@@ -131,24 +131,24 @@
             <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
 
             <div class="card-title">
-                GitHub 저장
-            </div>
-
-            <div class="form-group">
-                <label for="githubToken">GitHub Access Token</label>
-                <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx" onchange="saveGithubSettings()">
+                GitHub 저장 및 불러오기
             </div>
 
             <div class="form-group">
                 <div style="display: flex; gap: 6px;">
-                    <input type="text" id="githubRepo" placeholder="아이디/저장소명" style="flex:2;" onchange="saveGithubSettings()">
+                    <input type="text" id="githubRepo" placeholder="GitHub아이디/저장소명 (예: user/repo)" style="flex:2;" onchange="saveGithubSettings()">
                     <input type="text" id="githubPath" value="words.json" placeholder="파일명" style="flex:1;" onchange="saveGithubSettings()">
                 </div>
             </div>
 
+            <div class="form-group">
+                <label for="githubToken">GitHub Access Token <span style="font-weight:normal; color:var(--text-muted);">(업로드시에만 필요)</span></label>
+                <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx" onchange="saveGithubSettings()">
+            </div>
+
             <div style="display: flex; gap: 6px;">
                 <button type="button" class="btn btn-secondary" style="flex: 1; padding: 10px;" onclick="loadFromGithub()">
-                    GitHub 불러오기
+                    GitHub 불러오기 (토큰 불필요)
                 </button>
                 <button type="button" class="btn btn-success" style="flex: 1; padding: 10px;" onclick="uploadToGithub()">
                     GitHub 업로드
@@ -168,7 +168,6 @@
         let currentWords = [];
 
         window.onload = async function() {
-            // 저장된 GitHub 정보 로드
             const token = localStorage.getItem('gh_token') || '';
             const repo = localStorage.getItem('gh_repo') || '';
             const path = localStorage.getItem('gh_path') || 'words.json';
@@ -177,11 +176,9 @@
             if (repo) document.getElementById('githubRepo').value = repo;
             if (path) document.getElementById('githubPath').value = path;
 
-            // GitHub 연동 정보가 있으면 원격 데이터 불러오기 시도
-            if (token && repo) {
+            if (repo) {
                 await loadFromGithub();
             } else {
-                // 원격 설정이 없으면 LocalStorage 로드
                 loadLocalData();
             }
         };
@@ -209,7 +206,6 @@
             renderWordList();
         }
 
-        /* 단어 데이터 기반 과목/단원 자동 동기화 */
         function syncCategoriesFromWords() {
             currentWords.forEach(w => {
                 if (w.subject && !subjects.includes(w.subject)) {
@@ -225,7 +221,6 @@
             saveSubjectData();
         }
 
-        /* UTF-8 디코딩/인코딩 (Cross-Browser) */
         function utf8ToBase64(str) {
             const bytes = new TextEncoder().encode(str);
             let binary = '';
@@ -344,7 +339,6 @@
             }
         }
 
-        /* 과목 최소 1개 제한 삭제 */
         function deleteSubject() {
             const currentSubject = document.getElementById('subjectSelect').value;
             if (!currentSubject) return;
@@ -412,7 +406,6 @@
             }
         }
 
-        /* 단원 최소 1개 제한 삭제 */
         function deleteChapter() {
             const currentSub = document.getElementById('subjectSelect').value;
             const currentChapter = document.getElementById('chapterSelect').value;
@@ -612,54 +605,69 @@
             dlAnchorElem.click();
         }
 
-        /* GitHub 원격 데이터 동기화 함수 (불러오기) */
+        /* 개선된 GitHub 불러오기 (토큰 없이 raw.githubusercontent.com 직접 읽기 지원) */
         async function loadFromGithub() {
             const token = document.getElementById('githubToken').value.trim();
             const repo = document.getElementById('githubRepo').value.trim();
             const path = document.getElementById('githubPath').value.trim() || 'words.json';
             const statusEl = document.getElementById('githubStatus');
 
-            if (!token || !repo) return;
+            if (!repo) {
+                showStatus(statusEl, '저장소(Repo) 이름을 입력해 주세요 (예: user/repo)', 'error');
+                return;
+            }
 
             saveGithubSettings();
-            showStatus(statusEl, 'GitHub에서 JSON 데이터 동기화 중...', 'info');
+            showStatus(statusEl, 'GitHub에서 JSON 데이터를 불러오는 중...', 'info');
 
-            const url = `https://api.github.com/repos/${repo}/contents/${path}?t=${Date.now()}`;
-            const authHeader = `Bearer ${token}`;
-
+            // 토큰이 없거나 Public 조회일 때는 raw URL 사용
+            const rawUrl = `https://raw.githubusercontent.com/${repo}/main/${path}?t=${Date.now()}`;
+            
             try {
-                const res = await fetch(url, {
-                    headers: {
-                        'Authorization': authHeader,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
+                let parsedData = null;
 
-                if (res.ok) {
-                    const fileData = await res.json();
-                    const decodedData = base64ToUtf8(fileData.content);
-                    const parsed = JSON.parse(decodedData);
-
-                    if (Array.isArray(parsed)) {
-                        currentWords = parsed;
-                        saveToLocal();
-                        syncCategoriesFromWords();
-                        renderSubjectOptions();
-                        renderWordList();
-                        showStatus(statusEl, `GitHub 데이터 로드 성공 (${currentWords.length}개 단어)`, 'success');
+                if (token) {
+                    // 토큰이 입력되어 있으면 API 방식으로 우선 시도
+                    const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}?t=${Date.now()}`;
+                    const res = await fetch(apiUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    if (res.ok) {
+                        const fileData = await res.json();
+                        parsedData = JSON.parse(base64ToUtf8(fileData.content));
                     }
+                }
+
+                // 토큰으로 실패했거나 토큰이 없는 경우 raw URL fetch
+                if (!parsedData) {
+                    const rawRes = await fetch(rawUrl);
+                    if (rawRes.ok) {
+                        parsedData = await rawRes.json();
+                    }
+                }
+
+                if (Array.isArray(parsedData)) {
+                    currentWords = parsedData;
+                    saveToLocal();
+                    syncCategoriesFromWords();
+                    renderSubjectOptions();
+                    renderWordList();
+                    showStatus(statusEl, `GitHub 데이터 불러오기 성공 (${currentWords.length}개 단어)`, 'success');
                 } else {
-                    showStatus(statusEl, 'GitHub 데이터를 불러오지 못했습니다.', 'error');
+                    showStatus(statusEl, 'GitHub에서 올바른 JSON 데이터를 가져오지 못했습니다.', 'error');
                     loadLocalData();
                 }
             } catch (e) {
                 console.error(e);
-                showStatus(statusEl, 'GitHub 동기화 에러 발생', 'error');
+                showStatus(statusEl, 'GitHub 데이터를 읽어오는 중 에러가 발생했습니다.', 'error');
                 loadLocalData();
             }
         }
 
-        /* GitHub 업로드 함수 */
+        /* GitHub 업로드 */
         async function uploadToGithub() {
             const token = document.getElementById('githubToken').value.trim();
             const repo = document.getElementById('githubRepo').value.trim();
@@ -667,7 +675,7 @@
             const statusEl = document.getElementById('githubStatus');
 
             if (!token || !repo) {
-                showStatus(statusEl, 'GitHub Access Token과 저장소(Repo) 이름을 입력해주세요.', 'error');
+                showStatus(statusEl, '업로드하려면 GitHub Access Token과 저장소명이 필요합니다.', 'error');
                 return;
             }
 
