@@ -54,16 +54,12 @@
         .word-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border-color); background: #fff; }
         .word-item:last-child { border-bottom: none; }
         .word-info strong { font-size: 0.95rem; color: var(--primary); }
-        .word-info .phonetic { font-size: 0.8rem; color: var(--text-muted); margin-left: 4px; }
         .word-info .meaning { font-size: 0.85rem; color: #334155; margin-top: 2px; }
 
         .status-msg { padding: 8px 10px; border-radius: 6px; font-size: 0.8rem; margin-top: 8px; display: none; }
         .status-msg.info { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
         .status-msg.success { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
         .status-msg.error { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
-
-        .loading-spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #cbd5e1; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 6px; vertical-align: middle; }
-        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -106,7 +102,6 @@
                 <!-- 단어 등록하기 -->
                 <div class="card-title" style="margin-bottom: 6px;">
                     <span>단어 등록하기</span>
-                    <span id="autoStatus" style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);"></span>
                 </div>
                 
                 <div class="form-group">
@@ -117,7 +112,7 @@
                 </div>
 
                 <button type="button" class="btn btn-primary" style="width: 100%; padding: 10px;" onclick="processBulkInput()">
-                    단어 한 번에 등록하기 (발음기호 자동생성)
+                    단어 한 번에 등록하기
                 </button>
             </div>
         </div>
@@ -328,22 +323,9 @@
             }
         }
 
-        /* 발음기호 API */
-        async function fetchPhonetic(word) {
-            try {
-                const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    return data[0]?.phonetic || data[0]?.phonetics?.find(p => p.text)?.text || '';
-                }
-            } catch (e) {}
-            return '';
-        }
-
-        /* 단원 입력 처리 */
-        async function processBulkInput() {
+        /* 단어 대량 입력 처리 (즉시 저장) */
+        function processBulkInput() {
             const bulkText = document.getElementById('bulkText').value.trim();
-            const autoStatus = document.getElementById('autoStatus');
 
             if (!bulkText) {
                 alert('등록할 단어를 입력해 주세요.');
@@ -353,8 +335,6 @@
             const subject = document.getElementById('subjectSelect').value;
             const chapter = document.getElementById('chapterSelect').value;
             const lines = bulkText.split('\n');
-            
-            autoStatus.innerHTML = '발음기호 생성 중... <span class="loading-spinner"></span>';
             let addedCount = 0;
 
             for (const line of lines) {
@@ -364,7 +344,6 @@
                     const meaning = parts[1].trim();
 
                     if (word && meaning) {
-                        const phonetic = await fetchPhonetic(word);
                         const existingIdx = currentWords.findIndex(w => w.word.toLowerCase() === word.toLowerCase() && w.subject === subject && w.chapter === chapter);
                         
                         const newWordObj = {
@@ -372,8 +351,7 @@
                             subject: subject,
                             chapter: chapter,
                             word: word,
-                            meaning: meaning,
-                            phonetic: phonetic
+                            meaning: meaning
                         };
 
                         if (existingIdx >= 0) {
@@ -385,8 +363,6 @@
                     }
                 }
             }
-
-            autoStatus.innerText = '';
 
             if (addedCount > 0) {
                 saveToLocal();
@@ -444,7 +420,6 @@
                         <div class="word-info">
                             <div>
                                 <strong>${escapeHtml(item.word)}</strong>
-                                <span class="phonetic">${escapeHtml(item.phonetic)}</span>
                             </div>
                             <div class="meaning">${escapeHtml(item.meaning)}</div>
                         </div>
