@@ -221,13 +221,14 @@
             gap: 8px;
         }
 
-        /* 전체 목록 스타일 */
+        /* 전체 목록 스타일 (하단 단어 가림 방지 여백 50px 추가) */
         .list-container {
             flex: 1;
             overflow-y: auto;
             border: 1px solid var(--border-color);
             border-radius: 12px;
             background: #fff;
+            padding-bottom: 50px;
         }
         .list-item {
             display: flex;
@@ -457,7 +458,6 @@
         let cardIndex = 0;
         let passedChapters = new Set(); 
 
-        // 시험용 랜덤 배열 및 상태값 변수
         let quizWords = [];
         let quizIndex = 0;
         let quizScore = 0;
@@ -564,7 +564,6 @@
             initTest();
         }
 
-        /* 1번 수정 사항: 탭을 바꿀 때마다 시험을 처음부터 새로 시작 */
         function switchTab(tabId, btnEl) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -742,13 +741,12 @@
             }
         }
 
-        /* 2번 수정 사항: 연습 시험 단어 순서 랜덤화 */
+        /* 연습 시험 */
         function initQuiz() {
             quizIndex = 0;
             quizScore = 0;
             quizWrongList = [];
             
-            // 현재 단어 목록 복사 후 무작위 셔플
             quizWords = [...filteredWords].sort(() => Math.random() - 0.5);
 
             const layout = document.getElementById('quizLayout');
@@ -847,13 +845,12 @@
             }, 300);
         }
 
-        /* 2번 수정 사항: 최종 시험 단어 순서 랜덤화 */
+        /* 최종 시험 */
         function initTest() {
             testIndex = 0;
             testScore = 0;
             testWrongList = [];
 
-            // 현재 단어 목록 복사 후 무작위 셔플
             testWords = [...filteredWords].sort(() => Math.random() - 0.5);
 
             const layout = document.getElementById('testLayout');
