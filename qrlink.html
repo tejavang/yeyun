@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR 코드 스캐너</title>
+    <!-- 화이트리스트에 라이브러리 CDN 주소(unpkg.com) 추가가 필요합니다. 
+         서버에 자체 저장하여 로컬 경로로 지정하시면 외부 연결 없이 작동합니다. -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f4f5f7;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        #reader {
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #000;
+        }
+        #result-container {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #eef2f5;
+            word-break: break-all;
+            display: none;
+        }
+        a.qr-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 12px 20px;
+            background-color: #0066cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .error-message {
+            color: #d93025;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>QR 코드 스캔</h2>
+    <div id="reader"></div>
+    
+    <div id="result-container">
+        <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">인식된 주소:</p>
+        <div id="result-text" style="font-weight: bold; margin-bottom: 12px;"></div>
+        <a id="qr-link" class="qr-link" href="#" target="_blank" rel="noopener noreferrer">링크 바로가기</a>
+    </div>
+</div>
+
+<script>
+    const html5QrCode = new Html5Qrcode("reader");
+    const resultContainer = document.getElementById('result-container');
+    const resultText = document.getElementById('result-text');
+    const qrLink = document.getElementById('qr-link');
+
+    function onScanSuccess(decodedText, decodedResult) {
+        // 스캔 성공 시 인식 중지
+        html5QrCode.stop().then(() => {
+            // URL 형태인지 단순 검증
+            if (decodedText.startsWith("http://") || decodedText.startsWith("https://")) {
+                resultText.innerText = decodedText;
+                qrLink.href = decodedText;
+                resultContainer.style.display = "block";
+                
+                // 필요시 사용자 클릭 없이 바로 이동하게 하려면 아래 주석을 해제하세요.
+                // window.location.href = decodedText;
+            } else {
+                alert("URL 형식의 QR 코드가 아닙니다: " + decodedText);
+                startScanner(); // 스캐너 재시작
+            }
+        }).catch(err => console.error("Stop failed: ", err));
+    }
+
+    function startScanner() {
+        const config = { 
+            fps: 10, 
+            qrbox: { width: 250, height: 250 } 
+        };
+
+        // 모바일 환경(iOS Safari, Android Chrome)에서는 후면 카메라(facingMode: "environment")를 사용
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            config, 
+            onScanSuccess
+        ).catch(err => {
+            // 후면 카메라 접근 실패 시 (노트북, Edge 등) 기본 카메라 사용
+            html5QrCode.start(
+                { facingMode: "user" }, 
+                config, 
+                onScanSuccess
+            ).catch(err2 => {
+                alert("카메라에 접근할 수 없습니다. 권한 설정을 확인해주세요.");
+            });
+        });
+    }
+
+    // 페이지 로드 시 스캐너 실행
+    window.addEventListener('DOMContentLoaded', startScanner);
+</script>
+
+</body>
+</html>
