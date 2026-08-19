@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초등 단어장 - 과목/단원 관리형 스피드 관리자</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); line-height: 1.5; padding: 16px; max-width: 1050px; margin: 0 auto; }
+        
+        header { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        h1 { font-size: 1.4rem; color: var(--primary); }
+
+        .layout-grid { display: grid; grid-template-columns: 420px 1fr; gap: 16px; }
+        @media (max-width: 820px) { .layout-grid { grid-template-columns: 1fr; } }
+
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; margin-bottom: 16px; }
+        .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; color: var(--text-main); }
+
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: var(--text-main); }
+        
+        input[type="text"], input[type="password"], select, textarea {
+            width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; transition: all 0.2s; background: #fff;
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-secondary { background-color: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background-color: #e2e8f0; }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; padding: 4px 8px; font-size: 0.75rem; }
+
+        .category-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+
+        .word-list-scroll { flex: 1; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; min-height: 250px; max-height: 400px; }
+        .word-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border-color); background: #fff; }
+        .word-item:last-child { border-bottom: none; }
+        .word-info strong { font-size: 0.95rem; color: var(--primary); }
+        .word-info .phonetic { font-size: 0.8rem; color: var(--text-muted); margin-left: 4px; }
+        .word-info .meaning { font-size: 0.85rem; color: #334155; margin-top: 2px; }
+
+        .status-msg { padding: 8px 10px; border-radius: 6px; font-size: 0.8rem; margin-top: 8px; display: none; }
+        .status-msg.info { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .status-msg.success { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .status-msg.error { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+        .loading-spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #cbd5e1; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 6px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>⚡ 초등 단어장 - 스마트 관리자 페이지</h1>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+            과목/단원 관리 + 자동 사전 검색 탑재
+        </div>
+    </header>
+
+    <div class="layout-grid">
+        <!-- 1열: 과목/단원 설정 및 단어 입력 -->
+        <div>
+            <!-- 과목/단원 설정 & 개별 단어 입력 카드 -->
+            <div class="card">
+                <div class="card-title">
+                    ⚡ 단어 등록
+                    <span id="autoStatus" style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);"></span>
+                </div>
+
+                <!-- 과목 선택 및 관리 -->
+                <div class="form-group">
+                    <label>과목 선택 / 관리</label>
+                    <div class="category-row">
+                        <select id="subjectSelect" style="flex:1;"></select>
+                        <button type="button" class="btn btn-secondary" onclick="addSubject()" title="새 과목 추가">+ 과목</button>
+                        <button type="button" class="btn btn-danger" onclick="deleteSubject()" title="선택한 과목 삭제">🗑️</button>
+                    </div>
+                </div>
+
+                <!-- 단원 선택 및 관리 -->
+                <div class="form-group">
+                    <label>단원 선택 / 관리</label>
+                    <div class="category-row">
+                        <select id="chapterSelect" style="flex:1;"></select>
+                        <button type="button" class="btn btn-secondary" onclick="addChapter()" title="새 단원 추가">+ 단원</button>
+                        <button type="button" class="btn btn-danger" onclick="deleteChapter()" title="선택한 단원 삭제">🗑️</button>
+                    </div>
+                </div>
+
+                <hr style="margin: 12px 0; border: none; border-top: 1px solid var(--border-color);">
+
+                <div class="form-group">
+                    <label for="englishWord">영어 단어 <span style="font-weight:normal; color:var(--primary);">(입력 후 Enter)</span></label>
+                    <input type="text" id="englishWord" placeholder="예: apple (Enter 누르면 자동 조회)" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="koreanMeaning">한국어 뜻 (자동 채워짐)</label>
+                    <input type="text" id="koreanMeaning" placeholder="단어 입력 시 자동으로 채워집니다">
+                </div>
+
+                <div class="form-group">
+                    <label for="phoneticSymbol">발음 기호 (자동 채워짐)</label>
+                    <input type="text" id="phoneticSymbol" placeholder="예: [æpl]">
+                </div>
+
+                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 4px;" onclick="addWordToList()">
+                    ➕ 목록에 추가 (Enter)
+                </button>
+            </div>
+
+            <!-- 대량 단어 추가 카드 -->
+            <div class="card">
+                <div class="card-title">
+                    📦 대량 단어 붙여넣기
+                </div>
+                <div class="form-group">
+                    <label for="bulkText" style="font-weight: normal; font-size: 0.8rem;">
+                        `단어 : 뜻` 형식으로 여러 줄을 붙여넣으세요.
+                    </label>
+                    <textarea id="bulkText" rows="3" placeholder="apple : 사과&#10;banana : 바나나&#10;school : 학교"></textarea>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="processBulkInput()">
+                    📥 한 번에 대량 등록하기
+                </button>
+            </div>
+        </div>
+
+        <!-- 2열: 등록된 단어 목록 및 GitHub 업로드 -->
+        <div class="card">
+            <div class="card-title">
+                <span>📋 등록된 단어 (<span id="wordCount">0</span>개)</span>
+                <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 2px 6px;" onclick="clearAllWords()">전체 삭제</button>
+            </div>
+
+            <div class="word-list-scroll" id="wordListContainer">
+                <!-- 등록 리스트 -->
+            </div>
+
+            <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
+
+            <div class="card-title">
+                ☁️ GitHub 저장 (아이 폰 연동)
+            </div>
+
+            <div class="form-group">
+                <label for="githubToken">GitHub Access Token</label>
+                <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx">
+            </div>
+
+            <div class="form-group">
+                <div style="display: flex; gap: 6px;">
+                    <input type="text" id="githubRepo" placeholder="아이디/저장소명" style="flex:2;">
+                    <input type="text" id="githubPath" value="words.json" placeholder="파일명" style="flex:1;">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 6px;">
+                <button type="button" class="btn btn-success" style="flex: 1;" onclick="uploadToGithub()">
+                    🚀 GitHub 업로드
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="downloadJSON()">
+                    💾 JSON 다운로드
+                </button>
+            </div>
+
+            <div id="githubStatus" class="status-msg"></div>
+        </div>
+    </div>
+
+    <script>
+        // 기본 과목 및 단원 초기값
+        let subjects = ["초등 5학년 영어", "초등 6학년 영어", "기초 파닉스"];
+        let chapters = ["1단원", "2단원", "3단원", "4단원", "5단원"];
+        let currentWords = [];
+
+        window.onload = function() {
+            // 저장된 과목/단원 불러오기
+            const savedSubjects = localStorage.getItem('voca_subjects');
+            if (savedSubjects) subjects = JSON.parse(savedSubjects);
+
+            const savedChapters = localStorage.getItem('voca_chapters');
+            if (savedChapters) chapters = JSON.parse(savedChapters);
+
+            renderCategoryOptions();
+
+            // GitHub 및 저장된 단어 불러오기
+            if (localStorage.getItem('gh_token')) document.getElementById('githubToken').value = localStorage.getItem('gh_token');
+            if (localStorage.getItem('gh_repo')) document.getElementById('githubRepo').value = localStorage.getItem('gh_repo');
+            
+            const savedWords = localStorage.getItem('voca_words');
+            if (savedWords) {
+                try {
+                    currentWords = JSON.parse(savedWords);
+                    renderWordList();
+                } catch(e){}
+            }
+        };
+
+        // 과목 및 단원 Select 메뉴 렌더링
+        function renderCategoryOptions() {
+            const subjectSelect = document.getElementById('subjectSelect');
+            const chapterSelect = document.getElementById('chapterSelect');
+
+            subjectSelect.innerHTML = subjects.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+            chapterSelect.innerHTML = chapters.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+        }
+
+        // 과목 추가
+        function addSubject() {
+            const newSubject = prompt('새로 추가할 과목명을 입력해 주세요 (예: 초등 4학년 영어):');
+            if (newSubject && newSubject.trim()) {
+                const trimmed = newSubject.trim();
+                if (!subjects.includes(trimmed)) {
+                    subjects.push(trimmed);
+                    localStorage.setItem('voca_subjects', JSON.stringify(subjects));
+                    renderCategoryOptions();
+                    document.getElementById('subjectSelect').value = trimmed;
+                } else {
+                    alert('이미 존재하는 과목입니다.');
+                }
+            }
+        }
+
+        // 과목 삭제
+        function deleteSubject() {
+            const currentSubject = document.getElementById('subjectSelect').value;
+            if (!currentSubject) return;
+
+            if (subjects.length <= 1) {
+                alert('최소 하나의 과목은 존재해야 합니다.');
+                return;
+            }
+
+            if (confirm(`'${currentSubject}' 과목을 삭제하시겠습니까?`)) {
+                subjects = subjects.filter(s => s !== currentSubject);
+                localStorage.setItem('voca_subjects', JSON.stringify(subjects));
+                renderCategoryOptions();
+            }
+        }
+
+        // 단원 추가
+        function addChapter() {
+            const newChapter = prompt('새로 추가할 단원명을 입력해 주세요 (예: 6단원, Special Lesson):');
+            if (newChapter && newChapter.trim()) {
+                const trimmed = newChapter.trim();
+                if (!chapters.includes(trimmed)) {
+                    chapters.push(trimmed);
+                    localStorage.setItem('voca_chapters', JSON.stringify(chapters));
+                    renderCategoryOptions();
+                    document.getElementById('chapterSelect').value = trimmed;
+                } else {
+                    alert('이미 존재하는 단원입니다.');
+                }
+            }
+        }
+
+        // 단원 삭제
+        function deleteChapter() {
+            const currentChapter = document.getElementById('chapterSelect').value;
+            if (!currentChapter) return;
+
+            if (chapters.length <= 1) {
+                alert('최소 하나의 단원은 존재해야 합니다.');
+                return;
+            }
+
+            if (confirm(`'${currentChapter}' 단원을 삭제하시겠습니까?`)) {
+                chapters = chapters.filter(c => c !== currentChapter);
+                localStorage.setItem('voca_chapters', JSON.stringify(chapters));
+                renderCategoryOptions();
+            }
+        }
+
+        // 영단어 입력 엔터 및 포커스아웃 처리
+        const englishInput = document.getElementById('englishWord');
+        const autoStatus = document.getElementById('autoStatus');
+
+        englishInput.addEventListener('keydown', async function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const word = this.value.trim();
+                const meaning = document.getElementById('koreanMeaning').value.trim();
+
+                if (word && meaning) {
+                    addWordToList();
+                    return;
+                }
+
+                if (word) {
+                    await fetchWordData(word);
+                }
+            }
+        });
+
+        englishInput.addEventListener('blur', function() {
+            const word = this.value.trim();
+            const meaning = document.getElementById('koreanMeaning').value.trim();
+            if (word && !meaning) {
+                fetchWordData(word);
+            }
+        });
+
+        // 자동 사전 / 번역 API 불러오기
+        async function fetchWordData(word) {
+            autoStatus.innerHTML = '조회 중... <span class="loading-spinner"></span>';
+            
+            try {
+                let phonetic = '';
+                try {
+                    const dictRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+                    if (dictRes.ok) {
+                        const dictData = await dictRes.json();
+                        phonetic = dictData[0]?.phonetic || dictData[0]?.phonetics?.find(p => p.text)?.text || '';
+                    }
+                } catch (e) {}
+
+                let meaning = '';
+                const transRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|ko`);
+                if (transRes.ok) {
+                    const transData = await transRes.json();
+                    meaning = transData.responseData?.translatedText || '';
+                    meaning = meaning.replace(/^a\s+/i, '').replace(/^the\s+/i, '');
+                }
+
+                document.getElementById('koreanMeaning').value = meaning;
+                document.getElementById('phoneticSymbol').value = phonetic;
+                
+                autoStatus.innerText = '✅ 자동 입력 완료!';
+                setTimeout(() => { autoStatus.innerText = ''; }, 2000);
+
+            } catch (err) {
+                console.error(err);
+                autoStatus.innerText = '❌ 조회 실패 (수동 입력 필요)';
+            }
+        }
+
+        // 단어 목록 추가
+        function addWordToList() {
+            const subject = document.getElementById('subjectSelect').value;
+            const chapter = document.getElementById('chapterSelect').value;
+            const word = document.getElementById('englishWord').value.trim();
+            const meaning = document.getElementById('koreanMeaning').value.trim();
+            const phonetic = document.getElementById('phoneticSymbol').value.trim();
+
+            if (!word || !meaning) {
+                alert('영어 단어와 뜻을 입력해주세요.');
+                return;
+            }
+
+            const existingIdx = currentWords.findIndex(w => w.word.toLowerCase() === word.toLowerCase() && w.subject === subject && w.chapter === chapter);
+            
+            const newWordObj = {
+                id: Date.now(),
+                subject: subject,
+                chapter: chapter,
+                word: word,
+                meaning: meaning,
+                phonetic: phonetic
+            };
+
+            if (existingIdx >= 0) {
+                currentWords[existingIdx] = newWordObj;
+            } else {
+                currentWords.unshift(newWordObj);
+            }
+
+            saveToLocal();
+            renderWordList();
+
+            document.getElementById('englishWord').value = '';
+            document.getElementById('koreanMeaning').value = '';
+            document.getElementById('phoneticSymbol').value = '';
+            document.getElementById('englishWord').focus();
+        }
+
+        // 대량 단어 추가
+        function processBulkInput() {
+            const bulkText = document.getElementById('bulkText').value.trim();
+            if (!bulkText) {
+                alert('대량 입력할 텍스트를 붙여넣어주세요.');
+                return;
+            }
+
+            const subject = document.getElementById('subjectSelect').value;
+            const chapter = document.getElementById('chapterSelect').value;
+            const lines = bulkText.split('\n');
+            let addedCount = 0;
+
+            lines.forEach(line => {
+                const parts = line.split(/[:=\-\t]+/);
+                if (parts.length >= 2) {
+                    const word = parts[0].trim();
+                    const meaning = parts[1].trim();
+
+                    if (word && meaning) {
+                        currentWords.unshift({
+                            id: Date.now() + Math.random(),
+                            subject: subject,
+                            chapter: chapter,
+                            word: word,
+                            meaning: meaning,
+                            phonetic: ''
+                        });
+                        addedCount++;
+                    }
+                }
+            });
+
+            if (addedCount > 0) {
+                saveToLocal();
+                renderWordList();
+                document.getElementById('bulkText').value = '';
+                alert(`총 ${addedCount}개의 단어가 성공적으로 추가되었습니다!`);
+            } else {
+                alert('단어 구분 형식(예: apple : 사과)을 확인해주세요.');
+            }
+        }
+
+        function removeWord(id) {
+            currentWords = currentWords.filter(w => w.id !== id);
+            saveToLocal();
+            renderWordList();
+        }
+
+        function clearAllWords() {
+            if (confirm('등록된 모든 단어를 삭제하시겠습니까?')) {
+                currentWords = [];
+                saveToLocal();
+                renderWordList();
+            }
+        }
+
+        function saveToLocal() {
+            localStorage.setItem('voca_words', JSON.stringify(currentWords));
+        }
+
+        function renderWordList() {
+            const container = document.getElementById('wordListContainer');
+            document.getElementById('wordCount').innerText = currentWords.length;
+
+            if (currentWords.length === 0) {
+                container.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                        등록된 단어가 없습니다.<br>단어를 입력하면 자동으로 채워집니다.
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            currentWords.forEach(item => {
+                html += `
+                    <div class="word-item">
+                        <div class="word-info">
+                            <div>
+                                <strong>${escapeHtml(item.word)}</strong>
+                                <span class="phonetic">${escapeHtml(item.phonetic)}</span>
+                                <span style="font-size: 0.7rem; background: #f1f5f9; padding: 2px 4px; border-radius: 4px; margin-left:4px;">
+                                    ${escapeHtml(item.subject)} - ${escapeHtml(item.chapter)}
+                                </span>
+                            </div>
+                            <div class="meaning">${escapeHtml(item.meaning)}</div>
+                        </div>
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                            <button type="button" class="btn btn-secondary" style="padding: 2px 6px; font-size: 0.75rem;" onclick="speakWebSpeech('${escapeHtml(item.word)}')">🔊</button>
+                            <button type="button" class="btn btn-danger" onclick="removeWord(${item.id})">삭제</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function speakWebSpeech(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function escapeHtml(str) {
+            if(!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function showStatus(el, msg, type) {
+            el.innerText = msg;
+            el.className = `status-msg ${type}`;
+            el.style.display = 'block';
+        }
+
+        function downloadJSON() {
+            if (currentWords.length === 0) {
+                alert('다운로드할 단어가 없습니다.');
+                return;
+            }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentWords, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "words.json");
+            dlAnchorElem.click();
+        }
+
+        // GitHub REST API 업로드
+        async function uploadToGithub() {
+            const token = document.getElementById('githubToken').value.trim();
+            const repo = document.getElementById('githubRepo').value.trim();
+            const path = document.getElementById('githubPath').value.trim() || 'words.json';
+            const statusEl = document.getElementById('githubStatus');
+
+            if (!token || !repo) {
+                showStatus(statusEl, 'GitHub Access Token과 저장소(Repo) 이름을 입력해주세요.', 'error');
+                return;
+            }
+
+            localStorage.setItem('gh_token', token);
+            localStorage.setItem('gh_repo', repo);
+
+            showStatus(statusEl, 'GitHub 저장소에 업로드 중...', 'info');
+
+            const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(currentWords, null, 2))));
+            const url = `https://api.github.com/repos/${repo}/contents/${path}`;
+
+            try {
+                let sha = '';
+                const getFileRes = await fetch(url, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+
+                if (getFileRes.ok) {
+                    const fileData = await getFileRes.json();
+                    sha = fileData.sha;
+                }
+
+                const putRes = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `Update vocab list (${currentWords.length} words)`,
+                        content: contentEncoded,
+                        sha: sha ? sha : undefined
+                    })
+                });
+
+                if (putRes.ok) {
+                    showStatus(statusEl, '🎉 GitHub에 성공적으로 업로드되었습니다!', 'success');
+                } else {
+                    const errData = await putRes.json();
+                    showStatus(statusEl, `❌ 업로드 실패: ${errData.message || '설정을 확인하세요.'}`, 'error');
+                }
+
+            } catch (err) {
+                console.error(err);
+                showStatus(statusEl, '❌ GitHub 통신 오류가 발생했습니다.', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
