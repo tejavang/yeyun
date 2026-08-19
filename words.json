@@ -1,5 +1,229 @@
 [
   {
+    "id": 1787160964357.5571,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 5",
+    "word": "move into",
+    "meaning": "...로 이사하다, ...로 이동하다"
+  },
+  {
+    "id": 1787160964357.1277,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 5",
+    "word": "guess",
+    "meaning": "추측하다"
+  },
+  {
+    "id": 1787160964357.6465,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 5",
+    "word": "specific",
+    "meaning": "특정한"
+  },
+  {
+    "id": 1787160964357.551,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 5",
+    "word": "vacuum",
+    "meaning": "진공 청소기로 청소하다"
+  },
+  {
+    "id": 1787160964357.091,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 5",
+    "word": "water",
+    "meaning": "물을 주다, 물"
+  },
+  {
+    "id": 1787160964357.1465,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 5",
+    "word": "laundry",
+    "meaning": "세탁물"
+  },
+  {
+    "id": 1787160964357.6172,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 5",
+    "word": "guest",
+    "meaning": "손님"
+  },
+  {
+    "id": 1787160964357.1648,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 5",
+    "word": "take turns",
+    "meaning": "번갈아 하다, 교대로 하다"
+  },
+  {
+    "id": 1787160698874.1003,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 4",
+    "word": "break down",
+    "meaning": "고장나다"
+  },
+  {
+    "id": 1787160698874.2012,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 4",
+    "word": "stay",
+    "meaning": "머무르다"
+  },
+  {
+    "id": 1787160698874.0676,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 4",
+    "word": "terrible",
+    "meaning": "끔찍한"
+  },
+  {
+    "id": 1787160698874.306,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 4",
+    "word": "be scared of",
+    "meaning": "...를 두려워하다"
+  },
+  {
+    "id": 1787160698874.073,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 4",
+    "word": "give sb a ride",
+    "meaning": "sb(누구)를 태워주다"
+  },
+  {
+    "id": 1787160698874.989,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 4",
+    "word": "babysit",
+    "meaning": "아기를 돌보다"
+  },
+  {
+    "id": 1787160698874.7742,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 4",
+    "word": "student council",
+    "meaning": "학생회"
+  },
+  {
+    "id": 1787160698874.4094,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 4",
+    "word": "due",
+    "meaning": "...하기로 되어있는, ...할 예정인"
+  },
+  {
+    "id": 1787160406155.4282,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 3",
+    "word": "business trip",
+    "meaning": "출장"
+  },
+  {
+    "id": 1787160406155.962,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 3",
+    "word": "burst",
+    "meaning": "터뜨리다"
+  },
+  {
+    "id": 1787160406155.9197,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 3",
+    "word": "noisemakers",
+    "meaning": "(축제에 쓰는) 호루라기, 방울"
+  },
+  {
+    "id": 1787160406155.3364,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 3",
+    "word": "farewell",
+    "meaning": "작별 인사"
+  },
+  {
+    "id": 1787160406155.044,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 3",
+    "word": "sign",
+    "meaning": "표지판"
+  },
+  {
+    "id": 1787160406155.2651,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 3",
+    "word": "surprise party",
+    "meaning": "깜짝 파티"
+  },
+  {
+    "id": 1787160406155.131,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 3",
+    "word": "invitation",
+    "meaning": "초대"
+  },
+  {
+    "id": 1787160406155.8904,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 3",
+    "word": "banner",
+    "meaning": "현수막"
+  },
+  {
+    "id": 1787160254576.6423,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 2",
+    "word": "local",
+    "meaning": "지역의, 주민"
+  },
+  {
+    "id": 1787160254576.4644,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 2",
+    "word": "fiction",
+    "meaning": "소설"
+  },
+  {
+    "id": 1787160254576.575,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 2",
+    "word": "strength",
+    "meaning": "용기"
+  },
+  {
+    "id": 1787160254576.5803,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 2",
+    "word": "guidance counselor",
+    "meaning": "생활 지도 카운슬러"
+  },
+  {
+    "id": 1787160254576.836,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 2",
+    "word": "share",
+    "meaning": "함께 쓰다, 공유하다"
+  },
+  {
+    "id": 1787160254576.0732,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 2",
+    "word": "lyrics",
+    "meaning": "노랫말"
+  },
+  {
+    "id": 1787160254575.1113,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 2",
+    "word": "take a look",
+    "meaning": "보다"
+  },
+  {
+    "id": 1787160254575.2363,
+    "subject": "리스닝 stage 2",
+    "chapter": "Unit 2",
+    "word": "athlete",
+    "meaning": "육상 경기 선수"
+  },
+  {
     "id": 1787160028390.9336,
     "subject": "리스닝 stage 2",
     "chapter": "Unit 1",
