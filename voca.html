@@ -2,7 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- [수정] viewport-fit=cover 추가 (safe-area-inset 사용을 위해 필수) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>🥑 VOCA</title>
     <style>
         :root {
@@ -20,8 +21,10 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
+        /* [수정] 100vh 대신 동적 뷰포트 높이(100dvh) 및 Safe Area 하단 패딩 적용 */
         html, body { 
-            height: 100vh; 
+            height: 100vh;
+            height: 100dvh; /* 모바일 주소창/하단바 가변 대응 */
             overflow: hidden; 
             background-color: var(--bg-color); 
             color: var(--text-main); 
@@ -31,9 +34,12 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            height: 100dvh; /* 모바일 주소창/하단바 가변 대응 */
             max-width: 600px;
             margin: 0 auto;
             padding: 12px;
+            /* [수정] 아이폰 홈바 등 하단 안전 영역 확보 */
+            padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
             position: relative;
         }
 
@@ -220,7 +226,7 @@
             gap: 8px;
         }
 
-        /* 전체 목록 스타일 (컨테이너 자체 padding 제거) */
+        /* 전체 목록 스타일 */
         .list-container {
             flex: 1;
             overflow-y: auto;
@@ -255,6 +261,11 @@
             color: var(--text-main); 
             text-align: right;
             word-break: break-word;
+        }
+
+        /* [수정] 모바일 하단 UI/Safe Area에 대응하는 동적 하단 여백 스페이서 */
+        .list-bottom-spacer {
+            height: calc(30px + env(safe-area-inset-bottom, 20px));
         }
 
         /* 시험 객관식 보기 버튼 */
@@ -345,6 +356,7 @@
 <body>
 
     <div class="app-container">
+        <!-- 토스트 피드백 팝업 -->
         <div id="toastPopup" class="toast-popup"></div>
 
         <header>
@@ -352,11 +364,13 @@
             <div class="star-count" id="starCountDisplay">⭐ 0개</div>
         </header>
 
+        <!-- 셀렉트 박스 카테고리 (과목 및 단원 선택) -->
         <div class="category-container">
             <select id="subjectSelect" onchange="updateChapterSelect()"></select>
             <select id="chapterSelect" onchange="onCategoryChange()"></select>
         </div>
 
+        <!-- 탭 메뉴 -->
         <nav>
             <button class="nav-btn active" onclick="switchTab('listTab', this)">전체 목록</button>
             <button class="nav-btn" onclick="switchTab('cardTab', this)">카드 공부</button>
@@ -365,10 +379,12 @@
         </nav>
 
         <main>
+            <!-- 1. 전체 목록 탭 -->
             <div id="listTab" class="tab-content active">
                 <div class="list-container" id="wordListContainer"></div>
             </div>
 
+            <!-- 2. 카드 공부 탭 -->
             <div id="cardTab" class="tab-content">
                 <div class="study-layout">
                     <div class="progress-bar"><div id="cardProgress" class="progress-fill"></div></div>
@@ -403,6 +419,7 @@
                 </div>
             </div>
 
+            <!-- 3. 연습 시험 탭 (객관식) -->
             <div id="quizTab" class="tab-content">
                 <div class="study-layout" id="quizLayout">
                     <div class="progress-bar"><div id="quizProgress" class="progress-fill"></div></div>
@@ -420,6 +437,7 @@
                 </div>
             </div>
 
+            <!-- 4. 최종 시험 탭 (주관식) -->
             <div id="testTab" class="tab-content">
                 <div class="study-layout" id="testLayout">
                     <div class="progress-bar"><div id="testProgress" class="progress-fill"></div></div>
@@ -580,7 +598,7 @@
             }, 300);
         }
 
-        /* 목록 렌더링: 마지막 항목 아래에 독립된 한 줄 높이의 빈 div 추가 */
+        /* 목록 렌더링 */
         function renderList() {
             const container = document.getElementById('wordListContainer');
             if (filteredWords.length === 0) {
@@ -595,8 +613,8 @@
                 </div>
             `).join('');
 
-            // 마지막 칸 경계면 아래에 들어갈 빈 여백 요소를 함께 추가
-            container.innerHTML = itemsHtml + `<div style="height: 52px;" aria-hidden="true"></div>`;
+            // [수정] 모바일 하단 UI/Safe Area 높이를 동적으로 계산하는 클래스(list-bottom-spacer) 적용
+            container.innerHTML = itemsHtml + `<div class="list-bottom-spacer" aria-hidden="true"></div>`;
         }
 
         /* 카드 공부 */
