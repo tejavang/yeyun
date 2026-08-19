@@ -52,16 +52,12 @@
         .word-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border-color); background: #fff; }
         .word-item:last-child { border-bottom: none; }
         .word-info strong { font-size: 0.95rem; color: var(--primary); }
-        .word-info .phonetic { font-size: 0.8rem; color: var(--text-muted); margin-left: 4px; }
         .word-info .meaning { font-size: 0.85rem; color: #334155; margin-top: 2px; }
 
         .status-msg { padding: 8px 10px; border-radius: 6px; font-size: 0.8rem; margin-top: 8px; display: none; }
         .status-msg.info { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
         .status-msg.success { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
         .status-msg.error { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
-
-        .loading-spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #cbd5e1; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 6px; vertical-align: middle; }
-        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -101,7 +97,6 @@
 
                 <div class="card-title" style="margin-bottom: 6px;">
                     <span>단어 등록하기</span>
-                    <span id="autoStatus" style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);"></span>
                 </div>
                 
                 <div class="form-group">
@@ -112,12 +107,12 @@
                 </div>
 
                 <button type="button" class="btn btn-primary" style="width: 100%; padding: 10px;" onclick="processBulkInput()">
-                    단어 한 번에 등록하기 (발음기호 자동생성)
+                    단어 한 번에 등록하기
                 </button>
             </div>
         </div>
 
-        <!-- 2열 (오른쪽): 선택된 과목/단원의 등록 단어 목록 & GitHub 저장 -->
+        <!-- 2열 (오른쪽): 선택된 과목/단원의 등록 단어 목록 & 단어장 연동 -->
         <div class="card">
             <div class="card-title">
                 <span>등록된 단어 (<span id="filterInfo" style="color:var(--primary);"></span>) : <span id="wordCount">0</span>개</span>
@@ -131,30 +126,27 @@
             <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
 
             <div class="card-title">
-                GitHub 저장 및 불러오기
+                단어장 저장 및 불러오기
             </div>
 
             <div class="form-group">
                 <div style="display: flex; gap: 6px;">
-                    <input type="text" id="githubRepo" placeholder="GitHub아이디/저장소명 (예: user/repo)" style="flex:2;" onchange="saveGithubSettings()">
+                    <input type="text" id="githubRepo" placeholder="단어장 아이디/저장소명 (예: user/repo)" style="flex:2;" onchange="saveGithubSettings()">
                     <input type="text" id="githubPath" value="words.json" placeholder="파일명" style="flex:1;" onchange="saveGithubSettings()">
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="githubToken">GitHub Access Token <span style="font-weight:normal; color:var(--text-muted);">(업로드시에만 필요)</span></label>
+                <label for="githubToken">단어장 Access Token <span style="font-weight:normal; color:var(--text-muted);">(업로드시에만 필요)</span></label>
                 <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx" onchange="saveGithubSettings()">
             </div>
 
             <div style="display: flex; gap: 6px;">
                 <button type="button" class="btn btn-secondary" style="flex: 1; padding: 10px;" onclick="loadFromGithub()">
-                    GitHub 불러오기 (토큰 불필요)
+                    단어장 불러오기 (토큰 불필요)
                 </button>
                 <button type="button" class="btn btn-success" style="flex: 1; padding: 10px;" onclick="uploadToGithub()">
-                    GitHub 업로드
-                </button>
-                <button type="button" class="btn btn-secondary" style="padding: 10px;" onclick="downloadJSON()">
-                    JSON
+                    단어장 업로드
                 </button>
             </div>
 
@@ -429,18 +421,7 @@
             localStorage.setItem('voca_subject_chapters', JSON.stringify(subjectChapters));
         }
 
-        async function fetchPhonetic(word) {
-            try {
-                const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    return data[0]?.phonetic || data[0]?.phonetics?.find(p => p.text)?.text || '';
-                }
-            } catch (e) {}
-            return '';
-        }
-
-        async function processBulkInput() {
+        function processBulkInput() {
             const subject = document.getElementById('subjectSelect').value;
             const chapter = document.getElementById('chapterSelect').value;
 
@@ -450,7 +431,6 @@
             }
 
             const bulkText = document.getElementById('bulkText').value.trim();
-            const autoStatus = document.getElementById('autoStatus');
 
             if (!bulkText) {
                 alert('등록할 단어를 입력해 주세요.');
@@ -458,7 +438,6 @@
             }
 
             const lines = bulkText.split('\n');
-            autoStatus.innerHTML = '발음기호 생성 중... <span class="loading-spinner"></span>';
             let addedCount = 0;
 
             for (const line of lines) {
@@ -468,7 +447,6 @@
                     const meaning = parts[1].trim();
 
                     if (word && meaning) {
-                        const phonetic = await fetchPhonetic(word);
                         const existingIdx = currentWords.findIndex(w => w.word.toLowerCase() === word.toLowerCase() && w.subject === subject && w.chapter === chapter);
                         
                         const newWordObj = {
@@ -476,8 +454,7 @@
                             subject: subject,
                             chapter: chapter,
                             word: word,
-                            meaning: meaning,
-                            phonetic: phonetic
+                            meaning: meaning
                         };
 
                         if (existingIdx >= 0) {
@@ -489,8 +466,6 @@
                     }
                 }
             }
-
-            autoStatus.innerText = '';
 
             if (addedCount > 0) {
                 saveToLocal();
@@ -560,7 +535,6 @@
                         <div class="word-info">
                             <div>
                                 <strong>${escapeHtml(item.word)}</strong>
-                                <span class="phonetic">${escapeHtml(item.phonetic)}</span>
                             </div>
                             <div class="meaning">${escapeHtml(item.meaning)}</div>
                         </div>
@@ -593,19 +567,7 @@
             el.style.display = 'block';
         }
 
-        function downloadJSON() {
-            if (currentWords.length === 0) {
-                alert('다운로드할 단어가 없습니다.');
-                return;
-            }
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentWords, null, 2));
-            const dlAnchorElem = document.createElement('a');
-            dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", "words.json");
-            dlAnchorElem.click();
-        }
-
-        /* 개선된 GitHub 불러오기 (토큰 없이 raw.githubusercontent.com 직접 읽기 지원) */
+        /* 단어장 불러오기 */
         async function loadFromGithub() {
             const token = document.getElementById('githubToken').value.trim();
             const repo = document.getElementById('githubRepo').value.trim();
@@ -613,21 +575,19 @@
             const statusEl = document.getElementById('githubStatus');
 
             if (!repo) {
-                showStatus(statusEl, '저장소(Repo) 이름을 입력해 주세요 (예: user/repo)', 'error');
+                showStatus(statusEl, '단어장 아이디/저장소명을 입력해 주세요 (예: user/repo)', 'error');
                 return;
             }
 
             saveGithubSettings();
-            showStatus(statusEl, 'GitHub에서 JSON 데이터를 불러오는 중...', 'info');
+            showStatus(statusEl, '단어장 데이터를 불러오는 중...', 'info');
 
-            // 토큰이 없거나 Public 조회일 때는 raw URL 사용
             const rawUrl = `https://raw.githubusercontent.com/${repo}/main/${path}?t=${Date.now()}`;
             
             try {
                 let parsedData = null;
 
                 if (token) {
-                    // 토큰이 입력되어 있으면 API 방식으로 우선 시도
                     const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}?t=${Date.now()}`;
                     const res = await fetch(apiUrl, {
                         headers: {
@@ -641,7 +601,6 @@
                     }
                 }
 
-                // 토큰으로 실패했거나 토큰이 없는 경우 raw URL fetch
                 if (!parsedData) {
                     const rawRes = await fetch(rawUrl);
                     if (rawRes.ok) {
@@ -655,19 +614,19 @@
                     syncCategoriesFromWords();
                     renderSubjectOptions();
                     renderWordList();
-                    showStatus(statusEl, `GitHub 데이터 불러오기 성공 (${currentWords.length}개 단어)`, 'success');
+                    showStatus(statusEl, `단어장 데이터 불러오기 성공 (${currentWords.length}개 단어)`, 'success');
                 } else {
-                    showStatus(statusEl, 'GitHub에서 올바른 JSON 데이터를 가져오지 못했습니다.', 'error');
+                    showStatus(statusEl, '단어장에서 올바른 데이터를 가져오지 못했습니다.', 'error');
                     loadLocalData();
                 }
             } catch (e) {
                 console.error(e);
-                showStatus(statusEl, 'GitHub 데이터를 읽어오는 중 에러가 발생했습니다.', 'error');
+                showStatus(statusEl, '단어장 데이터를 읽어오는 중 에러가 발생했습니다.', 'error');
                 loadLocalData();
             }
         }
 
-        /* GitHub 업로드 */
+        /* 단어장 업로드 */
         async function uploadToGithub() {
             const token = document.getElementById('githubToken').value.trim();
             const repo = document.getElementById('githubRepo').value.trim();
@@ -675,12 +634,12 @@
             const statusEl = document.getElementById('githubStatus');
 
             if (!token || !repo) {
-                showStatus(statusEl, '업로드하려면 GitHub Access Token과 저장소명이 필요합니다.', 'error');
+                showStatus(statusEl, '업로드하려면 단어장 Access Token과 저장소명이 필요합니다.', 'error');
                 return;
             }
 
             saveGithubSettings();
-            showStatus(statusEl, 'GitHub 저장소에 업로드 중...', 'info');
+            showStatus(statusEl, '단어장에 업로드 중...', 'info');
 
             const jsonString = JSON.stringify(currentWords, null, 2);
             const contentEncoded = utf8ToBase64(jsonString);
@@ -716,7 +675,7 @@
                 });
 
                 if (putRes.ok) {
-                    showStatus(statusEl, 'GitHub에 성공적으로 업로드되었습니다!', 'success');
+                    showStatus(statusEl, '단어장에 성공적으로 업로드되었습니다!', 'success');
                 } else {
                     const errData = await putRes.json();
                     showStatus(statusEl, `업로드 실패: ${errData.message || '설정을 확인하세요.'}`, 'error');
@@ -724,7 +683,7 @@
 
             } catch (err) {
                 console.error(err);
-                showStatus(statusEl, 'GitHub 통신 오류가 발생했습니다.', 'error');
+                showStatus(statusEl, '단어장 통신 오류가 발생했습니다.', 'error');
             }
         }
     </script>
