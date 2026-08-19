@@ -323,7 +323,7 @@
             }
         }
 
-        /* 단어 대량 입력 처리 (즉시 저장) */
+        /* 자동 검사 후 대량 입력 처리 */
         function processBulkInput() {
             const bulkText = document.getElementById('bulkText').value.trim();
 
@@ -332,9 +332,37 @@
                 return;
             }
 
+            const lines = bulkText.split('\n');
+            const warnings = [];
+            const englishRegex = /^[a-zA-Z\s'\-]+$/; // 알파벳, 하이픈(-), 아포스트로피('), 공백 허용
+
+            // 1차 자동 오타 및 형식 검사
+            lines.forEach((line, index) => {
+                const lineNum = index + 1;
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return;
+
+                const parts = trimmedLine.split(/[:=\-\t]+/);
+
+                if (parts.length < 2 || !parts[0].trim() || !parts[1].trim()) {
+                    warnings.push(`${lineNum}번째 줄: '단어 : 뜻' 형식이 누락되었습니다. ("${trimmedLine}")`);
+                } else {
+                    const word = parts[0].trim();
+                    if (!englishRegex.test(word)) {
+                        warnings.push(`${lineNum}번째 줄: 영단어 '${word}'에 한글, 숫자 또는 잘못된 문자가 섞여 있습니다.`);
+                    }
+                }
+            });
+
+            // 검사 시 오류가 하나라도 있다면 등록을 멈추고 알려줌
+            if (warnings.length > 0) {
+                alert('⚠️ 아래 오타/형식 오류를 수정한 뒤 다시 시도해 주세요:\n\n' + warnings.join('\n'));
+                return;
+            }
+
+            // 2차 오류가 없을 시 바로 등록 진행
             const subject = document.getElementById('subjectSelect').value;
             const chapter = document.getElementById('chapterSelect').value;
-            const lines = bulkText.split('\n');
             let addedCount = 0;
 
             for (const line of lines) {
@@ -369,8 +397,6 @@
                 renderWordList();
                 document.getElementById('bulkText').value = '';
                 alert(`'${subject} - ${chapter}'에 총 ${addedCount}개의 단어가 성공적으로 등록되었습니다!`);
-            } else {
-                alert('단어 구분 형식(예: apple : 사과)을 확인해주세요.');
             }
         }
 
