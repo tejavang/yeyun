@@ -417,20 +417,29 @@
         }
 
         function loadWords() {
-            const saved = localStorage.getItem('voca_words');
-            if (saved) {
-                try {
-                    allWords = JSON.parse(saved);
-                } catch(e) { allWords = []; }
-            } else {
-                allWords = [
-                    { id: 1, subject: "초등 5학년 영어", chapter: "1단원", word: "come true", meaning: "이루어지다" },
-                    { id: 2, subject: "초등 5학년 영어", chapter: "1단원", word: "apple", meaning: "사과" },
-                    { id: 3, subject: "초등 5학년 영어", chapter: "1단원", word: "school", meaning: "학교" },
-                    { id: 4, subject: "초등 5학년 영어", chapter: "1단원", word: "teacher", meaning: "선생님" }
-                ];
-            }
-            initCategorySelects();
+            // URL 뒤에 ?v=타임스탬프를 붙여 모바일 브라우저의 강제 캐시를 방지합니다.
+            fetch('words.json?v=' + new Date().getTime())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('네트워크 응답 실패');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    allWords = data;
+                    // 불러온 최신 데이터를 localStorage에도 백업 저장
+                    localStorage.setItem('voca_words', JSON.stringify(allWords));
+                    initCategorySelects();
+                })
+                .catch(error => {
+                    console.error('JSON 로드 실패, 기존 로컬 데이터 사용:', error);
+                    // 인터넷 연결이 안 되거나 파일이 없을 때만 localStorage 데이터 사용
+                    const saved = localStorage.getItem('voca_words');
+                    if (saved) {
+                        try { allWords = JSON.parse(saved); } catch(e) { allWords = []; }
+                    }
+                    initCategorySelects();
+                });
         }
 
         function initCategorySelects() {
