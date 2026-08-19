@@ -390,7 +390,7 @@
                         </div>
                     </div>
 
-                    <!-- 3등분으로 구성된 버튼 영역 -->
+                    <!-- 3등분 액션 버튼 영역 -->
                     <div class="row-group">
                         <button id="speechRecBtn" class="btn-action-third" onclick="startSpeechRecognition(event)">
                             🎙️ 발음 하기
@@ -457,10 +457,13 @@
         let cardIndex = 0;
         let passedChapters = new Set(); 
 
+        // 시험용 랜덤 배열 및 상태값 변수
+        let quizWords = [];
         let quizIndex = 0;
         let quizScore = 0;
         let quizWrongList = [];
 
+        let testWords = [];
         let testIndex = 0;
         let testScore = 0;
         let testWrongList = [];
@@ -561,6 +564,7 @@
             initTest();
         }
 
+        /* 1번 수정 사항: 탭을 바꿀 때마다 시험을 처음부터 새로 시작 */
         function switchTab(tabId, btnEl) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -570,6 +574,10 @@
 
             if (tabId === 'cardTab') {
                 renderCard(true);
+            } else if (tabId === 'quizTab') {
+                initQuiz();
+            } else if (tabId === 'testTab') {
+                initTest();
             }
         }
 
@@ -661,7 +669,6 @@
             if (filteredWords.length === 0) return;
             
             const currentWord = filteredWords[cardIndex].word.trim();
-            // 단어 내의 공백을 '+'로 변환
             const queryWord = currentWord.replace(/\s+/g, '+');
             const searchUrl = `https://small.dic.daum.net/search.do?dic=eng&q=${queryWord}`;
             
@@ -735,12 +742,15 @@
             }
         }
 
-        /* 연습 시험 */
+        /* 2번 수정 사항: 연습 시험 단어 순서 랜덤화 */
         function initQuiz() {
             quizIndex = 0;
             quizScore = 0;
             quizWrongList = [];
             
+            // 현재 단어 목록 복사 후 무작위 셔플
+            quizWords = [...filteredWords].sort(() => Math.random() - 0.5);
+
             const layout = document.getElementById('quizLayout');
             layout.innerHTML = `
                 <div class="progress-bar"><div id="quizProgress" class="progress-fill"></div></div>
@@ -760,12 +770,12 @@
 
         function renderQuizStep() {
             const layout = document.getElementById('quizLayout');
-            if (filteredWords.length === 0) {
+            if (quizWords.length === 0) {
                 layout.innerHTML = `<div class="empty-msg">연습할 단어가 없습니다.</div>`;
                 return;
             }
 
-            if (quizIndex >= filteredWords.length) {
+            if (quizIndex >= quizWords.length) {
                 let wrongHtml = '';
                 if (quizWrongList.length > 0) {
                     wrongHtml = `
@@ -784,17 +794,17 @@
                 layout.innerHTML = `
                     <div style="text-align:center; padding: 20px 0;">
                         <h2 style="color:var(--primary); margin-bottom:8px;">연습 시험 완료!</h2>
-                        <p style="font-size:1.1rem; font-weight:700;">점수: ${quizScore} / ${filteredWords.length}</p>
+                        <p style="font-size:1.1rem; font-weight:700;">점수: ${quizScore} / ${quizWords.length}</p>
                         ${wrongHtml}
                         <button class="btn btn-primary" style="margin:16px auto 0; padding:0 30px;" onclick="initQuiz()">다시 풀어보기</button>
                     </div>`;
                 return;
             }
 
-            const progress = ((quizIndex + 1) / filteredWords.length) * 100;
+            const progress = ((quizIndex + 1) / quizWords.length) * 100;
             document.getElementById('quizProgress').style.width = `${progress}%`;
 
-            const target = filteredWords[quizIndex];
+            const target = quizWords[quizIndex];
             document.getElementById('quizTargetMeaning').innerText = target.meaning;
 
             let options = [target.word];
@@ -820,7 +830,7 @@
         }
 
         function checkQuizAnswer(selectedWord) {
-            const target = filteredWords[quizIndex];
+            const target = quizWords[quizIndex];
             const isCorrect = (selectedWord.trim().toLowerCase() === target.word.trim().toLowerCase());
             
             if (isCorrect) {
@@ -837,11 +847,14 @@
             }, 300);
         }
 
-        /* 최종 시험 */
+        /* 2번 수정 사항: 최종 시험 단어 순서 랜덤화 */
         function initTest() {
             testIndex = 0;
             testScore = 0;
             testWrongList = [];
+
+            // 현재 단어 목록 복사 후 무작위 셔플
+            testWords = [...filteredWords].sort(() => Math.random() - 0.5);
 
             const layout = document.getElementById('testLayout');
             layout.innerHTML = `
@@ -864,13 +877,13 @@
 
         function renderTestStep() {
             const layout = document.getElementById('testLayout');
-            if (filteredWords.length === 0) {
+            if (testWords.length === 0) {
                 layout.innerHTML = `<div class="empty-msg">시험을 볼 단어가 없습니다.</div>`;
                 return;
             }
 
-            if (testIndex >= filteredWords.length) {
-                const isFullMark = (testScore === filteredWords.length);
+            if (testIndex >= testWords.length) {
+                const isFullMark = (testScore === testWords.length);
                 
                 if (isFullMark) {
                     const currentSub = document.getElementById('subjectSelect').value;
@@ -898,17 +911,17 @@
                 layout.innerHTML = `
                     <div style="text-align:center; padding: 20px 0;">
                         <h2 style="color:var(--primary); margin-bottom:8px;">최종 시험 완료!</h2>
-                        <p style="font-size:1.1rem; font-weight:700;">점수: ${testScore} / ${filteredWords.length}</p>
+                        <p style="font-size:1.1rem; font-weight:700;">점수: ${testScore} / ${testWords.length}</p>
                         ${wrongHtml}
                         <button class="btn btn-primary" style="margin:16px auto 0; padding:0 30px;" onclick="initTest()">다시 풀어보기</button>
                     </div>`;
                 return;
             }
 
-            const progress = ((testIndex + 1) / filteredWords.length) * 100;
+            const progress = ((testIndex + 1) / testWords.length) * 100;
             document.getElementById('testProgress').style.width = `${progress}%`;
 
-            const target = filteredWords[testIndex];
+            const target = testWords[testIndex];
             document.getElementById('testTargetMeaning').innerText = target.meaning;
             
             const input = document.getElementById('testInput');
@@ -929,7 +942,7 @@
             if (!input) return;
 
             const val = input.value.trim().toLowerCase();
-            const target = filteredWords[testIndex];
+            const target = testWords[testIndex];
             const isCorrect = (val === target.word.trim().toLowerCase());
 
             if (isCorrect) {
