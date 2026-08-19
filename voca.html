@@ -2,7 +2,6 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <!-- viewport-fit=cover 추가 (safe-area-inset 사용을 위해 필수) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>🥑 VOCA</title>
     <style>
@@ -23,7 +22,7 @@
         
         html, body { 
             height: 100vh;
-            height: 100dvh; /* 모바일 주소창/하단바 가변 대응 */
+            height: 100dvh;
             overflow: hidden; 
             background-color: var(--bg-color); 
             color: var(--text-main); 
@@ -41,7 +40,6 @@
             position: relative;
         }
 
-        /* 헤더 */
         header {
             display: flex;
             justify-content: space-between;
@@ -53,7 +51,6 @@
         .header-title { font-size: 1.25rem; color: #166534; font-weight: 800; display: flex; align-items: center; gap: 4px; }
         .star-count { font-size: 0.95rem; color: #f59e0b; font-weight: 800; background: #fffbebf5; padding: 4px 10px; border-radius: 20px; border: 1px solid #fde68a; }
 
-        /* 카테고리 셀렉터 */
         .category-container {
             display: flex;
             gap: 6px;
@@ -70,7 +67,6 @@
             outline: none;
         }
 
-        /* 탭 네비게이션 */
         nav {
             display: flex;
             background: #e2e8f0;
@@ -98,7 +94,6 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        /* 메인 콘텐츠 영역 */
         main {
             flex: 1;
             display: flex;
@@ -116,7 +111,6 @@
             display: flex;
         }
 
-        /* 진행바 */
         .progress-bar {
             height: 6px;
             background: #e2e8f0;
@@ -132,7 +126,6 @@
             transition: width 0.3s;
         }
 
-        /* 레이아웃 */
         .study-layout {
             display: flex;
             flex-direction: column;
@@ -173,7 +166,6 @@
         .card-word { font-size: 1.6rem; font-weight: 800; color: var(--primary); word-break: break-word; }
         .card-meaning { font-size: 1.4rem; font-weight: 700; color: var(--text-main); word-break: break-word; }
 
-        /* 공통 버튼 */
         .btn {
             padding: 10px;
             border: none;
@@ -236,7 +228,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px 16px;
+            padding: 16px 18px; /* [수정] 폰트 확장에 맞춘 패딩 조정 */
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             user-select: none;
@@ -246,27 +238,29 @@
             background-color: var(--primary-light);
         }
         .list-item:last-child { border-bottom: none; }
+        
+        /* [수정] 단어(영어) 폰트 크기 150% 확대: 1.15rem -> 1.725rem */
         .list-item .w-eng { 
             font-weight: 800; 
             color: var(--primary); 
-            font-size: 1.15rem; 
+            font-size: 1.725rem; 
             text-align: left;
             word-break: break-word;
         }
+        
+        /* [수정] 뜻(한글) 폰트 크기 150% 확대: 1.05rem -> 1.575rem */
         .list-item .w-kor { 
-            font-size: 1.05rem; 
+            font-size: 1.575rem; 
             font-weight: 700;
             color: var(--text-main); 
             text-align: right;
             word-break: break-word;
         }
 
-        /* 모바일 하단 UI/Safe Area 대응 스페이서 */
         .list-bottom-spacer {
             height: calc(30px + env(safe-area-inset-bottom, 20px));
         }
 
-        /* 시험 객관식 보기 버튼 */
         .opt-btn {
             flex: 1;
             height: 42px;
@@ -286,7 +280,6 @@
         }
         .opt-btn:active { background: var(--primary-light); }
 
-        /* 시험 주관식 입력창 */
         .test-input {
             width: 100%;
             height: 42px;
@@ -300,7 +293,6 @@
         }
         .test-input:focus { border-color: var(--primary); }
 
-        /* 오답 노트 */
         .wrong-answers-box {
             margin-top: 14px;
             text-align: left;
@@ -324,7 +316,6 @@
             font-size: 0.9rem;
         }
 
-        /* 0.3초 피드백 팝업 */
         .toast-popup {
             position: absolute;
             top: 50%;
@@ -354,7 +345,6 @@
 <body>
 
     <div class="app-container">
-        <!-- 토스트 피드백 팝업 -->
         <div id="toastPopup" class="toast-popup"></div>
 
         <header>
@@ -362,13 +352,11 @@
             <div class="star-count" id="starCountDisplay">⭐ 0개</div>
         </header>
 
-        <!-- 셀렉트 박스 카테고리 (과목 및 단원 선택) -->
         <div class="category-container">
             <select id="subjectSelect" onchange="updateChapterSelect()"></select>
             <select id="chapterSelect" onchange="onCategoryChange()"></select>
         </div>
 
-        <!-- 탭 메뉴 -->
         <nav>
             <button class="nav-btn active" onclick="switchTab('listTab', this)">전체 목록</button>
             <button id="cardTabBtn" class="nav-btn" onclick="switchTab('cardTab', this)">카드 공부</button>
@@ -377,12 +365,10 @@
         </nav>
 
         <main>
-            <!-- 1. 전체 목록 탭 -->
             <div id="listTab" class="tab-content active">
                 <div class="list-container" id="wordListContainer"></div>
             </div>
 
-            <!-- 2. 카드 공부 탭 -->
             <div id="cardTab" class="tab-content">
                 <div class="study-layout">
                     <div class="progress-bar"><div id="cardProgress" class="progress-fill"></div></div>
@@ -417,7 +403,6 @@
                 </div>
             </div>
 
-            <!-- 3. 연습 시험 탭 (객관식) -->
             <div id="quizTab" class="tab-content">
                 <div class="study-layout" id="quizLayout">
                     <div class="progress-bar"><div id="quizProgress" class="progress-fill"></div></div>
@@ -435,7 +420,6 @@
                 </div>
             </div>
 
-            <!-- 4. 최종 시험 탭 (주관식) -->
             <div id="testTab" class="tab-content">
                 <div class="study-layout" id="testLayout">
                     <div class="progress-bar"><div id="testProgress" class="progress-fill"></div></div>
@@ -460,10 +444,10 @@
 
     <script>
         let allWords = [];
-        let originalFilteredWords = []; // [신규] 원본 순서 단어 저장용
+        let originalFilteredWords = [];
         let filteredWords = [];
         let cardIndex = 0;
-        let isCardShuffled = false; // [신규] 카드 공부 셔플 상태 제어 플래그
+        let isCardShuffled = false;
         let passedChapters = new Set(); 
 
         let quizWords = [];
@@ -566,7 +550,6 @@
             originalFilteredWords = allWords.filter(w => w.subject === currentSub && w.chapter === currentCh);
             filteredWords = [...originalFilteredWords];
             
-            // 카테고리 변경 시 셔플 상태 리셋
             resetCardShuffleState();
             cardIndex = 0;
 
@@ -576,7 +559,6 @@
             initTest();
         }
 
-        /* [신규] 카드 공부 셔플 상태 리셋 함수 */
         function resetCardShuffleState() {
             isCardShuffled = false;
             filteredWords = [...originalFilteredWords];
@@ -587,10 +569,9 @@
         function switchTab(tabId, btnEl) {
             const isCardTabCurrentlyActive = document.getElementById('cardTab').classList.contains('active');
 
-            // [수정] 카드 공부 탭을 이미 선택한 상태에서 한번 더 터치한 경우 -> 셔플 토글
             if (tabId === 'cardTab' && isCardTabCurrentlyActive) {
                 isCardShuffled = !isCardShuffled;
-                cardIndex = 0; // 처음부터 다시 시작
+                cardIndex = 0;
 
                 if (isCardShuffled) {
                     btnEl.innerText = "카드 공부 🔀";
@@ -603,7 +584,6 @@
                 return;
             }
 
-            // 다른 탭으로 전환되거나 카드 공부 탭으로 처음 접근하는 경우
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
 
@@ -611,12 +591,10 @@
             btnEl.classList.add('active');
 
             if (tabId === 'cardTab') {
-                // 카드 공부 탭 최초 진입 시 기본 상태로 초기화 후 시작
                 resetCardShuffleState();
                 cardIndex = 0;
                 renderCard(true);
             } else {
-                // 카드 공부 외 다른 탭으로 나갈 때 셔플 상태 초기화
                 resetCardShuffleState();
 
                 if (tabId === 'quizTab') {
@@ -637,7 +615,6 @@
             }, 300);
         }
 
-        /* 목록 렌더링 */
         function renderList() {
             const container = document.getElementById('wordListContainer');
             if (originalFilteredWords.length === 0) {
@@ -655,7 +632,6 @@
             container.innerHTML = itemsHtml + `<div class="list-bottom-spacer" aria-hidden="true"></div>`;
         }
 
-        /* 카드 공부 */
         function renderCard(autoSpeak = true) {
             const card = document.getElementById('flashcard');
             card.classList.remove('flipped');
@@ -712,7 +688,6 @@
             }
         }
 
-        /* 사전 찾기 */
         function openDictionary(e) {
             if (e) e.stopPropagation();
             if (filteredWords.length === 0) return;
@@ -724,7 +699,6 @@
             window.open(searchUrl, '_blank');
         }
 
-        /* 발음 하기 */
         function initSpeechRecognition() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
@@ -791,7 +765,6 @@
             }
         }
 
-        /* 연습 시험 */
         function initQuiz() {
             quizIndex = 0;
             quizScore = 0;
@@ -895,7 +868,6 @@
             }, 300);
         }
 
-        /* 최종 시험 */
         function initTest() {
             testIndex = 0;
             testScore = 0;
