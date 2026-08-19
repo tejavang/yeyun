@@ -136,22 +136,25 @@
 
             <div class="form-group">
                 <label for="githubToken">GitHub Access Token</label>
-                <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx">
+                <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx" onchange="saveGithubSettings()">
             </div>
 
             <div class="form-group">
                 <div style="display: flex; gap: 6px;">
-                    <input type="text" id="githubRepo" placeholder="아이디/저장소명" style="flex:2;">
-                    <input type="text" id="githubPath" value="words.json" placeholder="파일명" style="flex:1;">
+                    <input type="text" id="githubRepo" placeholder="아이디/저장소명" style="flex:2;" onchange="saveGithubSettings()">
+                    <input type="text" id="githubPath" value="words.json" placeholder="파일명" style="flex:1;" onchange="saveGithubSettings()">
                 </div>
             </div>
 
             <div style="display: flex; gap: 6px;">
+                <button type="button" class="btn btn-secondary" style="flex: 1; padding: 10px;" onclick="loadFromGithub()">
+                    GitHub 불러오기
+                </button>
                 <button type="button" class="btn btn-success" style="flex: 1; padding: 10px;" onclick="uploadToGithub()">
                     GitHub 업로드
                 </button>
                 <button type="button" class="btn btn-secondary" style="padding: 10px;" onclick="downloadJSON()">
-                    JSON 다운로드
+                    JSON
                 </button>
             </div>
 
@@ -160,34 +163,69 @@
     </div>
 
     <script>
-        let subjects = ["5학년 영어", "6학년 영어", "기초 파닉스"];
-        let subjectChapters = {
-            "5학년 영어": ["1단원", "2단원", "3단원", "4단원", "5단원"],
-            "6학년 영어": ["1단원", "2단원", "3단원"],
-            "기초 파닉스": ["Alphabet", "Vowels"]
-        };
+        let subjects = [];
+        let subjectChapters = {};
         let currentWords = [];
 
-        window.onload = function() {
+        window.onload = async function() {
+            // 저장된 GitHub 정보 로드
+            const token = localStorage.getItem('gh_token') || '';
+            const repo = localStorage.getItem('gh_repo') || '';
+            const path = localStorage.getItem('gh_path') || 'words.json';
+
+            if (token) document.getElementById('githubToken').value = token;
+            if (repo) document.getElementById('githubRepo').value = repo;
+            if (path) document.getElementById('githubPath').value = path;
+
+            // GitHub 연동 정보가 있으면 원격 데이터 불러오기 시도
+            if (token && repo) {
+                await loadFromGithub();
+            } else {
+                // 원격 설정이 없으면 LocalStorage 로드
+                loadLocalData();
+            }
+        };
+
+        function saveGithubSettings() {
+            localStorage.setItem('gh_token', document.getElementById('githubToken').value.trim());
+            localStorage.setItem('gh_repo', document.getElementById('githubRepo').value.trim());
+            localStorage.setItem('gh_path', document.getElementById('githubPath').value.trim() || 'words.json');
+        }
+
+        function loadLocalData() {
             const savedSubjects = localStorage.getItem('voca_subjects');
             if (savedSubjects) subjects = JSON.parse(savedSubjects);
 
             const savedSubjectChapters = localStorage.getItem('voca_subject_chapters');
             if (savedSubjectChapters) subjectChapters = JSON.parse(savedSubjectChapters);
 
-            renderSubjectOptions();
-
-            if (localStorage.getItem('gh_token')) document.getElementById('githubToken').value = localStorage.getItem('gh_token');
-            if (localStorage.getItem('gh_repo')) document.getElementById('githubRepo').value = localStorage.getItem('gh_repo');
-            
             const savedWords = localStorage.getItem('voca_words');
             if (savedWords) {
                 try { currentWords = JSON.parse(savedWords); } catch(e){}
             }
-            renderWordList();
-        };
 
-        /* Safari 호환 유티리티: UTF-8 인코딩 (한글 및 특수문자 대응) */
+            syncCategoriesFromWords();
+            renderSubjectOptions();
+            renderWordList();
+        }
+
+        /* 단어 데이터 기반 과목/단원 자동 동기화 */
+        function syncCategoriesFromWords() {
+            currentWords.forEach(w => {
+                if (w.subject && !subjects.includes(w.subject)) {
+                    subjects.push(w.subject);
+                }
+                if (w.subject && w.chapter) {
+                    if (!subjectChapters[w.subject]) subjectChapters[w.subject] = [];
+                    if (!subjectChapters[w.subject].includes(w.chapter)) {
+                        subjectChapters[w.subject].push(w.chapter);
+                    }
+                }
+            });
+            saveSubjectData();
+        }
+
+        /* UTF-8 디코딩/인코딩 (Cross-Browser) */
         function utf8ToBase64(str) {
             const bytes = new TextEncoder().encode(str);
             let binary = '';
@@ -197,15 +235,30 @@
             return window.btoa(binary);
         }
 
+        function base64ToUtf8(base64Str) {
+            const binary = window.atob(base64Str.replace(/\s/g, ''));
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return new TextDecoder().decode(bytes);
+        }
+
         function renderSubjectOptions() {
             const subjectSelect = document.getElementById('subjectSelect');
             const currentSub = subjectSelect.value;
+
+            if (subjects.length === 0) {
+                subjectSelect.innerHTML = '<option value="">(과목 없음)</option>';
+                renderChapterOptions();
+                return;
+            }
 
             subjectSelect.innerHTML = subjects.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
 
             if (currentSub && subjects.includes(currentSub)) {
                 subjectSelect.value = currentSub;
-            } else if (subjects.length > 0) {
+            } else {
                 subjectSelect.value = subjects[0];
             }
 
@@ -217,8 +270,9 @@
             const chapterSelect = document.getElementById('chapterSelect');
             const currentSub = subjectSelect.value;
 
-            if (!subjectChapters[currentSub]) {
-                subjectChapters[currentSub] = ["1단원"];
+            if (!currentSub || !subjectChapters[currentSub] || subjectChapters[currentSub].length === 0) {
+                chapterSelect.innerHTML = '<option value="">(단원 없음)</option>';
+                return;
             }
 
             const currentChList = subjectChapters[currentSub];
@@ -228,7 +282,7 @@
 
             if (currentCh && currentChList.includes(currentCh)) {
                 chapterSelect.value = currentCh;
-            } else if (currentChList.length > 0) {
+            } else {
                 chapterSelect.value = currentChList[0];
             }
         }
@@ -248,7 +302,7 @@
                 const trimmed = newSubject.trim();
                 if (!subjects.includes(trimmed)) {
                     subjects.push(trimmed);
-                    subjectChapters[trimmed] = ["1단원"];
+                    subjectChapters[trimmed] = [];
                     
                     saveSubjectData();
                     renderSubjectOptions();
@@ -290,14 +344,10 @@
             }
         }
 
+        /* 과목 최소 1개 제한 삭제 */
         function deleteSubject() {
             const currentSubject = document.getElementById('subjectSelect').value;
             if (!currentSubject) return;
-
-            if (subjects.length <= 1) {
-                alert('최소 하나의 과목은 존재해야 합니다.');
-                return;
-            }
 
             if (confirm(`'${currentSubject}' 과목과 해당 과목의 등록된 단어를 삭제하시겠습니까?`)) {
                 subjects = subjects.filter(s => s !== currentSubject);
@@ -313,7 +363,10 @@
 
         function addChapter() {
             const currentSub = document.getElementById('subjectSelect').value;
-            if (!currentSub) return;
+            if (!currentSub) {
+                alert('먼저 과목을 추가해 주세요.');
+                return;
+            }
 
             const newChapter = prompt(`'${currentSub}' 과목에 추가할 단원명을 입력해 주세요:`);
             if (newChapter && newChapter.trim()) {
@@ -359,16 +412,13 @@
             }
         }
 
+        /* 단원 최소 1개 제한 삭제 */
         function deleteChapter() {
             const currentSub = document.getElementById('subjectSelect').value;
             const currentChapter = document.getElementById('chapterSelect').value;
             if (!currentSub || !currentChapter) return;
 
             const chList = subjectChapters[currentSub] || [];
-            if (chList.length <= 1) {
-                alert('과목 내에 최소 하나의 단원은 존재해야 합니다.');
-                return;
-            }
 
             if (confirm(`'${currentSub}' 과목의 '${currentChapter}' 단원과 해당 단원의 단어를 삭제하시겠습니까?`)) {
                 subjectChapters[currentSub] = chList.filter(c => c !== currentChapter);
@@ -398,6 +448,14 @@
         }
 
         async function processBulkInput() {
+            const subject = document.getElementById('subjectSelect').value;
+            const chapter = document.getElementById('chapterSelect').value;
+
+            if (!subject || !chapter) {
+                alert('단어를 등록할 과목과 단원을 먼저 만들어 주세요.');
+                return;
+            }
+
             const bulkText = document.getElementById('bulkText').value.trim();
             const autoStatus = document.getElementById('autoStatus');
 
@@ -406,10 +464,7 @@
                 return;
             }
 
-            const subject = document.getElementById('subjectSelect').value;
-            const chapter = document.getElementById('chapterSelect').value;
             const lines = bulkText.split('\n');
-            
             autoStatus.innerHTML = '발음기호 생성 중... <span class="loading-spinner"></span>';
             let addedCount = 0;
 
@@ -464,6 +519,8 @@
             const subject = document.getElementById('subjectSelect').value;
             const chapter = document.getElementById('chapterSelect').value;
 
+            if (!subject || !chapter) return;
+
             if (confirm(`'${subject} - ${chapter}'에 속한 단어만 모두 삭제하시겠습니까?`)) {
                 currentWords = currentWords.filter(w => !(w.subject === subject && w.chapter === chapter));
                 saveToLocal();
@@ -479,6 +536,16 @@
             const container = document.getElementById('wordListContainer');
             const subject = document.getElementById('subjectSelect').value;
             const chapter = document.getElementById('chapterSelect').value;
+
+            if (!subject || !chapter) {
+                document.getElementById('filterInfo').innerText = '선택 없음';
+                document.getElementById('wordCount').innerText = 0;
+                container.innerHTML = `
+                    <div style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                        과목과 단원을 추가해 주세요.
+                    </div>`;
+                return;
+            }
 
             document.getElementById('filterInfo').innerText = `${subject} > ${chapter}`;
 
@@ -545,7 +612,54 @@
             dlAnchorElem.click();
         }
 
-        /* Safari 호환 GitHub 업로드 로직 */
+        /* GitHub 원격 데이터 동기화 함수 (불러오기) */
+        async function loadFromGithub() {
+            const token = document.getElementById('githubToken').value.trim();
+            const repo = document.getElementById('githubRepo').value.trim();
+            const path = document.getElementById('githubPath').value.trim() || 'words.json';
+            const statusEl = document.getElementById('githubStatus');
+
+            if (!token || !repo) return;
+
+            saveGithubSettings();
+            showStatus(statusEl, 'GitHub에서 JSON 데이터 동기화 중...', 'info');
+
+            const url = `https://api.github.com/repos/${repo}/contents/${path}?t=${Date.now()}`;
+            const authHeader = `Bearer ${token}`;
+
+            try {
+                const res = await fetch(url, {
+                    headers: {
+                        'Authorization': authHeader,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (res.ok) {
+                    const fileData = await res.json();
+                    const decodedData = base64ToUtf8(fileData.content);
+                    const parsed = JSON.parse(decodedData);
+
+                    if (Array.isArray(parsed)) {
+                        currentWords = parsed;
+                        saveToLocal();
+                        syncCategoriesFromWords();
+                        renderSubjectOptions();
+                        renderWordList();
+                        showStatus(statusEl, `GitHub 데이터 로드 성공 (${currentWords.length}개 단어)`, 'success');
+                    }
+                } else {
+                    showStatus(statusEl, 'GitHub 데이터를 불러오지 못했습니다.', 'error');
+                    loadLocalData();
+                }
+            } catch (e) {
+                console.error(e);
+                showStatus(statusEl, 'GitHub 동기화 에러 발생', 'error');
+                loadLocalData();
+            }
+        }
+
+        /* GitHub 업로드 함수 */
         async function uploadToGithub() {
             const token = document.getElementById('githubToken').value.trim();
             const repo = document.getElementById('githubRepo').value.trim();
@@ -557,19 +671,12 @@
                 return;
             }
 
-            localStorage.setItem('gh_token', token);
-            localStorage.setItem('gh_repo', repo);
-
+            saveGithubSettings();
             showStatus(statusEl, 'GitHub 저장소에 업로드 중...', 'info');
 
-            // Safari 호환 UTF-8 Base64 인코딩 적용
             const jsonString = JSON.stringify(currentWords, null, 2);
             const contentEncoded = utf8ToBase64(jsonString);
-
-            // Safari 캐싱 방지 타임스탬프 파라미터 추가
             const url = `https://api.github.com/repos/${repo}/contents/${path}?t=${Date.now()}`;
-
-            // Safari 호환 'Bearer' 토큰 인증 헤더 사용
             const authHeader = `Bearer ${token}`;
 
             try {
