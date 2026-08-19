@@ -221,7 +221,7 @@
             gap: 8px;
         }
 
-        /* 3. 전체 목록 발음버튼 포함 */
+        /* 3. 전체 목록 스타일 수정 */
         .list-container {
             flex: 1;
             overflow-y: auto;
@@ -233,20 +233,29 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 14px;
+            padding: 14px 16px;
             border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            user-select: none;
+            gap: 12px;
+        }
+        .list-item:active {
+            background-color: var(--primary-light);
         }
         .list-item:last-child { border-bottom: none; }
-        .list-item-left { display: flex; flex-direction: column; gap: 2px; }
-        .list-item .w-eng { font-weight: 700; color: var(--primary); font-size: 0.95rem; }
-        .list-item .w-kor { font-size: 0.85rem; color: var(--text-muted); }
-        .btn-list-speech {
-            background: #f1f5f9;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 0.85rem;
-            cursor: pointer;
+        .list-item .w-eng { 
+            font-weight: 800; 
+            color: var(--primary); 
+            font-size: 1.15rem; 
+            text-align: left;
+            word-break: break-word;
+        }
+        .list-item .w-kor { 
+            font-size: 1.05rem; 
+            font-weight: 700;
+            color: var(--text-main); 
+            text-align: right;
+            word-break: break-word;
         }
 
         /* 시험 객관식 보기 버튼 */
@@ -283,7 +292,7 @@
         }
         .test-input:focus { border-color: var(--primary); }
 
-        /* 2. 오답 노트 스타일 */
+        /* 오답 노트 스타일 */
         .wrong-answers-box {
             margin-top: 14px;
             text-align: left;
@@ -339,7 +348,7 @@
     <div class="app-container">
         <div id="toastPopup" class="toast-popup"></div>
 
-        <!-- 1. 헤더 수정: 🥑 VOCA -->
+        <!-- 1. 헤더: 🥑 VOCA -->
         <header>
             <div class="header-title">🥑 VOCA</div>
             <div class="star-count" id="starCountDisplay">⭐ 0개</div>
@@ -365,7 +374,7 @@
                 <div class="list-container" id="wordListContainer"></div>
             </div>
 
-            <!-- 2. 카드 공부 탭 (발음하기 / 발음듣기 반으로 나눔) -->
+            <!-- 2. 카드 공부 탭 -->
             <div id="cardTab" class="tab-content">
                 <div class="study-layout">
                     <div class="progress-bar"><div id="cardProgress" class="progress-fill"></div></div>
@@ -382,7 +391,6 @@
                         </div>
                     </div>
 
-                    <!-- 4. 발음 하기 | 발음 듣기 버튼 -->
                     <div class="row-group">
                         <button id="speechRecBtn" class="btn-speech-half" onclick="startSpeechRecognition(event)">
                             🎙️ 발음 하기
@@ -572,7 +580,7 @@
             }, 300);
         }
 
-        /* 3. 전체 목록 (단어별 발음 듣기 버튼 추가) */
+        /* 1 & 2 수정: 전체 목록 (버튼 제거, 좌우 정렬, 폰트 확대, 터치 발음) */
         function renderList() {
             const container = document.getElementById('wordListContainer');
             if (filteredWords.length === 0) {
@@ -581,17 +589,14 @@
             }
 
             container.innerHTML = filteredWords.map(w => `
-                <div class="list-item">
-                    <div class="list-item-left">
-                        <span class="w-eng">${escapeHtml(w.word)}</span>
-                        <span class="w-kor">${escapeHtml(w.meaning)}</span>
-                    </div>
-                    <button class="btn-list-speech" onclick="speakText('${escapeHtml(w.word)}')">🔊</button>
+                <div class="list-item" onclick="speakText('${escapeHtml(w.word)}')">
+                    <span class="w-eng">${escapeHtml(w.word)}</span>
+                    <span class="w-kor">${escapeHtml(w.meaning)}</span>
                 </div>
             `).join('');
         }
 
-        /* 2. 카드 공부 */
+        /* 카드 공부 */
         function renderCard(autoSpeak = true) {
             const card = document.getElementById('flashcard');
             card.classList.remove('flipped');
@@ -648,7 +653,7 @@
             }
         }
 
-        /* 4. 발음 하기 (음성 인식 기능) */
+        /* 발음 하기 (음성 인식 기능) */
         function initSpeechRecognition() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
@@ -670,7 +675,6 @@
                     const spokenText = event.results[0][0].transcript.toLowerCase().trim();
                     const targetWord = filteredWords[cardIndex].word.toLowerCase().trim();
                     
-                    // 특수문자나 공백 정리
                     const cleanSpoken = spokenText.replace(/[^a-z0-9 ]/g, '');
                     const cleanTarget = targetWord.replace(/[^a-z0-9 ]/g, '');
 
@@ -716,7 +720,7 @@
             }
         }
 
-        /* 3. 연습 시험 */
+        /* 연습 시험 */
         function initQuiz() {
             quizIndex = 0;
             quizScore = 0;
@@ -746,7 +750,6 @@
                 return;
             }
 
-            /* 2. 연습 시험 완료 후 틀린 문제 표시 */
             if (quizIndex >= filteredWords.length) {
                 let wrongHtml = '';
                 if (quizWrongList.length > 0) {
@@ -819,7 +822,7 @@
             }, 300);
         }
 
-        /* 4. 최종 시험 */
+        /* 최종 시험 */
         function initTest() {
             testIndex = 0;
             testScore = 0;
@@ -851,7 +854,6 @@
                 return;
             }
 
-            /* 2. 최종 시험 완료 후 틀린 문제 표시 */
             if (testIndex >= filteredWords.length) {
                 const isFullMark = (testScore === filteredWords.length);
                 
@@ -880,12 +882,10 @@
 
                 layout.innerHTML = `
                     <div style="text-align:center; padding: 20px 0;">
-                        <h2 style="color:${isFullMark ? 'var(--success)' : 'var(--primary)'}; margin-bottom:8px;">
-                            ${isFullMark ? '🎉 백점 완성! ⭐ 별을 획득했어요!' : '최종 시험 완료!'}
-                        </h2>
+                        <h2 style="color:var(--primary); margin-bottom:8px;">최종 시험 완료!</h2>
                         <p style="font-size:1.1rem; font-weight:700;">점수: ${testScore} / ${filteredWords.length}</p>
                         ${wrongHtml}
-                        <button class="btn btn-primary" style="margin:16px auto 0; padding:0 30px;" onclick="initTest()">다시 도전하기</button>
+                        <button class="btn btn-primary" style="margin:16px auto 0; padding:0 30px;" onclick="initTest()">다시 풀어보기</button>
                     </div>`;
                 return;
             }
@@ -896,32 +896,33 @@
             const target = filteredWords[testIndex];
             document.getElementById('testTargetMeaning').innerText = target.meaning;
             
-            const inputEl = document.getElementById('testInput');
-            if (inputEl) {
-                inputEl.value = '';
-                inputEl.focus();
+            const input = document.getElementById('testInput');
+            if (input) {
+                input.value = '';
+                input.focus();
             }
         }
 
         function handleTestKey(e) {
-            if (e.key === 'Enter') submitTestAnswer();
+            if (e.key === 'Enter') {
+                submitTestAnswer();
+            }
         }
 
         function submitTestAnswer() {
-            const inputEl = document.getElementById('testInput');
-            if (!inputEl) return;
+            const input = document.getElementById('testInput');
+            if (!input) return;
 
-            const userAns = inputEl.value.trim().toLowerCase();
+            const val = input.value.trim().toLowerCase();
             const target = filteredWords[testIndex];
-
-            const isCorrect = (userAns === target.word.trim().toLowerCase());
+            const isCorrect = (val === target.word.trim().toLowerCase());
 
             if (isCorrect) {
                 testScore++;
                 showFeedbackToast(true, "⭕ 정답!");
             } else {
                 testWrongList.push(target);
-                showFeedbackToast(false, "❌ 오답");
+                showFeedbackToast(false, `❌ 오답\n(정답: ${target.word})`);
             }
 
             testIndex++;
@@ -931,8 +932,13 @@
         }
 
         function escapeHtml(str) {
-            if(!str) return '';
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            if (typeof str !== 'string') return str;
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
     </script>
 </body>
