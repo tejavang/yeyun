@@ -3,442 +3,639 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>초등 영단어 마스터 ⭐️</title>
+    <title>영어 단어장</title>
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-soft: #e0e7ff;
-            --bg-color: #f0fdf4;
+            --primary: #4f46e5;
+            --primary-light: #eef2ff;
+            --bg-color: #f8fafc;
             --card-bg: #ffffff;
-            --text-main: #1e293b;
+            --text-main: #0f172a;
             --text-muted: #64748b;
-            --accent-yellow: #f59e0b;
+            --border-color: #e2e8f0;
             --success: #10b981;
             --danger: #ef4444;
-            --border-radius: 16px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #f8fafc; color: var(--text-main); padding: 12px; max-width: 600px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        
+        /* 모바일 화면 스크롤 방지 레이아웃 */
+        html, body { 
+            height: 100vh; 
+            overflow: hidden; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+        }
 
-        /* 상단 프로필 & 총 별점 헤더 */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 12px;
+        }
+
         header {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white; border-radius: var(--border-radius); padding: 16px; margin-bottom: 12px;
-            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+            text-align: center;
+            margin-bottom: 8px;
+            flex-shrink: 0;
         }
-        .header-title { font-size: 1.2rem; font-weight: 800; }
-        .star-badge {
-            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px);
-            padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 1.1rem;
-            display: flex; align-items: center; gap: 6px; border: 1px solid rgba(255, 255, 255, 0.3);
-        }
+        h1 { font-size: 1.2rem; color: var(--primary); font-weight: 800; }
 
-        /* 셀렉트 박스 (과목/단원) */
-        .filter-card {
-            background: var(--card-bg); border-radius: var(--border-radius); padding: 12px; margin-bottom: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04); display: flex; gap: 8px;
+        /* 카테고리 셀렉터 */
+        .category-container {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
         }
         select {
-            flex: 1; padding: 10px; border: 1px solid #e2e8f0; border-radius: 10px;
-            font-size: 0.9rem; font-weight: 600; color: var(--text-main); background: #f8fafc; outline: none;
+            flex: 1;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background: #fff;
+            outline: none;
         }
 
-        /* 탭 메뉴 */
-        .tab-menu { display: flex; gap: 6px; margin-bottom: 12px; }
-        .tab-btn {
-            flex: 1; padding: 10px; border: none; border-radius: 12px; font-weight: 700; font-size: 0.85rem;
-            cursor: pointer; background: #e2e8f0; color: var(--text-muted); transition: all 0.2s;
+        /* 탭 네비게이션 (아이콘 없이 깔끔하게) */
+        nav {
+            display: flex;
+            background: #e2e8f0;
+            border-radius: 8px;
+            padding: 2px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
         }
-        .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3); }
-
-        /* 메인 콘텐츠 영역 */
-        .content-area { flex: 1; display: flex; flex-direction: column; }
-
-        /* 🎴 플래시 카드 모드 */
-        .card-container { perspective: 1000px; height: 320px; margin-top: 10px; cursor: pointer; }
-        .flash-card {
-            width: 100%; height: 100%; position: relative; transform-style: preserve-3d;
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 24px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+        .nav-btn {
+            flex: 1;
+            padding: 8px 0;
+            border: none;
+            background: transparent;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            text-align: center;
         }
-        .flash-card.flipped { transform: rotateY(180deg); }
-        .card-front, .card-back {
-            position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
-            border-radius: 24px; display: flex; flex-direction: column; justify-content: center;
-            align-items: center; padding: 20px; background: white; border: 2px solid #e2e8f0;
+        .nav-btn.active {
+            background: #fff;
+            color: var(--primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        .card-back { transform: rotateY(180deg); background: #f0fdf4; border-color: #bbf7d0; }
-        .word-large { font-size: 2.2rem; font-weight: 800; color: var(--primary); margin-bottom: 8px; text-align: center; }
-        .meaning-large { font-size: 1.8rem; font-weight: 700; color: #166534; margin-bottom: 6px; text-align: center; }
-        .phonetic { font-size: 1rem; color: var(--text-muted); }
 
-        .card-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; gap: 12px; }
-        .btn-action {
-            flex: 1; padding: 14px; border: none; border-radius: 14px; font-weight: 700;
-            font-size: 1rem; cursor: pointer; transition: transform 0.1s;
+        /* 메인 콘텐츠 영역 (남은 높이 채우기) */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            position: relative;
         }
-        .btn-action:active { transform: scale(0.96); }
-        .btn-next { background: var(--primary); color: white; }
 
-        /* 📜 단어 목록 모드 */
-        .list-container { background: white; border-radius: var(--border-radius); padding: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; }
+        .tab-content {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+        }
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* 1. 카드 공부 */
+        .card-wrapper {
+            flex: 1;
+            perspective: 1000px;
+            cursor: pointer;
+            min-height: 0;
+            margin-bottom: 10px;
+        }
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.4s;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+        .flashcard.flipped { transform: rotateY(180deg); }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+        .card-back { transform: rotateY(180deg); }
+        .card-word { font-size: 1.8rem; font-weight: 800; color: var(--primary); word-break: break-word; }
+        .card-meaning { font-size: 1.5rem; font-weight: 700; color: var(--text-main); word-break: break-word; }
+        .card-hint { margin-top: 12px; font-size: 0.75rem; color: var(--text-muted); }
+
+        .card-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .btn {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-secondary { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-speech { background: var(--primary-light); color: var(--primary); width: 44px; height: 44px; border-radius: 50%; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; border: none; }
+
+        /* 2. 전체 목록 */
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: #fff;
+        }
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
         .list-item:last-child { border-bottom: none; }
+        .list-item .w-eng { font-weight: 700; color: var(--primary); font-size: 0.95rem; }
+        .list-item .w-kor { font-size: 0.85rem; color: var(--text-main); }
 
-        /* 🏆 최종시험 모드 (주관식) */
-        .exam-box {
-            background: white; border-radius: var(--border-radius); padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; margin-top: 10px;
+        /* 3. 연습 시험 (객관식) */
+        .quiz-card {
+            flex: 1;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
-        .exam-question { font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin: 20px 0; }
-        .exam-input {
-            width: 100%; padding: 14px; font-size: 1.2rem; font-weight: 700; text-align: center;
-            border: 2px solid #cbd5e1; border-radius: 12px; outline: none; transition: border-color 0.2s;
-            margin-bottom: 12px; text-transform: lowercase;
+        .quiz-question {
+            text-align: center;
+            padding: 20px 0;
         }
-        .exam-input:focus { border-color: var(--primary); }
+        .quiz-question .q-title { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; }
+        .quiz-question .q-target { font-size: 1.6rem; font-weight: 800; color: var(--text-main); }
+        
+        .quiz-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .opt-btn {
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            cursor: pointer;
+            word-break: break-word;
+        }
+        .opt-btn:active { background: var(--primary-light); }
 
-        /* 결과 창 및 폭죽 축하 */
-        .result-box { text-align: center; padding: 30px 10px; }
-        .star-animation { font-size: 4rem; animation: pop 0.5s ease-out; }
-        @keyframes pop { 0% { transform: scale(0); } 80% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        /* 4. 최종 시험 (주관식) */
+        .test-card {
+            flex: 1;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .test-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .test-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            text-align: center;
+            outline: none;
+        }
+        .test-input:focus { border-color: var(--primary); }
 
-        .chapter-star { color: var(--accent-yellow); font-size: 1.1rem; margin-left: 4px; }
+        .progress-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .empty-msg {
+            padding: 40px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="header-title">📖 초등 영단어</div>
-        <div class="star-badge">
-            ⭐ <span id="totalStars">0</span>개
+    <div class="app-container">
+        <header>
+            <h1>영어 단어장</h1>
+        </header>
+
+        <!-- 과목 / 단원 선택 -->
+        <div class="category-container">
+            <select id="subjectSelect" onchange="onCategoryChange()"></select>
+            <select id="chapterSelect" onchange="onCategoryChange()"></select>
         </div>
-    </header>
 
-    <!-- 과목 & 단원 선택 -->
-    <div class="filter-card">
-        <select id="subjectSelect" onchange="onFilterChange()"></select>
-        <select id="chapterSelect" onchange="onFilterChange()"></select>
-    </div>
+        <!-- 깔끔한 4가지 메뉴 (아이콘 제거) -->
+        <nav>
+            <button class="nav-btn active" onclick="switchTab('cardTab', this)">카드 공부</button>
+            <button class="nav-btn" onclick="switchTab('listTab', this)">전체 목록</button>
+            <button class="nav-btn" onclick="switchTab('quizTab', this)">연습 시험</button>
+            <button class="nav-btn" onclick="switchTab('testTab', this)">최종 시험</button>
+        </nav>
 
-    <!-- 학습 탭 메뉴 -->
-    <div class="tab-menu">
-        <button class="tab-btn active" id="tabCard" onclick="switchTab('card')">🎴 카드로 공부</button>
-        <button class="tab-btn" id="tabList" onclick="switchTab('list')">📜 전체 목록</button>
-        <button class="tab-btn" id="tabExam" onclick="switchTab('exam')">🏆 최종시험</button>
-    </div>
-
-    <!-- 메인 콘텐츠 영역 -->
-    <div class="content-area" id="contentArea"></div>
-
-    <script>
-        // GitHub JSON 파일 경로 (필요 시 파일명에 맞춰 수정)
-        const JSON_URL = './words.json';
-
-        let allWords = [];
-        let filteredWords = [];
-        let currentTab = 'card';
-        let cardIndex = 0;
-        let isFlipped = false;
-
-        // 시험 관련 변수
-        let examIndex = 0;
-        let examWrongCount = 0;
-
-        window.onload = async function() {
-            await loadWordsFromJSON();
-            loadTotalStars();
-            initFilters();
-            renderTabContent();
-        };
-
-        // JSON 데이터 불러오기
-        async function loadWordsFromJSON() {
-            try {
-                const res = await fetch(`${JSON_URL}?t=${Date.now()}`); // 캐시 방지
-                if (res.ok) {
-                    allWords = await res.json();
-                } else {
-                    console.log('JSON 파일을 찾을 수 없어 localStorage 데이터를 확인합니다.');
-                    const localData = localStorage.getItem('voca_words');
-                    if (localData) allWords = JSON.parse(localData);
-                }
-            } catch (e) {
-                const localData = localStorage.getItem('voca_words');
-                if (localData) allWords = JSON.parse(localData);
-            }
-        }
-
-        // 과목 및 단원 드롭다운 초기화
-        function initFilters() {
-            const subjects = [...new Set(allWords.map(w => w.subject))];
-            const subjectSelect = document.getElementById('subjectSelect');
-
-            if (subjects.length === 0) {
-                subjectSelect.innerHTML = `<option>단어가 없습니다</option>`;
-                return;
-            }
-
-            subjectSelect.innerHTML = subjects.map(s => `<option value="${s}">${s}</option>`).join('');
-            updateChapterOptions();
-        }
-
-        function updateChapterOptions() {
-            const selectedSubject = document.getElementById('subjectSelect').value;
-            const chapters = [...new Set(allWords.filter(w => w.subject === selectedSubject).map(w => w.chapter))];
-            const chapterSelect = document.getElementById('chapterSelect');
-
-            const passedChapters = getPassedChapters();
-
-            chapterSelect.innerHTML = chapters.map(c => {
-                const key = `${selectedSubject}_${c}`;
-                const hasStar = passedChapters.includes(key) ? ' ⭐' : '';
-                return `<option value="${c}">${c}${hasStar}</option>`;
-            }).join('');
-
-            filterWords();
-        }
-
-        function onFilterChange() {
-            const subjectSelect = document.getElementById('subjectSelect');
-            if (event && event.target.id === 'subjectSelect') {
-                updateChapterOptions();
-            } else {
-                filterWords();
-            }
-            cardIndex = 0;
-            examIndex = 0;
-            examWrongCount = 0;
-            renderTabContent();
-        }
-
-        function filterWords() {
-            const sub = document.getElementById('subjectSelect').value;
-            const ch = document.getElementById('chapterSelect').value;
-            filteredWords = allWords.filter(w => w.subject === sub && w.chapter === ch);
-        }
-
-        // 탭 전환
-        function switchTab(tab) {
-            currentTab = tab;
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            if (tab === 'card') document.getElementById('tabCard').classList.add('active');
-            if (tab === 'list') document.getElementById('tabList').classList.add('active');
-            if (tab === 'exam') document.getElementById('tabExam').classList.add('active');
-
-            cardIndex = 0;
-            examIndex = 0;
-            examWrongCount = 0;
-            isFlipped = false;
-            renderTabContent();
-        }
-
-        // 메인 화면 렌더링
-        function renderTabContent() {
-            const container = document.getElementById('contentArea');
-
-            if (filteredWords.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align:center; padding: 40px; color: var(--text-muted);">
-                        등록된 단어가 없습니다. <br> 관리자 페이지에서 단어를 올리고 실행하세요!
-                    </div>`;
-                return;
-            }
-
-            if (currentTab === 'card') renderCardMode(container);
-            else if (currentTab === 'list') renderListMode(container);
-            else if (currentTab === 'exam') renderExamMode(container);
-        }
-
-        /* ----------------------------------------------------
-           1. 🎴 플래시 카드 모드
-        ---------------------------------------------------- */
-        function renderCardMode(container) {
-            const wordObj = filteredWords[cardIndex];
-            container.innerHTML = `
-                <div style="font-size:0.85rem; color:var(--text-muted); text-align:right; font-weight:700;">
-                    ${cardIndex + 1} / ${filteredWords.length}
-                </div>
-                <div class="card-container" onclick="flipCard()">
-                    <div class="flash-card ${isFlipped ? 'flipped' : ''}" id="flashCard">
-                        <div class="card-front">
-                            <div class="word-large">${escapeHtml(wordObj.word)}</div>
-                            <div style="font-size:0.85rem; color:#94a3b8; margin-top:12px;">👆 터치해서 뜻 확인하기</div>
+        <main>
+            <!-- 1. 카드 공부 탭 -->
+            <div id="cardTab" class="tab-content active">
+                <div class="progress-bar"><div id="cardProgress" class="progress-fill"></div></div>
+                <div class="card-wrapper" onclick="flipCard()">
+                    <div class="flashcard" id="flashcard">
+                        <div class="card-face card-front">
+                            <div class="card-word" id="cardWord">-</div>
+                            <div class="card-hint">터치하여 뜻 확인</div>
                         </div>
-                        <div class="card-back">
-                            <div class="meaning-large">${escapeHtml(wordObj.meaning)}</div>
-                            <div class="phonetic">${escapeHtml(wordObj.phonetic)}</div>
-                            <button onclick="event.stopPropagation(); speakWord('${escapeHtml(wordObj.word)}')" style="margin-top:12px; background:none; border:none; font-size:1.5rem; cursor:pointer;">🔊 들어보기</button>
+                        <div class="card-face card-back">
+                            <div class="card-meaning" id="cardMeaning">-</div>
                         </div>
                     </div>
                 </div>
                 <div class="card-controls">
-                    <button class="btn-action btn-next" style="background:#e2e8f0; color:var(--text-main);" onclick="prevCard()">◀ 이전</button>
-                    <button class="btn-action btn-next" onclick="nextCard()">다음 ▶</button>
+                    <button class="btn btn-secondary" style="flex:1" onclick="prevCard()">이전</button>
+                    <button class="btn-speech" onclick="speakCurrentWord(event)">🔊</button>
+                    <button class="btn btn-primary" style="flex:1" onclick="nextCard()">다음</button>
                 </div>
-            `;
+            </div>
 
-            // 카드가 앞면으로 올 때 발음 자동 재생
-            if (!isFlipped) speakWord(wordObj.word);
-        }
+            <!-- 2. 전체 목록 탭 -->
+            <div id="listTab" class="tab-content">
+                <div class="list-container" id="wordListContainer"></div>
+            </div>
 
-        function flipCard() {
-            isFlipped = !isFlipped;
-            const card = document.getElementById('flashCard');
-            if (card) card.classList.toggle('flipped');
-        }
-
-        function nextCard() {
-            isFlipped = false;
-            cardIndex = (cardIndex + 1) % filteredWords.length;
-            renderTabContent();
-        }
-
-        function prevCard() {
-            isFlipped = false;
-            cardIndex = (cardIndex - 1 + filteredWords.length) % filteredWords.length;
-            renderTabContent();
-        }
-
-        /* ----------------------------------------------------
-           2. 📜 전체 단어 리스트 모드
-        ---------------------------------------------------- */
-        function renderListMode(container) {
-            let html = `<div class="list-container">`;
-            filteredWords.forEach(w => {
-                html += `
-                    <div class="list-item">
-                        <div>
-                            <strong style="font-size:1.05rem; color:var(--primary);">${escapeHtml(w.word)}</strong>
-                            <span style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml(w.phonetic)}</span>
-                            <div style="font-size:0.9rem; color:#334155; margin-top:2px;">${escapeHtml(w.meaning)}</div>
-                        </div>
-                        <button style="border:none; background:#f1f5f9; padding:8px 12px; border-radius:8px; font-size:1.1rem; cursor:pointer;" onclick="speakWord('${escapeHtml(w.word)}')">🔊</button>
+            <!-- 3. 연습 시험 탭 (객관식) -->
+            <div id="quizTab" class="tab-content">
+                <div class="quiz-card" id="quizContainer">
+                    <div style="font-size: 0.8rem; text-align: right; color: var(--text-muted);" id="quizProgressText">0 / 0</div>
+                    <div class="quiz-question">
+                        <div class="q-title">다음 뜻에 알맞은 영어 단어를 고르세요</div>
+                        <div class="q-target" id="quizTargetMeaning">-</div>
                     </div>
-                `;
-            });
-            html += `</div>`;
-            container.innerHTML = html;
+                    <div class="quiz-options" id="quizOptions"></div>
+                </div>
+            </div>
+
+            <!-- 4. 최종 시험 탭 (주관식 - 설명 생략) -->
+            <div id="testTab" class="tab-content">
+                <div class="test-card" id="testContainer">
+                    <div style="font-size: 0.8rem; text-align: right; color: var(--text-muted);" id="testProgressText">0 / 0</div>
+                    <div class="quiz-question">
+                        <div class="q-target" id="testTargetMeaning">-</div>
+                    </div>
+                    <div class="test-input-group">
+                        <input type="text" id="testInput" class="test-input" placeholder="영어 단어 입력" autocomplete="off" onkeyup="handleTestKey(event)">
+                        <button class="btn btn-primary" style="padding: 12px;" onclick="submitTestAnswer()">정답 제출</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let allWords = [];
+        let filteredWords = [];
+        let cardIndex = 0;
+        let passedChapters = new Set(); // 통과한 단원 기록 (별표 용)
+
+        // 연습/최종 시험 상태
+        let quizIndex = 0;
+        let quizScore = 0;
+        let testIndex = 0;
+        let testScore = 0;
+
+        window.onload = function() {
+            loadPassedChapters();
+            loadWords();
+        };
+
+        function loadPassedChapters() {
+            const saved = localStorage.getItem('voca_passed_chapters');
+            if (saved) {
+                try { passedChapters = new Set(JSON.parse(saved)); } catch(e){}
+            }
         }
 
-        /* ----------------------------------------------------
-           3. 🏆 최종시험 모드 (주관식)
-        ---------------------------------------------------- */
-        function renderExamMode(container) {
-            if (examIndex >= filteredWords.length) {
-                // 시험 종료 화면
-                const isPassed = (examWrongCount === 0);
-                const currentSub = document.getElementById('subjectSelect').value;
-                const currentCh = document.getElementById('chapterSelect').value;
+        function savePassedChapters() {
+            localStorage.setItem('voca_passed_chapters', JSON.stringify(Array.from(passedChapters)));
+        }
 
-                if (isPassed) {
-                    savePassedChapter(currentSub, currentCh);
-                }
+        function loadWords() {
+            const saved = localStorage.getItem('voca_words');
+            if (saved) {
+                try {
+                    allWords = JSON.parse(saved);
+                } catch(e) { allWords = []; }
+            } else {
+                // 샘플 기본 데이터
+                allWords = [
+                    { id: 1, subject: "초등 5학년 영어", chapter: "1단원", word: "come true", meaning: "이루어지다" },
+                    { id: 2, subject: "초등 5학년 영어", chapter: "1단원", word: "apple", meaning: "사과" },
+                    { id: 3, subject: "초등 5학년 영어", chapter: "1단원", word: "school", meaning: "학교" },
+                    { id: 4, subject: "초등 5학년 영어", chapter: "1단원", word: "teacher", meaning: "선생님" }
+                ];
+            }
+            initCategorySelects();
+        }
 
-                container.innerHTML = `
-                    <div class="exam-box result-box">
-                        <div class="star-animation">${isPassed ? '⭐' : '📖'}</div>
-                        <h2 style="margin: 12px 0; color: var(--text-main);">
-                            ${isPassed ? '축하합니다! 100점입니다!' : '아쉽네요! 조금 더 연습해봐요'}
-                        </h2>
-                        <p style="color: var(--text-muted); margin-bottom: 20px;">
-                            ${isPassed ? `'${currentCh}' 단원 완벽 통과! 별 1개를 얻었습니다!` : `틀린 개수: ${examWrongCount}개`}
-                        </p>
-                        <button class="btn-action btn-next" onclick="switchTab('exam')" style="width: 100%;">
-                            🔄 다시 시험보기
-                        </button>
-                    </div>
-                `;
+        function initCategorySelects() {
+            const subjectSelect = document.getElementById('subjectSelect');
+            const chapterSelect = document.getElementById('chapterSelect');
+
+            let subjects = Array.from(new Set(allWords.map(w => w.subject)));
+            if (subjects.length === 0) subjects = ["초등 5학년 영어"];
+
+            subjectSelect.innerHTML = subjects.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+
+            updateChapterSelect();
+        }
+
+        function updateChapterSelect() {
+            const subjectSelect = document.getElementById('subjectSelect');
+            const chapterSelect = document.getElementById('chapterSelect');
+            const currentSub = subjectSelect.value;
+
+            let chapters = Array.from(new Set(allWords.filter(w => w.subject === currentSub).map(w => w.chapter)));
+            if (chapters.length === 0) chapters = ["1단원"];
+
+            // 통과한 단원 옆에 별 표시
+            chapterSelect.innerHTML = chapters.map(c => {
+                const key = `${currentSub}_${c}`;
+                const isPassed = passedChapters.has(key);
+                return `<option value="${escapeHtml(c)}">${escapeHtml(c)}${isPassed ? ' ⭐' : ''}</option>`;
+            }).join('');
+
+            onCategoryChange();
+        }
+
+        function onCategoryChange() {
+            const currentSub = document.getElementById('subjectSelect').value;
+            const currentCh = document.getElementById('chapterSelect').value;
+
+            filteredWords = allWords.filter(w => w.subject === currentSub && w.chapter === currentCh);
+            cardIndex = 0;
+
+            renderCard();
+            renderList();
+            initQuiz();
+            initTest();
+        }
+
+        /* 탭 전환 */
+        function switchTab(tabId, btnEl) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            btnEl.classList.add('active');
+        }
+
+        /* 1. 카드 공부 로직 */
+        function renderCard() {
+            const card = document.getElementById('flashcard');
+            card.classList.remove('flipped');
+
+            if (filteredWords.length === 0) {
+                document.getElementById('cardWord').innerText = "단어 없음";
+                document.getElementById('cardMeaning').innerText = "등록된 단어가 없습니다.";
+                document.getElementById('cardProgress').style.width = '0%';
                 return;
             }
 
-            const currentWord = filteredWords[examIndex];
-            container.innerHTML = `
-                <div style="font-size:0.85rem; color:var(--text-muted); text-align:right; font-weight:700;">
-                    문제 ${examIndex + 1} / ${filteredWords.length}
-                </div>
-                <div class="exam-box">
-                    <div style="font-size:0.85rem; color:var(--primary); font-weight:700;">[주관식] 뜻에 맞는 영단어를 적으세요</div>
-                    <div class="exam-question">"${escapeHtml(currentWord.meaning)}"</div>
-                    
-                    <form onsubmit="submitExamAnswer(event)">
-                        <input type="text" id="examInput" class="exam-input" placeholder="영단어 입력..." autocomplete="off" autofocus>
-                        <button type="submit" class="btn-action btn-next" style="width:100%;">정답 확인 (Enter)</button>
-                    </form>
-                    <div id="examFeedback" style="margin-top:12px; font-weight:700;"></div>
-                </div>
-            `;
+            const item = filteredWords[cardIndex];
+            // 공백 유지되도록 처리 (come true 정상 출력)
+            document.getElementById('cardWord').innerText = item.word;
+            document.getElementById('cardMeaning').innerText = item.meaning;
 
-            // 자동 포커스
-            setTimeout(() => {
-                const el = document.getElementById('examInput');
-                if(el) el.focus();
-            }, 100);
+            const progress = ((cardIndex + 1) / filteredWords.length) * 100;
+            document.getElementById('cardProgress').style.width = `${progress}%`;
         }
 
-        function submitExamAnswer(e) {
-            e.preventDefault();
-            const inputEl = document.getElementById('examInput');
-            const feedbackEl = document.getElementById('examFeedback');
-            const userInput = inputEl.value.trim().toLowerCase();
-            const targetWord = filteredWords[examIndex].word.trim().toLowerCase();
-
-            if (!userInput) return;
-
-            if (userInput === targetWord) {
-                feedbackEl.style.color = 'var(--success)';
-                feedbackEl.innerText = '⭕ 정답입니다!';
-                speakWord(targetWord);
-                setTimeout(() => {
-                    examIndex++;
-                    renderTabContent();
-                }, 800);
-            } else {
-                examWrongCount++;
-                feedbackEl.style.color = 'var(--danger)';
-                feedbackEl.innerText = `❌ 오답! 정답은: ${filteredWords[examIndex].word}`;
-                speakWord(targetWord);
-                setTimeout(() => {
-                    examIndex++;
-                    renderTabContent();
-                }, 1800);
-            }
+        function flipCard() {
+            if (filteredWords.length === 0) return;
+            document.getElementById('flashcard').classList.toggle('flipped');
         }
 
-        /* ----------------------------------------------------
-           ⭐ 별점 & 단원 통과 로컬 스토리지 관리
-        ---------------------------------------------------- */
-        function getPassedChapters() {
-            const data = localStorage.getItem('voca_passed_chapters');
-            return data ? JSON.parse(data) : [];
+        function nextCard() {
+            if (filteredWords.length === 0) return;
+            cardIndex = (cardIndex + 1) % filteredWords.length;
+            renderCard();
         }
 
-        function savePassedChapter(subject, chapter) {
-            const key = `${subject}_${chapter}`;
-            let passed = getPassedChapters();
-            if (!passed.includes(key)) {
-                passed.push(key);
-                localStorage.setItem('voca_passed_chapters', JSON.stringify(passed));
-                loadTotalStars();
-                updateChapterOptions(); // 별 마크 반영
-            }
+        function prevCard() {
+            if (filteredWords.length === 0) return;
+            cardIndex = (cardIndex - 1 + filteredWords.length) % filteredWords.length;
+            renderCard();
         }
 
-        function loadTotalStars() {
-            const passed = getPassedChapters();
-            document.getElementById('totalStars').innerText = passed.length;
-        }
-
-        // 음성합성 (TTS)
-        function speakWord(text) {
+        function speakCurrentWord(e) {
+            e.stopPropagation();
+            if (filteredWords.length === 0) return;
+            const word = filteredWords[cardIndex].word;
+            
             if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // 이전 음성 취소
-                const utterance = new SpeechSynthesisUtterance(text);
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(word);
                 utterance.lang = 'en-US';
-                utterance.rate = 0.8; // 아이들이 듣기 편하게 살짝 천천히
+                utterance.rate = 0.85; // 또박또박한 속도
                 window.speechSynthesis.speak(utterance);
             }
+        }
+
+        /* 2. 전체 목록 로직 */
+        function renderList() {
+            const container = document.getElementById('wordListContainer');
+            if (filteredWords.length === 0) {
+                container.innerHTML = `<div class="empty-msg">등록된 단어가 없습니다.</div>`;
+                return;
+            }
+
+            container.innerHTML = filteredWords.map(w => `
+                <div class="list-item">
+                    <span class="w-eng">${escapeHtml(w.word)}</span>
+                    <span class="w-kor">${escapeHtml(w.meaning)}</span>
+                </div>
+            `).join('');
+        }
+
+        /* 3. 연습 시험 (객관식 4지선다) */
+        function initQuiz() {
+            quizIndex = 0;
+            quizScore = 0;
+            renderQuizStep();
+        }
+
+        function renderQuizStep() {
+            const container = document.getElementById('quizContainer');
+            if (filteredWords.length === 0) {
+                container.innerHTML = `<div class="empty-msg">연습할 단어가 없습니다.</div>`;
+                return;
+            }
+
+            if (quizIndex >= filteredWords.length) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding: 30px 0;">
+                        <h2 style="color:var(--primary); margin-bottom:10px;">연습 시험 완료!</h2>
+                        <p style="font-size:1.1rem; font-weight:700;">점수: ${quizScore} / ${filteredWords.length}</p>
+                        <button class="btn btn-primary" style="margin-top:20px; padding:10px 20px;" onclick="initQuiz()">다시 풀어보기</button>
+                    </div>`;
+                return;
+            }
+
+            document.getElementById('quizProgressText').innerText = `${quizIndex + 1} / ${filteredWords.length}`;
+            const target = filteredWords[quizIndex];
+            document.getElementById('quizTargetMeaning').innerText = target.meaning;
+
+            // 보기 4개 생성 (정답 1개 + 무작위 오답 3개)
+            let options = [target.word];
+            let otherWords = allWords.filter(w => w.word.toLowerCase() !== target.word.toLowerCase()).map(w => w.word);
+            
+            // 중복 제거
+            otherWords = Array.from(new Set(otherWords));
+            
+            // 랜덤으로 3개 채우기
+            while (options.length < 4 && otherWords.length > 0) {
+                const randIdx = Math.floor(Math.random() * otherWords.length);
+                options.push(otherWords.splice(randIdx, 1)[0]);
+            }
+
+            // 섞기
+            options.sort(() => Math.random() - 0.5);
+
+            const optionsContainer = document.getElementById('quizOptions');
+            optionsContainer.innerHTML = options.map(opt => `
+                <button class="opt-btn" onclick="checkQuizAnswer('${escapeHtml(opt)}')">${escapeHtml(opt)}</button>
+            `).join('');
+        }
+
+        function checkQuizAnswer(selectedWord) {
+            const target = filteredWords[quizIndex];
+            if (selectedWord.trim().toLowerCase() === target.word.trim().toLowerCase()) {
+                quizScore++;
+                alert("⭕ 정답입니다!");
+            } else {
+                alert(`❌ 아쉬워요! 정답은 [ ${target.word} ] 입니다.`);
+            }
+            quizIndex++;
+            renderQuizStep();
+        }
+
+        /* 4. 최종 시험 (주관식) */
+        function initTest() {
+            testIndex = 0;
+            testScore = 0;
+            renderTestStep();
+        }
+
+        function renderTestStep() {
+            const container = document.getElementById('testContainer');
+            if (filteredWords.length === 0) {
+                container.innerHTML = `<div class="empty-msg">시험을 볼 단어가 없습니다.</div>`;
+                return;
+            }
+
+            if (testIndex >= filteredWords.length) {
+                const isFullMark = (testScore === filteredWords.length);
+                
+                if (isFullMark) {
+                    const currentSub = document.getElementById('subjectSelect').value;
+                    const currentCh = document.getElementById('chapterSelect').value;
+                    passedChapters.add(`${currentSub}_${currentCh}`);
+                    savePassedChapters();
+                    updateChapterSelect(); // 별표 갱신
+                }
+
+                container.innerHTML = `
+                    <div style="text-align:center; padding: 30px 0;">
+                        <h2 style="color:${isFullMark ? 'var(--success)' : 'var(--primary)'}; margin-bottom:10px;">
+                            ${isFullMark ? '🎉 백점 완점! ⭐ 별을 획득했어요!' : '최종 시험 완료!'}
+                        </h2>
+                        <p style="font-size:1.1rem; font-weight:700;">점수: ${testScore} / ${filteredWords.length}</p>
+                        <button class="btn btn-primary" style="margin-top:20px; padding:10px 20px;" onclick="initTest()">다시 도전하기</button>
+                    </div>`;
+                return;
+            }
+
+            document.getElementById('testProgressText').innerText = `${testIndex + 1} / ${filteredWords.length}`;
+            const target = filteredWords[testIndex];
+            document.getElementById('testTargetMeaning').innerText = target.meaning;
+            
+            const inputEl = document.getElementById('testInput');
+            inputEl.value = '';
+            inputEl.focus();
+        }
+
+        function handleTestKey(e) {
+            if (e.key === 'Enter') submitTestAnswer();
+        }
+
+        function submitTestAnswer() {
+            const inputEl = document.getElementById('testInput');
+            const userAns = inputEl.value.trim().toLowerCase();
+            const target = filteredWords[testIndex];
+
+            // 띄어쓰기 포함 정확한 일치 확인
+            if (userAns === target.word.trim().toLowerCase()) {
+                testScore++;
+                alert("⭕ 정답입니다!");
+            } else {
+                alert(`❌ 오답입니다. 정답: [ ${target.word} ]`);
+            }
+
+            testIndex++;
+            renderTestStep();
         }
 
         function escapeHtml(str) {
