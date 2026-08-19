@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <!-- [수정] viewport-fit=cover 추가 (safe-area-inset 사용을 위해 필수) -->
+    <!-- viewport-fit=cover 추가 (safe-area-inset 사용을 위해 필수) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>🥑 VOCA</title>
     <style>
@@ -21,7 +21,6 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
-        /* [수정] 100vh 대신 동적 뷰포트 높이(100dvh) 및 Safe Area 하단 패딩 적용 */
         html, body { 
             height: 100vh;
             height: 100dvh; /* 모바일 주소창/하단바 가변 대응 */
@@ -34,11 +33,10 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            height: 100dvh; /* 모바일 주소창/하단바 가변 대응 */
+            height: 100dvh;
             max-width: 600px;
             margin: 0 auto;
             padding: 12px;
-            /* [수정] 아이폰 홈바 등 하단 안전 영역 확보 */
             padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
             position: relative;
         }
@@ -263,7 +261,7 @@
             word-break: break-word;
         }
 
-        /* [수정] 모바일 하단 UI/Safe Area에 대응하는 동적 하단 여백 스페이서 */
+        /* 모바일 하단 UI/Safe Area 대응 스페이서 */
         .list-bottom-spacer {
             height: calc(30px + env(safe-area-inset-bottom, 20px));
         }
@@ -373,7 +371,7 @@
         <!-- 탭 메뉴 -->
         <nav>
             <button class="nav-btn active" onclick="switchTab('listTab', this)">전체 목록</button>
-            <button class="nav-btn" onclick="switchTab('cardTab', this)">카드 공부</button>
+            <button id="cardTabBtn" class="nav-btn" onclick="switchTab('cardTab', this)">카드 공부</button>
             <button class="nav-btn" onclick="switchTab('quizTab', this)">연습 시험</button>
             <button class="nav-btn" onclick="switchTab('testTab', this)">최종 시험</button>
         </nav>
@@ -462,8 +460,10 @@
 
     <script>
         let allWords = [];
+        let originalFilteredWords = []; // [신규] 원본 순서 단어 저장용
         let filteredWords = [];
         let cardIndex = 0;
+        let isCardShuffled = false; // [신규] 카드 공부 셔플 상태 제어 플래그
         let passedChapters = new Set(); 
 
         let quizWords = [];
@@ -563,7 +563,11 @@
             const currentSub = document.getElementById('subjectSelect').value;
             const currentCh = document.getElementById('chapterSelect').value;
 
-            filteredWords = allWords.filter(w => w.subject === currentSub && w.chapter === currentCh);
+            originalFilteredWords = allWords.filter(w => w.subject === currentSub && w.chapter === currentCh);
+            filteredWords = [...originalFilteredWords];
+            
+            // 카테고리 변경 시 셔플 상태 리셋
+            resetCardShuffleState();
             cardIndex = 0;
 
             renderList();
@@ -572,7 +576,34 @@
             initTest();
         }
 
+        /* [신규] 카드 공부 셔플 상태 리셋 함수 */
+        function resetCardShuffleState() {
+            isCardShuffled = false;
+            filteredWords = [...originalFilteredWords];
+            const btn = document.getElementById('cardTabBtn');
+            if (btn) btn.innerText = "카드 공부";
+        }
+
         function switchTab(tabId, btnEl) {
+            const isCardTabCurrentlyActive = document.getElementById('cardTab').classList.contains('active');
+
+            // [수정] 카드 공부 탭을 이미 선택한 상태에서 한번 더 터치한 경우 -> 셔플 토글
+            if (tabId === 'cardTab' && isCardTabCurrentlyActive) {
+                isCardShuffled = !isCardShuffled;
+                cardIndex = 0; // 처음부터 다시 시작
+
+                if (isCardShuffled) {
+                    btnEl.innerText = "카드 공부 🔀";
+                    filteredWords = [...originalFilteredWords].sort(() => Math.random() - 0.5);
+                } else {
+                    btnEl.innerText = "카드 공부";
+                    filteredWords = [...originalFilteredWords];
+                }
+                renderCard(true);
+                return;
+            }
+
+            // 다른 탭으로 전환되거나 카드 공부 탭으로 처음 접근하는 경우
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
 
@@ -580,11 +611,19 @@
             btnEl.classList.add('active');
 
             if (tabId === 'cardTab') {
+                // 카드 공부 탭 최초 진입 시 기본 상태로 초기화 후 시작
+                resetCardShuffleState();
+                cardIndex = 0;
                 renderCard(true);
-            } else if (tabId === 'quizTab') {
-                initQuiz();
-            } else if (tabId === 'testTab') {
-                initTest();
+            } else {
+                // 카드 공부 외 다른 탭으로 나갈 때 셔플 상태 초기화
+                resetCardShuffleState();
+
+                if (tabId === 'quizTab') {
+                    initQuiz();
+                } else if (tabId === 'testTab') {
+                    initTest();
+                }
             }
         }
 
@@ -601,19 +640,18 @@
         /* 목록 렌더링 */
         function renderList() {
             const container = document.getElementById('wordListContainer');
-            if (filteredWords.length === 0) {
+            if (originalFilteredWords.length === 0) {
                 container.innerHTML = `<div class="empty-msg">등록된 단어가 없습니다.</div>`;
                 return;
             }
 
-            const itemsHtml = filteredWords.map(w => `
+            const itemsHtml = originalFilteredWords.map(w => `
                 <div class="list-item" onclick="speakText('${escapeHtml(w.word)}')">
                     <span class="w-eng">${escapeHtml(w.word)}</span>
                     <span class="w-kor">${escapeHtml(w.meaning)}</span>
                 </div>
             `).join('');
 
-            // [수정] 모바일 하단 UI/Safe Area 높이를 동적으로 계산하는 클래스(list-bottom-spacer) 적용
             container.innerHTML = itemsHtml + `<div class="list-bottom-spacer" aria-hidden="true"></div>`;
         }
 
@@ -759,7 +797,7 @@
             quizScore = 0;
             quizWrongList = [];
             
-            quizWords = [...filteredWords].sort(() => Math.random() - 0.5);
+            quizWords = [...originalFilteredWords].sort(() => Math.random() - 0.5);
 
             const layout = document.getElementById('quizLayout');
             layout.innerHTML = `
@@ -863,7 +901,7 @@
             testScore = 0;
             testWrongList = [];
 
-            testWords = [...filteredWords].sort(() => Math.random() - 0.5);
+            testWords = [...originalFilteredWords].sort(() => Math.random() - 0.5);
 
             const layout = document.getElementById('testLayout');
             layout.innerHTML = `
