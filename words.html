@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>예윤이❤️단어장</title>
+    <title>🥑VOCA</title>
     <style>
         :root {
             --primary: #4f46e5;
@@ -37,7 +37,7 @@
             position: relative;
         }
 
-        /* 1. 커스텀 상단 헤더 */
+        /* 1. 상단 헤더 (🥑 VOCA) */
         header {
             display: flex;
             justify-content: space-between;
@@ -46,8 +46,8 @@
             padding: 0 4px;
             flex-shrink: 0;
         }
-        .header-title { font-size: 1.15rem; color: var(--accent-pink); font-weight: 800; }
-        .star-count { font-size: 1rem; color: #f59e0b; font-weight: 800; background: #fffbebf5; padding: 4px 10px; border-radius: 20px; border: 1px solid #fde68a; }
+        .header-title { font-size: 1.25rem; color: #166534; font-weight: 800; display: flex; align-items: center; gap: 4px; }
+        .star-count { font-size: 0.95rem; color: #f59e0b; font-weight: 800; background: #fffbebf5; padding: 4px 10px; border-radius: 20px; border: 1px solid #fde68a; }
 
         /* 카테고리 셀렉터 */
         .category-container {
@@ -128,7 +128,7 @@
             transition: width 0.3s;
         }
 
-        /* 통일된 카드 디자인 & 높이 */
+        /* 레이아웃 */
         .study-layout {
             display: flex;
             flex-direction: column;
@@ -186,20 +186,34 @@
         }
         .btn-primary { background: var(--primary); color: #fff; }
         .btn-secondary { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
-        .btn-speech-wide {
-            width: 100%;
+        
+        /* 반으로 나누어진 발음 듣기/하기 버튼 */
+        .btn-speech-half {
+            flex: 1;
             height: 42px;
             background: var(--primary-light);
             color: var(--primary);
             border: 1px solid #c7d2fe;
             border-radius: 8px;
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 4px;
+        }
+        .btn-speech-half.recording {
+            background: #fee2e2;
+            color: var(--danger);
+            border-color: #fca5a5;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
         }
 
         .row-group {
@@ -207,7 +221,7 @@
             gap: 8px;
         }
 
-        /* 전체 목록 */
+        /* 3. 전체 목록 발음버튼 포함 */
         .list-container {
             flex: 1;
             overflow-y: auto;
@@ -223,8 +237,17 @@
             border-bottom: 1px solid var(--border-color);
         }
         .list-item:last-child { border-bottom: none; }
+        .list-item-left { display: flex; flex-direction: column; gap: 2px; }
         .list-item .w-eng { font-weight: 700; color: var(--primary); font-size: 0.95rem; }
-        .list-item .w-kor { font-size: 0.85rem; color: var(--text-main); }
+        .list-item .w-kor { font-size: 0.85rem; color: var(--text-muted); }
+        .btn-list-speech {
+            background: #f1f5f9;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
 
         /* 시험 객관식 보기 버튼 */
         .opt-btn {
@@ -260,6 +283,23 @@
         }
         .test-input:focus { border-color: var(--primary); }
 
+        /* 2. 오답 노트 스타일 */
+        .wrong-answers-box {
+            margin-top: 14px;
+            text-align: left;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            padding: 12px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .wrong-answers-title { font-size: 0.85rem; font-weight: 800; color: var(--danger); margin-bottom: 6px; }
+        .wrong-item { font-size: 0.85rem; padding: 4px 0; border-bottom: 1px dashed #fca5a5; display: flex; justify-content: space-between; }
+        .wrong-item:last-child { border-bottom: none; }
+        .wrong-item .w-kor { color: var(--text-main); }
+        .wrong-item .w-eng { font-weight: 700; color: var(--danger); }
+
         .empty-msg {
             padding: 40px;
             text-align: center;
@@ -267,7 +307,7 @@
             font-size: 0.9rem;
         }
 
-        /* 0.3초 자동 사라짐 피드백 팝업 */
+        /* 0.3초 피드백 팝업 */
         .toast-popup {
             position: absolute;
             top: 50%;
@@ -299,9 +339,9 @@
     <div class="app-container">
         <div id="toastPopup" class="toast-popup"></div>
 
-        <!-- 1. 헤더 수정: 왼쪽 이름, 오른쪽 별 개수 -->
+        <!-- 1. 헤더 수정: 🥑 VOCA -->
         <header>
-            <div class="header-title">예윤이❤️단어장</div>
+            <div class="header-title">🥑 VOCA</div>
             <div class="star-count" id="starCountDisplay">⭐ 0개</div>
         </header>
 
@@ -325,7 +365,7 @@
                 <div class="list-container" id="wordListContainer"></div>
             </div>
 
-            <!-- 2. 카드 공부 탭 -->
+            <!-- 2. 카드 공부 탭 (발음하기 / 발음듣기 반으로 나눔) -->
             <div id="cardTab" class="tab-content">
                 <div class="study-layout">
                     <div class="progress-bar"><div id="cardProgress" class="progress-fill"></div></div>
@@ -342,9 +382,15 @@
                         </div>
                     </div>
 
-                    <button class="btn-speech-wide" onclick="speakCurrentWord(event)">
-                        🔊 발음 듣기
-                    </button>
+                    <!-- 4. 발음 하기 | 발음 듣기 버튼 -->
+                    <div class="row-group">
+                        <button id="speechRecBtn" class="btn-speech-half" onclick="startSpeechRecognition(event)">
+                            🎙️ 발음 하기
+                        </button>
+                        <button class="btn-speech-half" onclick="speakCurrentWord(event)">
+                            🔊 발음 듣기
+                        </button>
+                    </div>
 
                     <div class="row-group">
                         <button class="btn btn-secondary" style="flex:1" onclick="prevCard()">이전</button>
@@ -353,7 +399,7 @@
                 </div>
             </div>
 
-            <!-- 3. 연습 시험 탭 (카드 공부와 동일한 레이아웃 구조) -->
+            <!-- 3. 연습 시험 탭 -->
             <div id="quizTab" class="tab-content">
                 <div class="study-layout" id="quizLayout">
                     <div class="progress-bar"><div id="quizProgress" class="progress-fill"></div></div>
@@ -371,7 +417,7 @@
                 </div>
             </div>
 
-            <!-- 4. 최종 시험 탭 (카드 공부와 동일한 레이아웃 구조) -->
+            <!-- 4. 최종 시험 탭 -->
             <div id="testTab" class="tab-content">
                 <div class="study-layout" id="testLayout">
                     <div class="progress-bar"><div id="testProgress" class="progress-fill"></div></div>
@@ -402,12 +448,19 @@
 
         let quizIndex = 0;
         let quizScore = 0;
+        let quizWrongList = [];
+
         let testIndex = 0;
         let testScore = 0;
+        let testWrongList = [];
+
+        let recognition = null;
+        let isRecording = false;
 
         window.onload = function() {
             loadPassedChapters();
             loadWords();
+            initSpeechRecognition();
         };
 
         function loadPassedChapters() {
@@ -423,7 +476,6 @@
             updateStarCount();
         }
 
-        /* 1. 상단 모은 별 개수 표시 업데이트 */
         function updateStarCount() {
             const count = passedChapters.size;
             document.getElementById('starCountDisplay').innerText = `⭐ ${count}개`;
@@ -441,7 +493,7 @@
                     initCategorySelects();
                 })
                 .catch(error => {
-                    console.error('JSON 불러오기 실패, 로컬 백업을 사용합니다:', error);
+                    console.error('JSON 불러오기 실패, 로컬 백업 사용:', error);
                     const saved = localStorage.getItem('voca_words');
                     if (saved) {
                         try { allWords = JSON.parse(saved); } catch(e) { allWords = []; }
@@ -520,7 +572,7 @@
             }, 300);
         }
 
-        /* 1. 전체 목록 */
+        /* 3. 전체 목록 (단어별 발음 듣기 버튼 추가) */
         function renderList() {
             const container = document.getElementById('wordListContainer');
             if (filteredWords.length === 0) {
@@ -530,8 +582,11 @@
 
             container.innerHTML = filteredWords.map(w => `
                 <div class="list-item">
-                    <span class="w-eng">${escapeHtml(w.word)}</span>
-                    <span class="w-kor">${escapeHtml(w.meaning)}</span>
+                    <div class="list-item-left">
+                        <span class="w-eng">${escapeHtml(w.word)}</span>
+                        <span class="w-kor">${escapeHtml(w.meaning)}</span>
+                    </div>
+                    <button class="btn-list-speech" onclick="speakText('${escapeHtml(w.word)}')">🔊</button>
                 </div>
             `).join('');
         }
@@ -580,14 +635,84 @@
         function speakCurrentWord(e) {
             if (e) e.stopPropagation();
             if (filteredWords.length === 0) return;
-            const word = filteredWords[cardIndex].word;
-            
+            speakText(filteredWords[cardIndex].word);
+        }
+
+        function speakText(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(word);
+                const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'en-US';
                 utterance.rate = 0.85;
                 window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        /* 4. 발음 하기 (음성 인식 기능) */
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                recognition.onstart = function() {
+                    isRecording = true;
+                    const btn = document.getElementById('speechRecBtn');
+                    if(btn) {
+                        btn.classList.add('recording');
+                        btn.innerHTML = '🔴 듣는 중...';
+                    }
+                };
+
+                recognition.onresult = function(event) {
+                    const spokenText = event.results[0][0].transcript.toLowerCase().trim();
+                    const targetWord = filteredWords[cardIndex].word.toLowerCase().trim();
+                    
+                    // 특수문자나 공백 정리
+                    const cleanSpoken = spokenText.replace(/[^a-z0-9 ]/g, '');
+                    const cleanTarget = targetWord.replace(/[^a-z0-9 ]/g, '');
+
+                    if (cleanSpoken === cleanTarget) {
+                        showFeedbackToast(true, `⭕ 정답!\n("${spokenText}")`);
+                    } else {
+                        showFeedbackToast(false, `❌ 다시 해봐요\n("${spokenText}")`);
+                    }
+                };
+
+                recognition.onerror = function(event) {
+                    showFeedbackToast(false, "❌ 인식 실패");
+                };
+
+                recognition.onend = function() {
+                    isRecording = false;
+                    const btn = document.getElementById('speechRecBtn');
+                    if(btn) {
+                        btn.classList.remove('recording');
+                        btn.innerHTML = '🎙️ 발음 하기';
+                    }
+                };
+            }
+        }
+
+        function startSpeechRecognition(e) {
+            if (e) e.stopPropagation();
+            if (filteredWords.length === 0) return;
+
+            if (!recognition) {
+                alert("이 브라우저는 음성 인식을 지원하지 않습니다. (구글 크롬/사파리 권장)");
+                return;
+            }
+
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                } catch(err) {
+                    recognition.stop();
+                }
             }
         }
 
@@ -595,6 +720,7 @@
         function initQuiz() {
             quizIndex = 0;
             quizScore = 0;
+            quizWrongList = [];
             
             const layout = document.getElementById('quizLayout');
             layout.innerHTML = `
@@ -620,12 +746,29 @@
                 return;
             }
 
+            /* 2. 연습 시험 완료 후 틀린 문제 표시 */
             if (quizIndex >= filteredWords.length) {
+                let wrongHtml = '';
+                if (quizWrongList.length > 0) {
+                    wrongHtml = `
+                        <div class="wrong-answers-box">
+                            <div class="wrong-answers-title">📝 틀린 문제 복습하기</div>
+                            ${quizWrongList.map(w => `
+                                <div class="wrong-item">
+                                    <span class="w-kor">${escapeHtml(w.meaning)}</span>
+                                    <span class="w-eng">${escapeHtml(w.word)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
                 layout.innerHTML = `
-                    <div style="text-align:center; padding: 40px 0;">
-                        <h2 style="color:var(--primary); margin-bottom:10px;">연습 시험 완료!</h2>
+                    <div style="text-align:center; padding: 20px 0;">
+                        <h2 style="color:var(--primary); margin-bottom:8px;">연습 시험 완료!</h2>
                         <p style="font-size:1.1rem; font-weight:700;">점수: ${quizScore} / ${filteredWords.length}</p>
-                        <button class="btn btn-primary" style="margin:20px auto 0; padding:0 30px;" onclick="initQuiz()">다시 풀어보기</button>
+                        ${wrongHtml}
+                        <button class="btn btn-primary" style="margin:16px auto 0; padding:0 30px;" onclick="initQuiz()">다시 풀어보기</button>
                     </div>`;
                 return;
             }
@@ -666,6 +809,7 @@
                 quizScore++;
                 showFeedbackToast(true, "⭕ 정답!");
             } else {
+                quizWrongList.push(target);
                 showFeedbackToast(false, "❌ 오답");
             }
 
@@ -679,6 +823,7 @@
         function initTest() {
             testIndex = 0;
             testScore = 0;
+            testWrongList = [];
 
             const layout = document.getElementById('testLayout');
             layout.innerHTML = `
@@ -706,6 +851,7 @@
                 return;
             }
 
+            /* 2. 최종 시험 완료 후 틀린 문제 표시 */
             if (testIndex >= filteredWords.length) {
                 const isFullMark = (testScore === filteredWords.length);
                 
@@ -717,13 +863,29 @@
                     updateChapterSelect(); 
                 }
 
+                let wrongHtml = '';
+                if (testWrongList.length > 0) {
+                    wrongHtml = `
+                        <div class="wrong-answers-box">
+                            <div class="wrong-answers-title">📝 틀린 문제 복습하기</div>
+                            ${testWrongList.map(w => `
+                                <div class="wrong-item">
+                                    <span class="w-kor">${escapeHtml(w.meaning)}</span>
+                                    <span class="w-eng">${escapeHtml(w.word)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
                 layout.innerHTML = `
-                    <div style="text-align:center; padding: 40px 0;">
-                        <h2 style="color:${isFullMark ? 'var(--success)' : 'var(--primary)'}; margin-bottom:10px;">
+                    <div style="text-align:center; padding: 20px 0;">
+                        <h2 style="color:${isFullMark ? 'var(--success)' : 'var(--primary)'}; margin-bottom:8px;">
                             ${isFullMark ? '🎉 백점 완성! ⭐ 별을 획득했어요!' : '최종 시험 완료!'}
                         </h2>
                         <p style="font-size:1.1rem; font-weight:700;">점수: ${testScore} / ${filteredWords.length}</p>
-                        <button class="btn btn-primary" style="margin:20px auto 0; padding:0 30px;" onclick="initTest()">다시 도전하기</button>
+                        ${wrongHtml}
+                        <button class="btn btn-primary" style="margin:16px auto 0; padding:0 30px;" onclick="initTest()">다시 도전하기</button>
                     </div>`;
                 return;
             }
@@ -758,6 +920,7 @@
                 testScore++;
                 showFeedbackToast(true, "⭕ 정답!");
             } else {
+                testWrongList.push(target);
                 showFeedbackToast(false, "❌ 오답");
             }
 
