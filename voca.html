@@ -168,7 +168,6 @@
         .card-back { transform: rotateY(180deg); }
         .card-word { font-size: 1.6rem; font-weight: 800; color: var(--primary); word-break: break-word; }
         .card-meaning { font-size: 1.4rem; font-weight: 700; color: var(--text-main); word-break: break-word; }
-        .card-hint { margin-top: 6px; font-size: 0.75rem; color: var(--text-muted); }
 
         /* 공통 버튼 스타일 */
         .btn {
@@ -187,8 +186,8 @@
         .btn-primary { background: var(--primary); color: #fff; }
         .btn-secondary { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
         
-        /* 반으로 나누어진 발음 듣기/하기 버튼 */
-        .btn-speech-half {
+        /* 3등분 액션 버튼 스타일 */
+        .btn-action-third {
             flex: 1;
             height: 42px;
             background: var(--primary-light);
@@ -201,9 +200,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 2px;
+            padding: 0 4px;
         }
-        .btn-speech-half.recording {
+        .btn-action-third.recording {
             background: #fee2e2;
             color: var(--danger);
             border-color: #fca5a5;
@@ -221,7 +221,7 @@
             gap: 8px;
         }
 
-        /* 3. 전체 목록 스타일 수정 */
+        /* 전체 목록 스타일 */
         .list-container {
             flex: 1;
             overflow-y: auto;
@@ -383,7 +383,6 @@
                         <div class="flashcard" id="flashcard">
                             <div class="card-face card-front">
                                 <div class="card-word" id="cardWord">-</div>
-                                <div class="card-hint">터치하여 뜻 확인</div>
                             </div>
                             <div class="card-face card-back">
                                 <div class="card-meaning" id="cardMeaning">-</div>
@@ -391,11 +390,15 @@
                         </div>
                     </div>
 
+                    <!-- 3등분으로 구성된 버튼 영역 -->
                     <div class="row-group">
-                        <button id="speechRecBtn" class="btn-speech-half" onclick="startSpeechRecognition(event)">
+                        <button id="speechRecBtn" class="btn-action-third" onclick="startSpeechRecognition(event)">
                             🎙️ 발음 하기
                         </button>
-                        <button class="btn-speech-half" onclick="speakCurrentWord(event)">
+                        <button class="btn-action-third" onclick="openDictionary(event)">
+                            🔍 사전 찾기
+                        </button>
+                        <button class="btn-action-third" onclick="speakCurrentWord(event)">
                             🔊 발음 듣기
                         </button>
                     </div>
@@ -580,7 +583,6 @@
             }, 300);
         }
 
-        /* 1 & 2 수정: 전체 목록 (버튼 제거, 좌우 정렬, 폰트 확대, 터치 발음) */
         function renderList() {
             const container = document.getElementById('wordListContainer');
             if (filteredWords.length === 0) {
@@ -651,6 +653,19 @@
                 utterance.rate = 0.85;
                 window.speechSynthesis.speak(utterance);
             }
+        }
+
+        /* 사전 찾기 기능 */
+        function openDictionary(e) {
+            if (e) e.stopPropagation();
+            if (filteredWords.length === 0) return;
+            
+            const currentWord = filteredWords[cardIndex].word.trim();
+            // 단어 내의 공백을 '+'로 변환
+            const queryWord = currentWord.replace(/\s+/g, '+');
+            const searchUrl = `https://small.dic.daum.net/search.do?dic=eng&q=${queryWord}`;
+            
+            window.open(searchUrl, '_blank');
         }
 
         /* 발음 하기 (음성 인식 기능) */
