@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>단어장 관리자 페이지</title>
+    <title>단어장 - 관리자 페이지</title>
     <style>
         :root {
             --primary: #4f46e5;
@@ -13,472 +13,575 @@
             --text-main: #0f172a;
             --text-muted: #64748b;
             --border-color: #e2e8f0;
-            --danger: #ef4444;
             --success: #10b981;
+            --danger: #ef4444;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); line-height: 1.5; padding: 16px; max-width: 1200px; margin: 0 auto; }
         
-        body { 
-            background-color: var(--bg-color); 
-            color: var(--text-main); 
-            padding: 20px 12px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid var(--border-color);
-        }
-        /* 1. 초등 삭제 처리 */
+        header { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         h1 { font-size: 1.4rem; color: var(--primary); }
 
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
+        /* 1:1 (5:5) 동일 너비 레이아웃 */
+        .layout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 850px) { .layout-grid { grid-template-columns: 1fr; } }
 
-        .card-title {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: var(--text-main);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; margin-bottom: 16px; }
+        .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; color: var(--text-main); }
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-bottom: 10px;
-        }
-
-        label { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: var(--text-main); }
         
-        input[type="text"], input[type="password"], select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            outline: none;
-            background: #fff;
+        input[type="text"], input[type="password"], select, textarea {
+            width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; transition: all 0.2s; background: #fff;
         }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
 
-        input:focus, select:focus { border-color: var(--primary); }
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-secondary { background-color: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background-color: #e2e8f0; }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
 
-        .row-group {
-            display: flex;
-            gap: 8px;
-        }
+        /* 통일된 크기의 카테고리 관리 버튼 */
+        .category-row { display: flex; gap: 6px; align-items: center; }
+        .btn-mgmt { width: 52px; padding: 8px 0; text-align: center; font-size: 0.85rem; }
 
-        .btn {
-            padding: 10px 14px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-        }
-        .btn-primary { background: var(--primary); color: #fff; }
-        .btn-primary:hover { background: var(--primary-hover); }
-        .btn-danger { background: #fee2e2; color: var(--danger); }
-        .btn-danger:hover { background: #fca5a5; }
-        .btn-secondary { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
+        .word-list-scroll { flex: 1; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; min-height: 350px; max-height: 520px; }
+        .word-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border-color); background: #fff; }
+        .word-item:last-child { border-bottom: none; }
+        .word-info strong { font-size: 0.95rem; color: var(--primary); }
+        .word-info .phonetic { font-size: 0.8rem; color: var(--text-muted); margin-left: 4px; }
+        .word-info .meaning { font-size: 0.85rem; color: #334155; margin-top: 2px; }
 
-        /* 단어 테이블 */
-        .table-wrapper {
-            overflow-x: auto;
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-        }
+        .status-msg { padding: 8px 10px; border-radius: 6px; font-size: 0.8rem; margin-top: 8px; display: none; }
+        .status-msg.info { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .status-msg.success { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .status-msg.error { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.9rem;
-        }
-
-        th, td {
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        th { background: #f1f5f9; position: sticky; top: 0; font-weight: 700; color: var(--text-muted); }
-
-        .github-config {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-        }
-
-        .action-btns {
-            display: flex;
-            gap: 4px;
-        }
+        .loading-spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #cbd5e1; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 6px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <!-- 1. 초등 문구 삭제 -->
     <header>
-        <h1>🥑 단어장 관리자</h1>
-        <button class="btn btn-primary" onclick="saveToGithub()">☁️ GitHub 저장</button>
+        <!-- 1. 타이틀 수정 -->
+        <h1>단어장 - 관리자 페이지</h1>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+            과목/단원 관리 & 단어 등록
+        </div>
     </header>
 
-    <!-- GitHub 연동 설정 (3. 아이 폰 연동 문구 삭제) -->
-    <div class="card github-config">
-        <div class="card-title">⚙️ GitHub 연동 설정</div>
-        <div class="form-group">
-            <label>GitHub Personal Access Token</label>
-            <input type="password" id="ghToken" placeholder="ghp_xxxx..." onchange="saveConfig()">
-        </div>
-        <div class="row-group">
-            <div class="form-group" style="flex:1">
-                <label>Owner (계정명)</label>
-                <input type="text" id="ghOwner" placeholder="tejavang" onchange="saveConfig()">
-            </div>
-            <div class="form-group" style="flex:1">
-                <label>Repository (저장소명)</label>
-                <input type="text" id="ghRepo" placeholder="yeyun" onchange="saveConfig()">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>JSON 파일 경로</label>
-            <input type="text" id="ghPath" value="words.json" onchange="saveConfig()">
-        </div>
-    </div>
+    <div class="layout-grid">
+        <!-- 1열 (왼쪽 50%): 과목/단원 설정 및 단어 등록하기 -->
+        <div>
+            <div class="card">
+                <!-- 과목 선택 및 관리 -->
+                <div class="form-group">
+                    <label>과목 선택 / 관리</label>
+                    <div class="category-row">
+                        <select id="subjectSelect" style="flex:1;" onchange="onSubjectChange()"></select>
+                        <button type="button" class="btn btn-secondary btn-mgmt" onclick="addSubject()">추가</button>
+                        <button type="button" class="btn btn-secondary btn-mgmt" onclick="editSubject()">수정</button>
+                        <button type="button" class="btn btn-danger btn-mgmt" onclick="deleteSubject()">삭제</button>
+                    </div>
+                </div>
 
-    <!-- 과목 / 단원 선택 및 추가/삭제 -->
-    <div class="card">
-        <div class="card-title">📚 과목 및 단원 관리</div>
-        
-        <div class="row-group" style="margin-bottom: 10px;">
-            <div class="form-group" style="flex:1">
-                <label>과목 선택</label>
-                <select id="subjectSelect" onchange="onSubjectChange()"></select>
+                <!-- 단원 선택 및 관리 -->
+                <div class="form-group">
+                    <label>단원 선택 / 관리</label>
+                    <div class="category-row">
+                        <select id="chapterSelect" style="flex:1;" onchange="onCategoryChange()"></select>
+                        <button type="button" class="btn btn-secondary btn-mgmt" onclick="addChapter()">추가</button>
+                        <button type="button" class="btn btn-secondary btn-mgmt" onclick="editChapter()">수정</button>
+                        <button type="button" class="btn btn-danger btn-mgmt" onclick="deleteChapter()">삭제</button>
+                    </div>
+                </div>
+
+                <hr style="margin: 12px 0; border: none; border-top: 1px solid var(--border-color);">
+
+                <!-- 단어 등록하기 -->
+                <div class="card-title" style="margin-bottom: 6px;">
+                    <span>단어 등록하기</span>
+                    <span id="autoStatus" style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);"></span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bulkText" style="font-weight: normal; font-size: 0.8rem; color: var(--text-muted);">
+                        <code>단어 : 뜻</code> 형식으로 한 줄에 하나씩 입력해 주세요.
+                    </label>
+                    <textarea id="bulkText" rows="14" placeholder="apple : 사과&#10;banana : 바나나&#10;school : 학교&#10;book : 책&#10;teacher : 선생님"></textarea>
+                </div>
+
+                <button type="button" class="btn btn-primary" style="width: 100%; padding: 10px;" onclick="processBulkInput()">
+                    단어 한 번에 등록하기 (발음기호 자동생성)
+                </button>
             </div>
-            <div class="form-group" style="flex:1">
-                <label>단원 선택</label>
-                <select id="chapterSelect" onchange="renderWordTable()"></select>
+        </div>
+
+        <!-- 2열 (오른쪽 50%): 선택된 과목/단원의 등록 단어 목록 & GitHub 저장 -->
+        <div class="card">
+            <div class="card-title">
+                <span>등록된 단어 (<span id="filterInfo" style="color:var(--primary);"></span>) : <span id="wordCount">0</span>개</span>
+                <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" onclick="clearCurrentCategoryWords()">이 단원 전체 삭제</button>
             </div>
-        </div>
 
-        <!-- 2. 과목별 독립 단원 관리 및 삭제 -->
-        <div class="row-group" style="margin-bottom: 10px;">
-            <input type="text" id="newSubjectInput" placeholder="새 과목명 (예: 5학년 영어)">
-            <button class="btn btn-secondary" onclick="addSubject()">과목 추가</button>
-        </div>
-        <div class="row-group">
-            <input type="text" id="newChapterInput" placeholder="현재 과목에 단원 추가 (예: 2단원)">
-            <button class="btn btn-secondary" onclick="addChapter()">단원 추가</button>
-            <button class="btn btn-danger" onclick="deleteCurrentChapter()">선택 단원 삭제</button>
-        </div>
-    </div>
+            <div class="word-list-scroll" id="wordListContainer">
+                <!-- 선택된 과목/단원 단어 리스트 -->
+            </div>
 
-    <!-- 단어 등록 -->
-    <div class="card">
-        <div class="card-title">✏️ 단어 추가</div>
-        <div class="row-group" style="margin-bottom: 10px;">
-            <input type="text" id="wordInput" placeholder="영어 단어" style="flex:1">
-            <input type="text" id="meaningInput" placeholder="한글 뜻" style="flex:1" onkeyup="handleWordKey(event)">
-        </div>
-        <button class="btn btn-primary" style="width:100%" onclick="addWord()">단어 등록</button>
-    </div>
+            <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
 
-    <!-- 등록된 단어 목록 -->
-    <div class="card">
-        <div class="card-title">
-            <span>📋 단어 목록</span>
-            <button class="btn btn-danger" style="font-size:0.8rem; padding:4px 8px;" onclick="deleteSelectedWords()">선택 삭제</button>
-        </div>
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width:30px;"><input type="checkbox" onchange="toggleSelectAll(this)"></th>
-                        <th>영어 단어</th>
-                        <th>한글 뜻</th>
-                        <th style="width:60px;">관리</th>
-                    </tr>
-                </thead>
-                <tbody id="wordTableBody"></tbody>
-            </table>
+            <!-- 1. 저장 영역 타이틀 수정 -->
+            <div class="card-title">
+                GitHub 저장
+            </div>
+
+            <div class="form-group">
+                <label for="githubToken">GitHub Access Token</label>
+                <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx">
+            </div>
+
+            <div class="form-group">
+                <div style="display: flex; gap: 6px;">
+                    <input type="text" id="githubRepo" placeholder="아이디/저장소명" style="flex:2;">
+                    <input type="text" id="githubPath" value="words.json" placeholder="파일명" style="flex:1;">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 6px;">
+                <button type="button" class="btn btn-success" style="flex: 1; padding: 10px;" onclick="uploadToGithub()">
+                    GitHub 업로드
+                </button>
+                <button type="button" class="btn btn-secondary" style="padding: 10px;" onclick="downloadJSON()">
+                    JSON 다운로드
+                </button>
+            </div>
+
+            <div id="githubStatus" class="status-msg"></div>
         </div>
     </div>
 
     <script>
-        let allWords = [];
+        let subjects = ["5학년 영어", "6학년 영어", "기초 파닉스"];
+        // 과목별로 단원 목록을 독립되게 관리하는 객체 구조
+        let subjectChapters = {
+            "5학년 영어": ["1단원", "2단원", "3단원", "4단원", "5단원"],
+            "6학년 영어": ["1단원", "2단원", "3단원"],
+            "기초 파닉스": ["Alphabet", "Vowels"]
+        };
+        let currentWords = [];
 
         window.onload = function() {
-            loadConfig();
-            loadWordsFromGithubOrLocal();
+            const savedSubjects = localStorage.getItem('voca_subjects');
+            if (savedSubjects) subjects = JSON.parse(savedSubjects);
+
+            const savedSubjectChapters = localStorage.getItem('voca_subject_chapters');
+            if (savedSubjectChapters) {
+                subjectChapters = JSON.parse(savedSubjectChapters);
+            }
+
+            renderSubjectOptions();
+
+            if (localStorage.getItem('gh_token')) document.getElementById('githubToken').value = localStorage.getItem('gh_token');
+            if (localStorage.getItem('gh_repo')) document.getElementById('githubRepo').value = localStorage.getItem('gh_repo');
+            
+            const savedWords = localStorage.getItem('voca_words');
+            if (savedWords) {
+                try {
+                    currentWords = JSON.parse(savedWords);
+                } catch(e){}
+            }
+            renderWordList();
         };
 
-        function loadConfig() {
-            document.getElementById('ghToken').value = localStorage.getItem('voca_gh_token') || '';
-            document.getElementById('ghOwner').value = localStorage.getItem('voca_gh_owner') || 'tejavang';
-            document.getElementById('ghRepo').value = localStorage.getItem('voca_gh_repo') || 'yeyun';
-            document.getElementById('ghPath').value = localStorage.getItem('voca_gh_path') || 'words.json';
-        }
-
-        function saveConfig() {
-            localStorage.setItem('voca_gh_token', document.getElementById('ghToken').value.trim());
-            localStorage.setItem('voca_gh_owner', document.getElementById('ghOwner').value.trim());
-            localStorage.setItem('voca_gh_repo', document.getElementById('ghRepo').value.trim());
-            localStorage.setItem('voca_gh_path', document.getElementById('ghPath').value.trim());
-        }
-
-        function loadWordsFromGithubOrLocal() {
-            fetch('words.json?v=' + new Date().getTime())
-                .then(res => res.json())
-                .then(data => {
-                    allWords = data;
-                    initCategorySelects();
-                })
-                .catch(() => {
-                    const saved = localStorage.getItem('voca_words');
-                    if (saved) {
-                        try { allWords = JSON.parse(saved); } catch(e) { allWords = []; }
-                    } else {
-                        allWords = [
-                            { id: 1, subject: "5학년 영어", chapter: "1단원", word: "apple", meaning: "사과" }
-                        ];
-                    }
-                    initCategorySelects();
-                });
-        }
-
-        function initCategorySelects() {
+        function renderSubjectOptions() {
             const subjectSelect = document.getElementById('subjectSelect');
-
-            let subjects = Array.from(new Set(allWords.map(w => w.subject)));
-            if (subjects.length === 0) subjects = ["5학년 영어"];
+            const currentSub = subjectSelect.value;
 
             subjectSelect.innerHTML = subjects.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
 
-            onSubjectChange();
+            if (currentSub && subjects.includes(currentSub)) {
+                subjectSelect.value = currentSub;
+            } else if (subjects.length > 0) {
+                subjectSelect.value = subjects[0];
+            }
+
+            renderChapterOptions();
         }
 
-        /* 2. 과목 선택 변경 시 해당 과목에 속한 단원만 필터링 */
-        function onSubjectChange() {
+        /* 2. 과목이 선택되었을 때 해당 과목에 속한 단원만 바인딩 */
+        function renderChapterOptions() {
             const subjectSelect = document.getElementById('subjectSelect');
             const chapterSelect = document.getElementById('chapterSelect');
             const currentSub = subjectSelect.value;
 
-            // 선택된 과목에 포함된 단원들만 추출
-            let chapters = Array.from(new Set(allWords.filter(w => w.subject === currentSub).map(w => w.chapter)));
-            if (chapters.length === 0) chapters = ["1단원"];
+            if (!subjectChapters[currentSub]) {
+                subjectChapters[currentSub] = ["1단원"];
+            }
 
-            chapterSelect.innerHTML = chapters.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+            const currentChList = subjectChapters[currentSub];
+            const currentCh = chapterSelect.value;
 
-            renderWordTable();
+            chapterSelect.innerHTML = currentChList.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+
+            if (currentCh && currentChList.includes(currentCh)) {
+                chapterSelect.value = currentCh;
+            } else if (currentChList.length > 0) {
+                chapterSelect.value = currentChList[0];
+            }
         }
 
+        function onSubjectChange() {
+            renderChapterOptions();
+            renderWordList();
+        }
+
+        function onCategoryChange() {
+            renderWordList();
+        }
+
+        /* 과목 관리 */
         function addSubject() {
-            const input = document.getElementById('newSubjectInput');
-            const val = input.value.trim();
-            if (!val) return;
-
-            const subjectSelect = document.getElementById('subjectSelect');
-            
-            // 이미 존재하는지 확인
-            let exists = false;
-            for (let i = 0; i < subjectSelect.options.length; i++) {
-                if (subjectSelect.options[i].value === val) exists = true;
+            const newSubject = prompt('새로 추가할 과목명을 입력해 주세요:');
+            if (newSubject && newSubject.trim()) {
+                const trimmed = newSubject.trim();
+                if (!subjects.includes(trimmed)) {
+                    subjects.push(trimmed);
+                    subjectChapters[trimmed] = ["1단원"];
+                    
+                    saveSubjectData();
+                    renderSubjectOptions();
+                    document.getElementById('subjectSelect').value = trimmed;
+                    renderChapterOptions();
+                    renderWordList();
+                } else {
+                    alert('이미 존재하는 과목입니다.');
+                }
             }
-
-            if (!exists) {
-                const opt = document.createElement('option');
-                opt.value = val;
-                opt.innerText = val;
-                subjectSelect.appendChild(opt);
-            }
-
-            subjectSelect.value = val;
-            input.value = '';
-            onSubjectChange();
         }
 
+        function editSubject() {
+            const currentSubject = document.getElementById('subjectSelect').value;
+            if (!currentSubject) return;
+
+            const updatedSubject = prompt('과목명을 수정하세요:', currentSubject);
+            if (updatedSubject && updatedSubject.trim() && updatedSubject.trim() !== currentSubject) {
+                const trimmed = updatedSubject.trim();
+                
+                currentWords.forEach(w => {
+                    if (w.subject === currentSubject) w.subject = trimmed;
+                });
+                saveToLocal();
+
+                const index = subjects.indexOf(currentSubject);
+                if (index !== -1) subjects[index] = trimmed;
+
+                if (subjectChapters[currentSubject]) {
+                    subjectChapters[trimmed] = subjectChapters[currentSubject];
+                    delete subjectChapters[currentSubject];
+                }
+                
+                saveSubjectData();
+                renderSubjectOptions();
+                document.getElementById('subjectSelect').value = trimmed;
+                renderChapterOptions();
+                renderWordList();
+            }
+        }
+
+        function deleteSubject() {
+            const currentSubject = document.getElementById('subjectSelect').value;
+            if (!currentSubject) return;
+
+            if (subjects.length <= 1) {
+                alert('최소 하나의 과목은 존재해야 합니다.');
+                return;
+            }
+
+            if (confirm(`'${currentSubject}' 과목과 해당 과목의 등록된 단어를 삭제하시겠습니까?`)) {
+                subjects = subjects.filter(s => s !== currentSubject);
+                delete subjectChapters[currentSubject];
+                currentWords = currentWords.filter(w => w.subject !== currentSubject);
+                
+                saveToLocal();
+                saveSubjectData();
+                renderSubjectOptions();
+                renderWordList();
+            }
+        }
+
+        /* 2. 과목별 독립 단원 관리 (추가, 수정, 삭제) */
         function addChapter() {
-            const input = document.getElementById('newChapterInput');
-            const val = input.value.trim();
-            if (!val) return;
+            const currentSub = document.getElementById('subjectSelect').value;
+            if (!currentSub) return;
 
-            const chapterSelect = document.getElementById('chapterSelect');
+            const newChapter = prompt(`'${currentSub}' 과목에 추가할 단원명을 입력해 주세요:`);
+            if (newChapter && newChapter.trim()) {
+                const trimmed = newChapter.trim();
+                if (!subjectChapters[currentSub]) subjectChapters[currentSub] = [];
+
+                if (!subjectChapters[currentSub].includes(trimmed)) {
+                    subjectChapters[currentSub].push(trimmed);
+                    saveSubjectData();
+                    renderChapterOptions();
+                    document.getElementById('chapterSelect').value = trimmed;
+                    renderWordList();
+                } else {
+                    alert('해당 과목에 이미 존재하는 단원입니다.');
+                }
+            }
+        }
+
+        function editChapter() {
+            const currentSub = document.getElementById('subjectSelect').value;
+            const currentChapter = document.getElementById('chapterSelect').value;
+            if (!currentSub || !currentChapter) return;
+
+            const updatedChapter = prompt('단원명을 수정하세요:', currentChapter);
+            if (updatedChapter && updatedChapter.trim() && updatedChapter.trim() !== currentChapter) {
+                const trimmed = updatedChapter.trim();
+                
+                currentWords.forEach(w => {
+                    if (w.subject === currentSub && w.chapter === currentChapter) {
+                        w.chapter = trimmed;
+                    }
+                });
+                saveToLocal();
+
+                const chList = subjectChapters[currentSub];
+                const index = chList.indexOf(currentChapter);
+                if (index !== -1) chList[index] = trimmed;
+
+                saveSubjectData();
+                renderChapterOptions();
+                document.getElementById('chapterSelect').value = trimmed;
+                renderWordList();
+            }
+        }
+
+        function deleteChapter() {
+            const currentSub = document.getElementById('subjectSelect').value;
+            const currentChapter = document.getElementById('chapterSelect').value;
+            if (!currentSub || !currentChapter) return;
+
+            const chList = subjectChapters[currentSub] || [];
+            if (chList.length <= 1) {
+                alert('과목 내에 최소 하나의 단원은 존재해야 합니다.');
+                return;
+            }
+
+            if (confirm(`'${currentSub}' 과목의 '${currentChapter}' 단원과 해당 단원의 단어를 삭제하시겠습니까?`)) {
+                subjectChapters[currentSub] = chList.filter(c => c !== currentChapter);
+                currentWords = currentWords.filter(w => !(w.subject === currentSub && w.chapter === currentChapter));
+
+                saveToLocal();
+                saveSubjectData();
+                renderChapterOptions();
+                renderWordList();
+            }
+        }
+
+        function saveSubjectData() {
+            localStorage.setItem('voca_subjects', JSON.stringify(subjects));
+            localStorage.setItem('voca_subject_chapters', JSON.stringify(subjectChapters));
+        }
+
+        /* 발음기호 API */
+        async function fetchPhonetic(word) {
+            try {
+                const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    return data[0]?.phonetic || data[0]?.phonetics?.find(p => p.text)?.text || '';
+                }
+            } catch (e) {}
+            return '';
+        }
+
+        /* 단원 입력 처리 */
+        async function processBulkInput() {
+            const bulkText = document.getElementById('bulkText').value.trim();
+            const autoStatus = document.getElementById('autoStatus');
+
+            if (!bulkText) {
+                alert('등록할 단어를 입력해 주세요.');
+                return;
+            }
+
+            const subject = document.getElementById('subjectSelect').value;
+            const chapter = document.getElementById('chapterSelect').value;
+            const lines = bulkText.split('\n');
             
-            let exists = false;
-            for (let i = 0; i < chapterSelect.options.length; i++) {
-                if (chapterSelect.options[i].value === val) exists = true;
+            autoStatus.innerHTML = '발음기호 생성 중... <span class="loading-spinner"></span>';
+            let addedCount = 0;
+
+            for (const line of lines) {
+                const parts = line.split(/[:=\-\t]+/);
+                if (parts.length >= 2) {
+                    const word = parts[0].trim();
+                    const meaning = parts[1].trim();
+
+                    if (word && meaning) {
+                        const phonetic = await fetchPhonetic(word);
+                        const existingIdx = currentWords.findIndex(w => w.word.toLowerCase() === word.toLowerCase() && w.subject === subject && w.chapter === chapter);
+                        
+                        const newWordObj = {
+                            id: Date.now() + Math.random(),
+                            subject: subject,
+                            chapter: chapter,
+                            word: word,
+                            meaning: meaning,
+                            phonetic: phonetic
+                        };
+
+                        if (existingIdx >= 0) {
+                            currentWords[existingIdx] = newWordObj;
+                        } else {
+                            currentWords.unshift(newWordObj);
+                        }
+                        addedCount++;
+                    }
+                }
             }
 
-            if (!exists) {
-                const opt = document.createElement('option');
-                opt.value = val;
-                opt.innerText = val;
-                chapterSelect.appendChild(opt);
+            autoStatus.innerText = '';
+
+            if (addedCount > 0) {
+                saveToLocal();
+                renderWordList();
+                document.getElementById('bulkText').value = '';
+                alert(`'${subject} - ${chapter}'에 총 ${addedCount}개의 단어가 성공적으로 등록되었습니다!`);
+            } else {
+                alert('단어 구분 형식(예: apple : 사과)을 확인해주세요.');
             }
-
-            chapterSelect.value = val;
-            input.value = '';
-            renderWordTable();
         }
 
-        /* 2. 과목별 독립 단원 삭제 처리 */
-        function deleteCurrentChapter() {
-            const currentSub = document.getElementById('subjectSelect').value;
-            const currentCh = document.getElementById('chapterSelect').value;
-
-            if (!confirm(`'${currentSub}' 과목의 '${currentCh}' 단원과 포함된 모든 단어를 삭제하시겠습니까?`)) return;
-
-            // 현재 선택된 과목의 해당 단원에 해당하는 단어들만 삭제
-            allWords = allWords.filter(w => !(w.subject === currentSub && w.chapter === currentCh));
-            
-            saveLocalBackup();
-            onSubjectChange();
+        function removeWord(id) {
+            currentWords = currentWords.filter(w => w.id !== id);
+            saveToLocal();
+            renderWordList();
         }
 
-        function handleWordKey(e) {
-            if (e.key === 'Enter') addWord();
+        function clearCurrentCategoryWords() {
+            const subject = document.getElementById('subjectSelect').value;
+            const chapter = document.getElementById('chapterSelect').value;
+
+            if (confirm(`'${subject} - ${chapter}'에 속한 단어만 모두 삭제하시겠습니까?`)) {
+                currentWords = currentWords.filter(w => !(w.subject === subject && w.chapter === chapter));
+                saveToLocal();
+                renderWordList();
+            }
         }
 
-        function addWord() {
-            const currentSub = document.getElementById('subjectSelect').value;
-            const currentCh = document.getElementById('chapterSelect').value;
+        function saveToLocal() {
+            localStorage.setItem('voca_words', JSON.stringify(currentWords));
+        }
 
-            const wordInput = document.getElementById('wordInput');
-            const meaningInput = document.getElementById('meaningInput');
+        function renderWordList() {
+            const container = document.getElementById('wordListContainer');
+            const subject = document.getElementById('subjectSelect').value;
+            const chapter = document.getElementById('chapterSelect').value;
 
-            const word = wordInput.value.trim();
-            const meaning = meaningInput.value.trim();
+            document.getElementById('filterInfo').innerText = `${subject} > ${chapter}`;
 
-            if (!word || !meaning) {
-                alert("영어 단어와 한글 뜻을 모두 입력해주세요.");
+            const filteredWords = currentWords.filter(w => w.subject === subject && w.chapter === chapter);
+            document.getElementById('wordCount').innerText = filteredWords.length;
+
+            if (filteredWords.length === 0) {
+                container.innerHTML = `
+                    <div style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                        이 단원에 등록된 단어가 없습니다.<br>왼쪽에서 단어를 등록해 보세요!
+                    </div>`;
                 return;
             }
 
-            const newId = allWords.length > 0 ? Math.max(...allWords.map(w => w.id || 0)) + 1 : 1;
-
-            allWords.push({
-                id: newId,
-                subject: currentSub,
-                chapter: currentCh,
-                word: word,
-                meaning: meaning
+            let html = '';
+            filteredWords.forEach(item => {
+                html += `
+                    <div class="word-item">
+                        <div class="word-info">
+                            <div>
+                                <strong>${escapeHtml(item.word)}</strong>
+                                <span class="phonetic">${escapeHtml(item.phonetic)}</span>
+                            </div>
+                            <div class="meaning">${escapeHtml(item.meaning)}</div>
+                        </div>
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                            <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;" onclick="speakWebSpeech('${escapeHtml(item.word)}')">음성</button>
+                            <button type="button" class="btn btn-danger" style="padding: 2px 8px; font-size: 0.75rem;" onclick="removeWord(${item.id})">삭제</button>
+                        </div>
+                    </div>
+                `;
             });
-
-            wordInput.value = '';
-            meaningInput.value = '';
-            wordInput.focus();
-
-            saveLocalBackup();
-            renderWordTable();
+            container.innerHTML = html;
         }
 
-        function deleteWord(id) {
-            allWords = allWords.filter(w => w.id !== id);
-            saveLocalBackup();
-            renderWordTable();
+        function speakWebSpeech(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                window.speechSynthesis.speak(utterance);
+            }
         }
 
-        function deleteSelectedWords() {
-            const checkboxes = document.querySelectorAll('.word-checkbox:checked');
-            if (checkboxes.length === 0) {
-                alert("삭제할 단어를 선택해주세요.");
+        function escapeHtml(str) {
+            if(!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function showStatus(el, msg, type) {
+            el.innerText = msg;
+            el.className = `status-msg ${type}`;
+            el.style.display = 'block';
+        }
+
+        function downloadJSON() {
+            if (currentWords.length === 0) {
+                alert('다운로드할 단어가 없습니다.');
+                return;
+            }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentWords, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "words.json");
+            dlAnchorElem.click();
+        }
+
+        async function uploadToGithub() {
+            const token = document.getElementById('githubToken').value.trim();
+            const repo = document.getElementById('githubRepo').value.trim();
+            const path = document.getElementById('githubPath').value.trim() || 'words.json';
+            const statusEl = document.getElementById('githubStatus');
+
+            if (!token || !repo) {
+                showStatus(statusEl, 'GitHub Access Token과 저장소(Repo) 이름을 입력해주세요.', 'error');
                 return;
             }
 
-            if (!confirm(`선택한 ${checkboxes.length}개 단어를 삭제하시겠습니까?`)) return;
+            localStorage.setItem('gh_token', token);
+            localStorage.setItem('gh_repo', repo);
 
-            const idsToDelete = Array.from(checkboxes).map(cb => parseInt(cb.value));
-            allWords = allWords.filter(w => !idsToDelete.includes(w.id));
+            showStatus(statusEl, 'GitHub 저장소에 업로드 중...', 'info');
 
-            saveLocalBackup();
-            renderWordTable();
-        }
-
-        function toggleSelectAll(masterCb) {
-            document.querySelectorAll('.word-checkbox').forEach(cb => {
-                cb.checked = masterCb.checked;
-            });
-        }
-
-        function renderWordTable() {
-            const currentSub = document.getElementById('subjectSelect').value;
-            const currentCh = document.getElementById('chapterSelect').value;
-
-            const tbody = document.getElementById('wordTableBody');
-            const filtered = allWords.filter(w => w.subject === currentSub && w.chapter === currentCh);
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">등록된 단어가 없습니다.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = filtered.map(w => `
-                <tr>
-                    <td><input type="checkbox" class="word-checkbox" value="${w.id}"></td>
-                    <td style="font-weight:700; color:var(--primary);">${escapeHtml(w.word)}</td>
-                    <td>${escapeHtml(w.meaning)}</td>
-                    <td>
-                        <button class="btn btn-danger" style="padding:2px 6px; font-size:0.75rem;" onclick="deleteWord(${w.id})">삭제</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function saveLocalBackup() {
-            localStorage.setItem('voca_words', JSON.stringify(allWords));
-        }
-
-        /* GitHub 저장 기능 (API 요청) */
-        async function saveToGithub() {
-            const token = document.getElementById('ghToken').value.trim();
-            const owner = document.getElementById('ghOwner').value.trim();
-            const repo = document.getElementById('ghRepo').value.trim();
-            const path = document.getElementById('ghPath').value.trim();
-
-            if (!token || !owner || !repo || !path) {
-                alert("GitHub 연동 설정을 먼저 올바르게 입력해주세요 (Token 필수)");
-                return;
-            }
-
-            saveConfig();
-
-            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-            const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(allWords, null, 2))));
+            const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(currentWords, null, 2))));
+            const url = `https://api.github.com/repos/${repo}/contents/${path}`;
 
             try {
-                // 기존 파일의 sha 값을 가져오기 위한 GET 요청
-                let sha = null;
-                const getRes = await fetch(url, {
+                let sha = '';
+                const getFileRes = await fetch(url, {
                     headers: { 'Authorization': `token ${token}` }
                 });
 
-                if (getRes.ok) {
-                    const getData = await getRes.json();
-                    sha = getData.sha;
+                if (getFileRes.ok) {
+                    const fileData = await getFileRes.json();
+                    sha = fileData.sha;
                 }
 
-                // GitHub API에 파일 업데이트(PUT) 요청
                 const putRes = await fetch(url, {
                     method: 'PUT',
                     headers: {
@@ -486,27 +589,23 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        message: 'Update words.json via Admin',
+                        message: `Update vocab list (${currentWords.length} words)`,
                         content: contentEncoded,
-                        sha: sha
+                        sha: sha ? sha : undefined
                     })
                 });
 
                 if (putRes.ok) {
-                    alert("🎉 GitHub에 성공적으로 저장되었습니다!");
+                    showStatus(statusEl, 'GitHub에 성공적으로 업로드되었습니다!', 'success');
                 } else {
                     const errData = await putRes.json();
-                    alert("❌ GitHub 저장 실패: " + (errData.message || '토큰이나 권한을 확인해주세요.'));
+                    showStatus(statusEl, `업로드 실패: ${errData.message || '설정을 확인하세요.'}`, 'error');
                 }
+
             } catch (err) {
                 console.error(err);
-                alert("❌ 저장 중 오류 발생: " + err.message);
+                showStatus(statusEl, 'GitHub 통신 오류가 발생했습니다.', 'error');
             }
-        }
-
-        function escapeHtml(str) {
-            if(!str) return '';
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
     </script>
 </body>
