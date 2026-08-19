@@ -23,7 +23,6 @@
         header { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         h1 { font-size: 1.4rem; color: var(--primary); }
 
-        /* 1:1 (5:5) 동일 너비 레이아웃 */
         .layout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         @media (max-width: 850px) { .layout-grid { grid-template-columns: 1fr; } }
 
@@ -46,7 +45,6 @@
         .btn-success { background-color: var(--success); color: white; }
         .btn-danger { background-color: var(--danger); color: white; }
 
-        /* 통일된 크기의 카테고리 관리 버튼 */
         .category-row { display: flex; gap: 6px; align-items: center; }
         .btn-mgmt { width: 52px; padding: 8px 0; text-align: center; font-size: 0.85rem; }
 
@@ -69,7 +67,6 @@
 <body>
 
     <header>
-        <!-- 1. 타이틀 수정 -->
         <h1>단어장 - 관리자 페이지</h1>
         <div style="font-size: 0.85rem; color: var(--text-muted);">
             과목/단원 관리 & 단어 등록
@@ -77,10 +74,9 @@
     </header>
 
     <div class="layout-grid">
-        <!-- 1열 (왼쪽 50%): 과목/단원 설정 및 단어 등록하기 -->
+        <!-- 1열 (왼쪽): 과목/단원 설정 및 단어 등록하기 -->
         <div>
             <div class="card">
-                <!-- 과목 선택 및 관리 -->
                 <div class="form-group">
                     <label>과목 선택 / 관리</label>
                     <div class="category-row">
@@ -91,7 +87,6 @@
                     </div>
                 </div>
 
-                <!-- 단원 선택 및 관리 -->
                 <div class="form-group">
                     <label>단원 선택 / 관리</label>
                     <div class="category-row">
@@ -104,7 +99,6 @@
 
                 <hr style="margin: 12px 0; border: none; border-top: 1px solid var(--border-color);">
 
-                <!-- 단어 등록하기 -->
                 <div class="card-title" style="margin-bottom: 6px;">
                     <span>단어 등록하기</span>
                     <span id="autoStatus" style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);"></span>
@@ -123,7 +117,7 @@
             </div>
         </div>
 
-        <!-- 2열 (오른쪽 50%): 선택된 과목/단원의 등록 단어 목록 & GitHub 저장 -->
+        <!-- 2열 (오른쪽): 선택된 과목/단원의 등록 단어 목록 & GitHub 저장 -->
         <div class="card">
             <div class="card-title">
                 <span>등록된 단어 (<span id="filterInfo" style="color:var(--primary);"></span>) : <span id="wordCount">0</span>개</span>
@@ -131,12 +125,11 @@
             </div>
 
             <div class="word-list-scroll" id="wordListContainer">
-                <!-- 선택된 과목/단원 단어 리스트 -->
+                <!-- 등록 단어 리스트 -->
             </div>
 
             <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
 
-            <!-- 1. 저장 영역 타이틀 수정 -->
             <div class="card-title">
                 GitHub 저장
             </div>
@@ -168,7 +161,6 @@
 
     <script>
         let subjects = ["5학년 영어", "6학년 영어", "기초 파닉스"];
-        // 과목별로 단원 목록을 독립되게 관리하는 객체 구조
         let subjectChapters = {
             "5학년 영어": ["1단원", "2단원", "3단원", "4단원", "5단원"],
             "6학년 영어": ["1단원", "2단원", "3단원"],
@@ -181,9 +173,7 @@
             if (savedSubjects) subjects = JSON.parse(savedSubjects);
 
             const savedSubjectChapters = localStorage.getItem('voca_subject_chapters');
-            if (savedSubjectChapters) {
-                subjectChapters = JSON.parse(savedSubjectChapters);
-            }
+            if (savedSubjectChapters) subjectChapters = JSON.parse(savedSubjectChapters);
 
             renderSubjectOptions();
 
@@ -192,12 +182,20 @@
             
             const savedWords = localStorage.getItem('voca_words');
             if (savedWords) {
-                try {
-                    currentWords = JSON.parse(savedWords);
-                } catch(e){}
+                try { currentWords = JSON.parse(savedWords); } catch(e){}
             }
             renderWordList();
         };
+
+        /* Safari 호환 유티리티: UTF-8 인코딩 (한글 및 특수문자 대응) */
+        function utf8ToBase64(str) {
+            const bytes = new TextEncoder().encode(str);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
 
         function renderSubjectOptions() {
             const subjectSelect = document.getElementById('subjectSelect');
@@ -214,7 +212,6 @@
             renderChapterOptions();
         }
 
-        /* 2. 과목이 선택되었을 때 해당 과목에 속한 단원만 바인딩 */
         function renderChapterOptions() {
             const subjectSelect = document.getElementById('subjectSelect');
             const chapterSelect = document.getElementById('chapterSelect');
@@ -245,7 +242,6 @@
             renderWordList();
         }
 
-        /* 과목 관리 */
         function addSubject() {
             const newSubject = prompt('새로 추가할 과목명을 입력해 주세요:');
             if (newSubject && newSubject.trim()) {
@@ -315,7 +311,6 @@
             }
         }
 
-        /* 2. 과목별 독립 단원 관리 (추가, 수정, 삭제) */
         function addChapter() {
             const currentSub = document.getElementById('subjectSelect').value;
             if (!currentSub) return;
@@ -391,7 +386,6 @@
             localStorage.setItem('voca_subject_chapters', JSON.stringify(subjectChapters));
         }
 
-        /* 발음기호 API */
         async function fetchPhonetic(word) {
             try {
                 const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
@@ -403,7 +397,6 @@
             return '';
         }
 
-        /* 단원 입력 처리 */
         async function processBulkInput() {
             const bulkText = document.getElementById('bulkText').value.trim();
             const autoStatus = document.getElementById('autoStatus');
@@ -552,6 +545,7 @@
             dlAnchorElem.click();
         }
 
+        /* Safari 호환 GitHub 업로드 로직 */
         async function uploadToGithub() {
             const token = document.getElementById('githubToken').value.trim();
             const repo = document.getElementById('githubRepo').value.trim();
@@ -568,13 +562,23 @@
 
             showStatus(statusEl, 'GitHub 저장소에 업로드 중...', 'info');
 
-            const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(currentWords, null, 2))));
-            const url = `https://api.github.com/repos/${repo}/contents/${path}`;
+            // Safari 호환 UTF-8 Base64 인코딩 적용
+            const jsonString = JSON.stringify(currentWords, null, 2);
+            const contentEncoded = utf8ToBase64(jsonString);
+
+            // Safari 캐싱 방지 타임스탬프 파라미터 추가
+            const url = `https://api.github.com/repos/${repo}/contents/${path}?t=${Date.now()}`;
+
+            // Safari 호환 'Bearer' 토큰 인증 헤더 사용
+            const authHeader = `Bearer ${token}`;
 
             try {
                 let sha = '';
                 const getFileRes = await fetch(url, {
-                    headers: { 'Authorization': `token ${token}` }
+                    headers: { 
+                        'Authorization': authHeader,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
                 });
 
                 if (getFileRes.ok) {
@@ -585,7 +589,8 @@
                 const putRes = await fetch(url, {
                     method: 'PUT',
                     headers: {
-                        'Authorization': `token ${token}`,
+                        'Authorization': authHeader,
+                        'Accept': 'application/vnd.github.v3+json',
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
