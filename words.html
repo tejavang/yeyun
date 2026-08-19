@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>영어 단어장</title>
+    <title>예윤이❤️단어장</title>
     <style>
         :root {
             --primary: #4f46e5;
@@ -15,6 +15,7 @@
             --border-color: #e2e8f0;
             --success: #10b981;
             --danger: #ef4444;
+            --accent-pink: #ec4899;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -36,12 +37,17 @@
             position: relative;
         }
 
+        /* 1. 커스텀 상단 헤더 */
         header {
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 8px;
+            padding: 0 4px;
             flex-shrink: 0;
         }
-        h1 { font-size: 1.2rem; color: var(--primary); font-weight: 800; }
+        .header-title { font-size: 1.15rem; color: var(--accent-pink); font-weight: 800; }
+        .star-count { font-size: 1rem; color: #f59e0b; font-weight: 800; background: #fffbebf5; padding: 4px 10px; border-radius: 20px; border: 1px solid #fde68a; }
 
         /* 카테고리 셀렉터 */
         .category-container {
@@ -60,7 +66,7 @@
             outline: none;
         }
 
-        /* 탭 네비게이션 (전체 목록, 카드 공부, 연습 시험, 최종 시험 순서) */
+        /* 탭 네비게이션 */
         nav {
             display: flex;
             background: #e2e8f0;
@@ -106,36 +112,33 @@
             display: flex;
         }
 
-        /* 1. 전체 목록 */
-        .list-container {
-            flex: 1;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            background: #fff;
+        /* 진행바 통일 */
+        .progress-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            flex-shrink: 0;
         }
-        .list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 14px;
-            border-bottom: 1px solid var(--border-color);
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s;
         }
-        .list-item:last-child { border-bottom: none; }
-        .list-item .w-eng { font-weight: 700; color: var(--primary); font-size: 0.95rem; }
-        .list-item .w-kor { font-size: 0.85rem; color: var(--text-main); }
 
-        /* 2. 카드 공부 (높이 절반 세로 배치) */
-        .card-tab-layout {
+        /* 통일된 카드 디자인 & 높이 */
+        .study-layout {
             display: flex;
             flex-direction: column;
             height: 100%;
             gap: 8px;
         }
+
         .card-wrapper {
-            height: 180px; /* 기존 대비 절반 높이 스케일 */
+            height: 180px;
             perspective: 1000px;
-            cursor: pointer;
             flex-shrink: 0;
         }
         .flashcard {
@@ -164,9 +167,10 @@
         }
         .card-back { transform: rotateY(180deg); }
         .card-word { font-size: 1.6rem; font-weight: 800; color: var(--primary); word-break: break-word; }
-        .card-meaning { font-size: 1.3rem; font-weight: 700; color: var(--text-main); word-break: break-word; }
+        .card-meaning { font-size: 1.4rem; font-weight: 700; color: var(--text-main); word-break: break-word; }
         .card-hint { margin-top: 6px; font-size: 0.75rem; color: var(--text-muted); }
 
+        /* 공통 버튼 스타일 */
         .btn {
             padding: 10px;
             border: none;
@@ -175,12 +179,16 @@
             font-size: 0.85rem;
             cursor: pointer;
             transition: background 0.2s;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .btn-primary { background: var(--primary); color: #fff; }
         .btn-secondary { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
         .btn-speech-wide {
             width: 100%;
-            padding: 10px;
+            height: 42px;
             background: var(--primary-light);
             color: var(--primary);
             border: 1px solid #c7d2fe;
@@ -194,78 +202,63 @@
             gap: 6px;
         }
 
-        .card-nav-buttons {
+        .row-group {
             display: flex;
             gap: 8px;
         }
 
-        /* 3 & 4. 연습/최종 시험 카드 */
-        .quiz-card {
+        /* 전체 목록 */
+        .list-container {
             flex: 1;
-            background: #fff;
+            overflow-y: auto;
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 16px;
+            background: #fff;
+        }
+        .list-item {
             display: flex;
-            flex-direction: column;
             justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border-color);
         }
-        .quiz-question {
-            text-align: center;
-            padding: 15px 0;
-        }
-        .quiz-question .q-title { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; }
-        .quiz-question .q-target { font-size: 1.6rem; font-weight: 800; color: var(--text-main); }
-        
-        .quiz-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
+        .list-item:last-child { border-bottom: none; }
+        .list-item .w-eng { font-weight: 700; color: var(--primary); font-size: 0.95rem; }
+        .list-item .w-kor { font-size: 0.85rem; color: var(--text-main); }
+
+        /* 시험 객관식 보기 버튼 */
         .opt-btn {
-            padding: 12px;
+            flex: 1;
+            height: 42px;
+            padding: 0 8px;
             border: 1px solid var(--border-color);
-            background: #f8fafc;
+            background: #fff;
             border-radius: 8px;
             font-size: 0.95rem;
             font-weight: 700;
             color: var(--text-main);
             cursor: pointer;
             word-break: break-word;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         }
         .opt-btn:active { background: var(--primary-light); }
 
-        .test-input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
+        /* 시험 주관식 입력창 */
         .test-input {
             width: 100%;
-            padding: 12px;
+            height: 42px;
+            padding: 0 12px;
             border: 2px solid var(--border-color);
             border-radius: 8px;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             text-align: center;
             outline: none;
+            background: #fff;
         }
         .test-input:focus { border-color: var(--primary); }
-
-        .progress-bar {
-            height: 6px;
-            background: #e2e8f0;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-        .progress-fill {
-            height: 100%;
-            background: var(--primary);
-            width: 0%;
-            transition: width 0.3s;
-        }
 
         .empty-msg {
             padding: 40px;
@@ -274,7 +267,7 @@
             font-size: 0.9rem;
         }
 
-        /* 0.3초 자동 사라짐 피드백 팝업 스타일 */
+        /* 0.3초 자동 사라짐 피드백 팝업 */
         .toast-popup {
             position: absolute;
             top: 50%;
@@ -304,11 +297,12 @@
 <body>
 
     <div class="app-container">
-        <!-- 화면 중앙 토스트 피드백 팝업 -->
         <div id="toastPopup" class="toast-popup"></div>
 
+        <!-- 1. 헤더 수정: 왼쪽 이름, 오른쪽 별 개수 -->
         <header>
-            <h1>영어 단어장</h1>
+            <div class="header-title">예윤이❤️단어장</div>
+            <div class="star-count" id="starCountDisplay">⭐ 0개</div>
         </header>
 
         <!-- 과목 / 단원 선택 -->
@@ -317,7 +311,7 @@
             <select id="chapterSelect" onchange="onCategoryChange()"></select>
         </div>
 
-        <!-- 변경된 메뉴 순서 (전체 목록, 카드 공부, 연습 시험, 최종 시험) -->
+        <!-- 탭 네비게이션 -->
         <nav>
             <button class="nav-btn active" onclick="switchTab('listTab', this)">전체 목록</button>
             <button class="nav-btn" onclick="switchTab('cardTab', this)">카드 공부</button>
@@ -331,9 +325,9 @@
                 <div class="list-container" id="wordListContainer"></div>
             </div>
 
-            <!-- 2. 카드 공부 탭 (절반 높이 + 발음 + 이전/다음 세로 순서) -->
+            <!-- 2. 카드 공부 탭 -->
             <div id="cardTab" class="tab-content">
-                <div class="card-tab-layout">
+                <div class="study-layout">
                     <div class="progress-bar"><div id="cardProgress" class="progress-fill"></div></div>
                     
                     <div class="card-wrapper" onclick="flipCard()">
@@ -348,42 +342,53 @@
                         </div>
                     </div>
 
-                    <!-- 그 아래 발음 듣기 버튼 -->
                     <button class="btn-speech-wide" onclick="speakCurrentWord(event)">
                         🔊 발음 듣기
                     </button>
 
-                    <!-- 그 아래 이전 다음 버튼 -->
-                    <div class="card-nav-buttons">
+                    <div class="row-group">
                         <button class="btn btn-secondary" style="flex:1" onclick="prevCard()">이전</button>
                         <button class="btn btn-primary" style="flex:1" onclick="nextCard()">다음</button>
                     </div>
                 </div>
             </div>
 
-            <!-- 3. 연습 시험 탭 (객관식) -->
+            <!-- 3. 연습 시험 탭 (카드 공부와 동일한 레이아웃 구조) -->
             <div id="quizTab" class="tab-content">
-                <div class="quiz-card" id="quizContainer">
-                    <div style="font-size: 0.8rem; text-align: right; color: var(--text-muted);" id="quizProgressText">0 / 0</div>
-                    <div class="quiz-question">
-                        <div class="q-title">다음 뜻에 알맞은 영어 단어를 고르세요</div>
-                        <div class="q-target" id="quizTargetMeaning">-</div>
+                <div class="study-layout" id="quizLayout">
+                    <div class="progress-bar"><div id="quizProgress" class="progress-fill"></div></div>
+
+                    <div class="card-wrapper">
+                        <div class="flashcard">
+                            <div class="card-face">
+                                <div class="card-meaning" id="quizTargetMeaning">-</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="quiz-options" id="quizOptions"></div>
+
+                    <div class="row-group" id="quizOptionsRow1"></div>
+                    <div class="row-group" id="quizOptionsRow2"></div>
                 </div>
             </div>
 
-            <!-- 4. 최종 시험 탭 (주관식) -->
+            <!-- 4. 최종 시험 탭 (카드 공부와 동일한 레이아웃 구조) -->
             <div id="testTab" class="tab-content">
-                <div class="test-card" id="testContainer">
-                    <div style="font-size: 0.8rem; text-align: right; color: var(--text-muted);" id="testProgressText">0 / 0</div>
-                    <div class="quiz-question">
-                        <div class="q-target" id="testTargetMeaning">-</div>
+                <div class="study-layout" id="testLayout">
+                    <div class="progress-bar"><div id="testProgress" class="progress-fill"></div></div>
+
+                    <div class="card-wrapper">
+                        <div class="flashcard">
+                            <div class="card-face">
+                                <div class="card-meaning" id="testTargetMeaning">-</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="test-input-group">
+
+                    <div style="height:42px;">
                         <input type="text" id="testInput" class="test-input" placeholder="영어 단어 입력" autocomplete="off" onkeyup="handleTestKey(event)">
-                        <button class="btn btn-primary" style="padding: 12px;" onclick="submitTestAnswer()">정답 제출</button>
                     </div>
+
+                    <button class="btn btn-primary" style="width:100%;" onclick="submitTestAnswer()">정답 제출</button>
                 </div>
             </div>
         </main>
@@ -410,33 +415,43 @@
             if (saved) {
                 try { passedChapters = new Set(JSON.parse(saved)); } catch(e){}
             }
+            updateStarCount();
         }
 
         function savePassedChapters() {
             localStorage.setItem('voca_passed_chapters', JSON.stringify(Array.from(passedChapters)));
+            updateStarCount();
+        }
+
+        /* 1. 상단 모은 별 개수 표시 업데이트 */
+        function updateStarCount() {
+            const count = passedChapters.size;
+            document.getElementById('starCountDisplay').innerText = `⭐ ${count}개`;
         }
 
         function loadWords() {
-            // URL 뒤에 ?v=타임스탬프를 붙여 모바일 브라우저의 강제 캐시를 방지합니다.
             fetch('words.json?v=' + new Date().getTime())
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('네트워크 응답 실패');
-                    }
+                    if (!response.ok) throw new Error('네트워크 응답 오류');
                     return response.json();
                 })
                 .then(data => {
                     allWords = data;
-                    // 불러온 최신 데이터를 localStorage에도 백업 저장
                     localStorage.setItem('voca_words', JSON.stringify(allWords));
                     initCategorySelects();
                 })
                 .catch(error => {
-                    console.error('JSON 로드 실패, 기존 로컬 데이터 사용:', error);
-                    // 인터넷 연결이 안 되거나 파일이 없을 때만 localStorage 데이터 사용
+                    console.error('JSON 불러오기 실패, 로컬 백업을 사용합니다:', error);
                     const saved = localStorage.getItem('voca_words');
                     if (saved) {
                         try { allWords = JSON.parse(saved); } catch(e) { allWords = []; }
+                    } else {
+                        allWords = [
+                            { id: 1, subject: "초등 5학년 영어", chapter: "1단원", word: "come true", meaning: "이루어지다" },
+                            { id: 2, subject: "초등 5학년 영어", chapter: "1단원", word: "apple", meaning: "사과" },
+                            { id: 3, subject: "초등 5학년 영어", chapter: "1단원", word: "school", meaning: "학교" },
+                            { id: 4, subject: "초등 5학년 영어", chapter: "1단원", word: "teacher", meaning: "선생님" }
+                        ];
                     }
                     initCategorySelects();
                 });
@@ -478,12 +493,11 @@
             cardIndex = 0;
 
             renderList();
-            renderCard(false); // 초기 과목 변경 시에는 자동 재생 안함
+            renderCard(false);
             initQuiz();
             initTest();
         }
 
-        /* 탭 전환 및 카드 진입 시 자동 발음 재생 */
         function switchTab(tabId, btnEl) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -492,11 +506,10 @@
             btnEl.classList.add('active');
 
             if (tabId === 'cardTab') {
-                renderCard(true); // 카드 공부 탭으로 전환되면 발음 재생
+                renderCard(true);
             }
         }
 
-        /* 0.3초 자동 피드백 팝업 함수 */
         function showFeedbackToast(isCorrect, text) {
             const popup = document.getElementById('toastPopup');
             popup.innerText = text;
@@ -504,7 +517,7 @@
 
             setTimeout(() => {
                 popup.classList.remove('show');
-            }, 300); // 0.3초 후 자동으로 없어짐
+            }, 300);
         }
 
         /* 1. 전체 목록 */
@@ -523,7 +536,7 @@
             `).join('');
         }
 
-        /* 2. 카드 공부 (발음 자동 재생 기능 포함) */
+        /* 2. 카드 공부 */
         function renderCard(autoSpeak = true) {
             const card = document.getElementById('flashcard');
             card.classList.remove('flipped');
@@ -578,43 +591,48 @@
             }
         }
 
-        /* 3. 연습 시험 (객관식) */
+        /* 3. 연습 시험 */
         function initQuiz() {
             quizIndex = 0;
             quizScore = 0;
             
-            // HTML 구조 재구성 (다시 풀어보기 후 갱신 보장)
-            const container = document.getElementById('quizContainer');
-            container.innerHTML = `
-                <div style="font-size: 0.8rem; text-align: right; color: var(--text-muted);" id="quizProgressText">0 / 0</div>
-                <div class="quiz-question">
-                    <div class="q-title">다음 뜻에 알맞은 영어 단어를 고르세요</div>
-                    <div class="q-target" id="quizTargetMeaning">-</div>
+            const layout = document.getElementById('quizLayout');
+            layout.innerHTML = `
+                <div class="progress-bar"><div id="quizProgress" class="progress-fill"></div></div>
+                <div class="card-wrapper">
+                    <div class="flashcard">
+                        <div class="card-face">
+                            <div class="card-meaning" id="quizTargetMeaning">-</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="quiz-options" id="quizOptions"></div>
+                <div class="row-group" id="quizOptionsRow1"></div>
+                <div class="row-group" id="quizOptionsRow2"></div>
             `;
             
             renderQuizStep();
         }
 
         function renderQuizStep() {
-            const container = document.getElementById('quizContainer');
+            const layout = document.getElementById('quizLayout');
             if (filteredWords.length === 0) {
-                container.innerHTML = `<div class="empty-msg">연습할 단어가 없습니다.</div>`;
+                layout.innerHTML = `<div class="empty-msg">연습할 단어가 없습니다.</div>`;
                 return;
             }
 
             if (quizIndex >= filteredWords.length) {
-                container.innerHTML = `
-                    <div style="text-align:center; padding: 30px 0;">
+                layout.innerHTML = `
+                    <div style="text-align:center; padding: 40px 0;">
                         <h2 style="color:var(--primary); margin-bottom:10px;">연습 시험 완료!</h2>
                         <p style="font-size:1.1rem; font-weight:700;">점수: ${quizScore} / ${filteredWords.length}</p>
-                        <button class="btn btn-primary" style="margin-top:20px; padding:10px 20px;" onclick="initQuiz()">다시 풀어보기</button>
+                        <button class="btn btn-primary" style="margin:20px auto 0; padding:0 30px;" onclick="initQuiz()">다시 풀어보기</button>
                     </div>`;
                 return;
             }
 
-            document.getElementById('quizProgressText').innerText = `${quizIndex + 1} / ${filteredWords.length}`;
+            const progress = ((quizIndex + 1) / filteredWords.length) * 100;
+            document.getElementById('quizProgress').style.width = `${progress}%`;
+
             const target = filteredWords[quizIndex];
             document.getElementById('quizTargetMeaning').innerText = target.meaning;
 
@@ -628,8 +646,14 @@
             }
             options.sort(() => Math.random() - 0.5);
 
-            const optionsContainer = document.getElementById('quizOptions');
-            optionsContainer.innerHTML = options.map(opt => `
+            const row1 = document.getElementById('quizOptionsRow1');
+            const row2 = document.getElementById('quizOptionsRow2');
+
+            row1.innerHTML = options.slice(0, 2).map(opt => `
+                <button class="opt-btn" onclick="checkQuizAnswer('${escapeHtml(opt)}')">${escapeHtml(opt)}</button>
+            `).join('');
+
+            row2.innerHTML = options.slice(2, 4).map(opt => `
                 <button class="opt-btn" onclick="checkQuizAnswer('${escapeHtml(opt)}')">${escapeHtml(opt)}</button>
             `).join('');
         }
@@ -648,33 +672,37 @@
             quizIndex++;
             setTimeout(() => {
                 renderQuizStep();
-            }, 300); // 팝업 사라진 후 다음 문제로
+            }, 300);
         }
 
-        /* 4. 최종 시험 (주관식) */
+        /* 4. 최종 시험 */
         function initTest() {
             testIndex = 0;
             testScore = 0;
 
-            const container = document.getElementById('testContainer');
-            container.innerHTML = `
-                <div style="font-size: 0.8rem; text-align: right; color: var(--text-muted);" id="testProgressText">0 / 0</div>
-                <div class="quiz-question">
-                    <div class="q-target" id="testTargetMeaning">-</div>
+            const layout = document.getElementById('testLayout');
+            layout.innerHTML = `
+                <div class="progress-bar"><div id="testProgress" class="progress-fill"></div></div>
+                <div class="card-wrapper">
+                    <div class="flashcard">
+                        <div class="card-face">
+                            <div class="card-meaning" id="testTargetMeaning">-</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="test-input-group">
+                <div style="height:42px;">
                     <input type="text" id="testInput" class="test-input" placeholder="영어 단어 입력" autocomplete="off" onkeyup="handleTestKey(event)">
-                    <button class="btn btn-primary" style="padding: 12px;" onclick="submitTestAnswer()">정답 제출</button>
                 </div>
+                <button class="btn btn-primary" style="width:100%;" onclick="submitTestAnswer()">정답 제출</button>
             `;
 
             renderTestStep();
         }
 
         function renderTestStep() {
-            const container = document.getElementById('testContainer');
+            const layout = document.getElementById('testLayout');
             if (filteredWords.length === 0) {
-                container.innerHTML = `<div class="empty-msg">시험을 볼 단어가 없습니다.</div>`;
+                layout.innerHTML = `<div class="empty-msg">시험을 볼 단어가 없습니다.</div>`;
                 return;
             }
 
@@ -689,18 +717,20 @@
                     updateChapterSelect(); 
                 }
 
-                container.innerHTML = `
-                    <div style="text-align:center; padding: 30px 0;">
+                layout.innerHTML = `
+                    <div style="text-align:center; padding: 40px 0;">
                         <h2 style="color:${isFullMark ? 'var(--success)' : 'var(--primary)'}; margin-bottom:10px;">
                             ${isFullMark ? '🎉 백점 완성! ⭐ 별을 획득했어요!' : '최종 시험 완료!'}
                         </h2>
                         <p style="font-size:1.1rem; font-weight:700;">점수: ${testScore} / ${filteredWords.length}</p>
-                        <button class="btn btn-primary" style="margin-top:20px; padding:10px 20px;" onclick="initTest()">다시 도전하기</button>
+                        <button class="btn btn-primary" style="margin:20px auto 0; padding:0 30px;" onclick="initTest()">다시 도전하기</button>
                     </div>`;
                 return;
             }
 
-            document.getElementById('testProgressText').innerText = `${testIndex + 1} / ${filteredWords.length}`;
+            const progress = ((testIndex + 1) / filteredWords.length) * 100;
+            document.getElementById('testProgress').style.width = `${progress}%`;
+
             const target = filteredWords[testIndex];
             document.getElementById('testTargetMeaning').innerText = target.meaning;
             
