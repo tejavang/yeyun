@@ -37,7 +37,7 @@
             position: relative;
         }
 
-        /* 1. 상단 헤더 (🥑 VOCA) */
+        /* 헤더 */
         header {
             display: flex;
             justify-content: space-between;
@@ -112,7 +112,7 @@
             display: flex;
         }
 
-        /* 진행바 통일 */
+        /* 진행바 */
         .progress-bar {
             height: 6px;
             background: #e2e8f0;
@@ -169,7 +169,7 @@
         .card-word { font-size: 1.6rem; font-weight: 800; color: var(--primary); word-break: break-word; }
         .card-meaning { font-size: 1.4rem; font-weight: 700; color: var(--text-main); word-break: break-word; }
 
-        /* 공통 버튼 스타일 */
+        /* 공통 버튼 */
         .btn {
             padding: 10px;
             border: none;
@@ -186,7 +186,6 @@
         .btn-primary { background: var(--primary); color: #fff; }
         .btn-secondary { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
         
-        /* 3등분 액션 버튼 스타일 */
         .btn-action-third {
             flex: 1;
             height: 42px;
@@ -221,14 +220,13 @@
             gap: 8px;
         }
 
-        /* 전체 목록 스타일 (하단 단어 가림 방지 여백 50px 추가) */
+        /* 전체 목록 스타일 (컨테이너 자체 padding 제거) */
         .list-container {
             flex: 1;
             overflow-y: auto;
             border: 1px solid var(--border-color);
             border-radius: 12px;
             background: #fff;
-            padding-bottom: 50px;
         }
         .list-item {
             display: flex;
@@ -293,7 +291,7 @@
         }
         .test-input:focus { border-color: var(--primary); }
 
-        /* 오답 노트 스타일 */
+        /* 오답 노트 */
         .wrong-answers-box {
             margin-top: 14px;
             text-align: left;
@@ -349,19 +347,16 @@
     <div class="app-container">
         <div id="toastPopup" class="toast-popup"></div>
 
-        <!-- 1. 헤더: 🥑 VOCA -->
         <header>
             <div class="header-title">🥑 VOCA</div>
             <div class="star-count" id="starCountDisplay">⭐ 0개</div>
         </header>
 
-        <!-- 과목 / 단원 선택 -->
         <div class="category-container">
             <select id="subjectSelect" onchange="updateChapterSelect()"></select>
             <select id="chapterSelect" onchange="onCategoryChange()"></select>
         </div>
 
-        <!-- 탭 네비게이션 -->
         <nav>
             <button class="nav-btn active" onclick="switchTab('listTab', this)">전체 목록</button>
             <button class="nav-btn" onclick="switchTab('cardTab', this)">카드 공부</button>
@@ -370,12 +365,10 @@
         </nav>
 
         <main>
-            <!-- 1. 전체 목록 탭 -->
             <div id="listTab" class="tab-content active">
                 <div class="list-container" id="wordListContainer"></div>
             </div>
 
-            <!-- 2. 카드 공부 탭 -->
             <div id="cardTab" class="tab-content">
                 <div class="study-layout">
                     <div class="progress-bar"><div id="cardProgress" class="progress-fill"></div></div>
@@ -391,7 +384,6 @@
                         </div>
                     </div>
 
-                    <!-- 3등분 액션 버튼 영역 -->
                     <div class="row-group">
                         <button id="speechRecBtn" class="btn-action-third" onclick="startSpeechRecognition(event)">
                             🎙️ 발음 하기
@@ -411,7 +403,6 @@
                 </div>
             </div>
 
-            <!-- 3. 연습 시험 탭 -->
             <div id="quizTab" class="tab-content">
                 <div class="study-layout" id="quizLayout">
                     <div class="progress-bar"><div id="quizProgress" class="progress-fill"></div></div>
@@ -429,7 +420,6 @@
                 </div>
             </div>
 
-            <!-- 4. 최종 시험 탭 -->
             <div id="testTab" class="tab-content">
                 <div class="study-layout" id="testLayout">
                     <div class="progress-bar"><div id="testProgress" class="progress-fill"></div></div>
@@ -590,6 +580,7 @@
             }, 300);
         }
 
+        /* 목록 렌더링: 마지막 항목 아래에 독립된 한 줄 높이의 빈 div 추가 */
         function renderList() {
             const container = document.getElementById('wordListContainer');
             if (filteredWords.length === 0) {
@@ -597,12 +588,15 @@
                 return;
             }
 
-            container.innerHTML = filteredWords.map(w => `
+            const itemsHtml = filteredWords.map(w => `
                 <div class="list-item" onclick="speakText('${escapeHtml(w.word)}')">
                     <span class="w-eng">${escapeHtml(w.word)}</span>
                     <span class="w-kor">${escapeHtml(w.meaning)}</span>
                 </div>
             `).join('');
+
+            // 마지막 칸 경계면 아래에 들어갈 빈 여백 요소를 함께 추가
+            container.innerHTML = itemsHtml + `<div style="height: 52px;" aria-hidden="true"></div>`;
         }
 
         /* 카드 공부 */
@@ -662,7 +656,7 @@
             }
         }
 
-        /* 사전 찾기 기능 */
+        /* 사전 찾기 */
         function openDictionary(e) {
             if (e) e.stopPropagation();
             if (filteredWords.length === 0) return;
@@ -674,7 +668,7 @@
             window.open(searchUrl, '_blank');
         }
 
-        /* 발음 하기 (음성 인식 기능) */
+        /* 발음 하기 */
         function initSpeechRecognition() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
