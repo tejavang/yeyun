@@ -228,7 +228,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 18px; /* [수정] 폰트 확장에 맞춘 패딩 조정 */
+            padding: 16px 18px;
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             user-select: none;
@@ -239,7 +239,6 @@
         }
         .list-item:last-child { border-bottom: none; }
         
-        /* [수정] 단어(영어) 폰트 크기 150% 확대: 1.15rem -> 1.725rem */
         .list-item .w-eng { 
             font-weight: 800; 
             color: var(--primary); 
@@ -248,7 +247,6 @@
             word-break: break-word;
         }
         
-        /* [수정] 뜻(한글) 폰트 크기 150% 확대: 1.05rem -> 1.575rem */
         .list-item .w-kor { 
             font-size: 1.575rem; 
             font-weight: 700;
@@ -487,6 +485,7 @@
             document.getElementById('starCountDisplay').innerText = `⭐ ${count}개`;
         }
 
+        /* [수정] 단어 데이터를 불러올 때 reverse()를 적용해 입력 순서대로 뒤집음 */
         function loadWords() {
             fetch('words.json?v=' + new Date().getTime())
                 .then(response => {
@@ -494,7 +493,8 @@
                     return response.json();
                 })
                 .then(data => {
-                    allWords = data;
+                    // 입력 순서(처음 입력한 단어부터) 보장을 위해 reverse() 적용
+                    allWords = data.reverse();
                     localStorage.setItem('voca_words', JSON.stringify(allWords));
                     initCategorySelects();
                 })
@@ -502,7 +502,11 @@
                     console.error('JSON 불러오기 실패, 로컬 백업 사용:', error);
                     const saved = localStorage.getItem('voca_words');
                     if (saved) {
-                        try { allWords = JSON.parse(saved); } catch(e) { allWords = []; }
+                        try { 
+                            allWords = JSON.parse(saved); 
+                        } catch(e) { 
+                            allWords = []; 
+                        }
                     } else {
                         allWords = [
                             { id: 1, subject: "초등 5학년 영어", chapter: "1단원", word: "come true", meaning: "이루어지다" },
