@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단어장 - 관리자 페이지</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); line-height: 1.5; padding: 16px; max-width: 1200px; margin: 0 auto; }
+        
+        header { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        h1 { font-size: 1.4rem; color: var(--primary); }
+
+        .layout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 850px) { .layout-grid { grid-template-columns: 1fr; } }
+
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; margin-bottom: 16px; }
+        .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; color: var(--text-main); }
+
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: var(--text-main); }
+        
+        input[type="text"], input[type="password"], select, textarea {
+            width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; transition: all 0.2s; background: #fff;
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-secondary { background-color: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background-color: #e2e8f0; }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
+
+        .category-row { display: flex; gap: 6px; align-items: center; }
+        .btn-mgmt { width: 52px; padding: 8px 0; text-align: center; font-size: 0.85rem; }
+
+        .word-list-scroll { flex: 1; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; min-height: 350px; max-height: 520px; }
+        .word-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border-color); background: #fff; }
+        .word-item:last-child { border-bottom: none; }
+        .word-info strong { font-size: 0.95rem; color: var(--primary); }
+        .word-info .meaning { font-size: 0.85rem; color: #334155; margin-top: 2px; }
+
+        .status-msg { padding: 8px 10px; border-radius: 6px; font-size: 0.8rem; margin-top: 8px; display: none; }
+        .status-msg.info { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .status-msg.success { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .status-msg.error { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>단어장 - 관리자 페이지</h1>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+            과목/단원 관리 & 단어 등록
+        </div>
+    </header>
+
+    <div class="layout-grid">
+        <!-- 1열 (왼쪽): 과목/단원 설정 및 단어 등록하기 -->
+        <div>
+            <div class="card">
+                <div class="form-group">
+                    <label>과목 선택 / 관리</label>
+                    <div class="category-row">
+                        <select id="subjectSelect" style="flex:1;" onchange="onSubjectChange()"></select>
+                        <button type="button" class="btn btn-secondary btn-mgmt" onclick="addSubject()">추가</button>
+                        <button type="button" class="btn btn-secondary btn-mgmt" onclick="editSubject()">수정</button>
+                        <button type="button" class="btn btn-danger btn-mgmt" onclick="deleteSubject()">삭제</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>단원 선택 / 관리</label>
+                    <div class="category-row">
+                        <select id="chapterSelect" style="flex:1;" onchange="onCategoryChange()"></select>
+                        <button type="button" class="btn btn-secondary btn-mgmt" onclick="addChapter()">추가</button>
+                        <button type="button" class="btn btn-secondary btn-mgmt" onclick="editChapter()">수정</button>
+                        <button type="button" class="btn btn-danger btn-mgmt" onclick="deleteChapter()">삭제</button>
+                    </div>
+                </div>
+
+                <hr style="margin: 12px 0; border: none; border-top: 1px solid var(--border-color);">
+
+                <div class="card-title" style="margin-bottom: 6px;">
+                    <span>단어 등록하기</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bulkText" style="font-weight: normal; font-size: 0.8rem; color: var(--text-muted);">
+                        <code>단어 : 뜻</code> 형식으로 한 줄에 하나씩 입력해 주세요.
+                    </label>
+                    <textarea id="bulkText" rows="14" placeholder="apple : 사과&#10;banana : 바나나&#10;school : 학교&#10;book : 책&#10;teacher : 선생님"></textarea>
+                </div>
+
+                <button type="button" class="btn btn-primary" style="width: 100%; padding: 10px;" onclick="processBulkInput()">
+                    단어 한 번에 등록하기
+                </button>
+            </div>
+        </div>
+
+        <!-- 2열 (오른쪽): 선택된 과목/단원의 등록 단어 목록 & 단어장 연동 -->
+        <div class="card">
+            <div class="card-title">
+                <span>등록된 단어 (<span id="filterInfo" style="color:var(--primary);"></span>) : <span id="wordCount">0</span>개</span>
+                <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" onclick="clearCurrentCategoryWords()">이 단원 전체 삭제</button>
+            </div>
+
+            <div class="word-list-scroll" id="wordListContainer">
+                <!-- 등록 단어 리스트 -->
+            </div>
+
+            <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
+
+            <div class="card-title">단어장 저장 및 불러오기</div>
+            <div id="loginPanel">
+                <div class="form-group">
+                    <label for="adminPassword">관리자 비밀번호</label>
+                    <input type="password" id="adminPassword" autocomplete="current-password" placeholder="Vercel에 설정한 관리자 비밀번호">
+                </div>
+                <button type="button" class="btn btn-primary" style="width: 100%; padding: 10px;" onclick="login()">관리자 로그인</button>
+            </div>
+            <div id="databaseControls" style="display:none;">
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">데이터는 Vercel Postgres에 저장됩니다.</p>
+                <div style="display: flex; gap: 6px;">
+                    <button type="button" class="btn btn-secondary" style="flex: 1; padding: 10px;" onclick="loadFromDatabase()">단어장 불러오기</button>
+                    <button type="button" class="btn btn-success" style="flex: 1; padding: 10px;" onclick="saveToDatabase()">단어장 저장</button>
+                </div>
+                <button type="button" class="btn btn-secondary" style="width:100%; margin-top:6px;" onclick="logout()">로그아웃</button>
+            </div>
+
+            <div id="githubStatus" class="status-msg"></div>
+        </div>
+    </div>
+
+    <script>
+        let subjects = [];
+        let subjectChapters = {};
+        let currentWords = [];
+
+        window.onload = async function() {
+            loadLocalData();
+        };
+
+        function loadLocalData() {
+            const savedSubjects = localStorage.getItem('voca_subjects');
+            if (savedSubjects) subjects = JSON.parse(savedSubjects);
+
+            const savedSubjectChapters = localStorage.getItem('voca_subject_chapters');
+            if (savedSubjectChapters) subjectChapters = JSON.parse(savedSubjectChapters);
+
+            const savedWords = localStorage.getItem('voca_words');
+            if (savedWords) {
+                try { currentWords = JSON.parse(savedWords); } catch(e){}
+            }
+
+            syncCategoriesFromWords();
+            renderSubjectOptions();
+            renderWordList();
+        }
+
+        function syncCategoriesFromWords() {
+            currentWords.forEach(w => {
+                if (w.subject && !subjects.includes(w.subject)) {
+                    subjects.push(w.subject);
+                }
+                if (w.subject && w.chapter) {
+                    if (!subjectChapters[w.subject]) subjectChapters[w.subject] = [];
+                    if (!subjectChapters[w.subject].includes(w.chapter)) {
+                        subjectChapters[w.subject].push(w.chapter);
+                    }
+                }
+            });
+            saveSubjectData();
+        }
+
+        function renderSubjectOptions() {
+            const subjectSelect = document.getElementById('subjectSelect');
+            const currentSub = subjectSelect.value;
+
+            if (subjects.length === 0) {
+                subjectSelect.innerHTML = '<option value="">(과목 없음)</option>';
+                renderChapterOptions();
+                return;
+            }
+
+            subjectSelect.innerHTML = subjects.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+
+            if (currentSub && subjects.includes(currentSub)) {
+                subjectSelect.value = currentSub;
+            } else {
+                subjectSelect.value = subjects[0];
+            }
+
+            renderChapterOptions();
+        }
+
+        function renderChapterOptions() {
+            const subjectSelect = document.getElementById('subjectSelect');
+            const chapterSelect = document.getElementById('chapterSelect');
+            const currentSub = subjectSelect.value;
+
+            if (!currentSub || !subjectChapters[currentSub] || subjectChapters[currentSub].length === 0) {
+                chapterSelect.innerHTML = '<option value="">(단원 없음)</option>';
+                return;
+            }
+
+            const currentChList = subjectChapters[currentSub];
+            const currentCh = chapterSelect.value;
+
+            chapterSelect.innerHTML = currentChList.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+
+            if (currentCh && currentChList.includes(currentCh)) {
+                chapterSelect.value = currentCh;
+            } else {
+                chapterSelect.value = currentChList[0];
+            }
+        }
+
+        function onSubjectChange() {
+            renderChapterOptions();
+            renderWordList();
+        }
+
+        function onCategoryChange() {
+            renderWordList();
+        }
+
+        function addSubject() {
+            const newSubject = prompt('새로 추가할 과목명을 입력해 주세요:');
+            if (newSubject && newSubject.trim()) {
+                const trimmed = newSubject.trim();
+                if (!subjects.includes(trimmed)) {
+                    subjects.push(trimmed);
+                    subjectChapters[trimmed] = [];
+                    
+                    saveSubjectData();
+                    renderSubjectOptions();
+                    document.getElementById('subjectSelect').value = trimmed;
+                    renderChapterOptions();
+                    renderWordList();
+                } else {
+                    alert('이미 존재하는 과목입니다.');
+                }
+            }
+        }
+
+        function editSubject() {
+            const currentSubject = document.getElementById('subjectSelect').value;
+            if (!currentSubject) return;
+
+            const updatedSubject = prompt('과목명을 수정하세요:', currentSubject);
+            if (updatedSubject && updatedSubject.trim() && updatedSubject.trim() !== currentSubject) {
+                const trimmed = updatedSubject.trim();
+                
+                currentWords.forEach(w => {
+                    if (w.subject === currentSubject) w.subject = trimmed;
+                });
+                saveToLocal();
+
+                const index = subjects.indexOf(currentSubject);
+                if (index !== -1) subjects[index] = trimmed;
+
+                if (subjectChapters[currentSubject]) {
+                    subjectChapters[trimmed] = subjectChapters[currentSubject];
+                    delete subjectChapters[currentSubject];
+                }
+                
+                saveSubjectData();
+                renderSubjectOptions();
+                document.getElementById('subjectSelect').value = trimmed;
+                renderChapterOptions();
+                renderWordList();
+            }
+        }
+
+        function deleteSubject() {
+            const currentSubject = document.getElementById('subjectSelect').value;
+            if (!currentSubject) return;
+
+            if (confirm(`'${currentSubject}' 과목과 해당 과목의 등록된 단어를 삭제하시겠습니까?`)) {
+                subjects = subjects.filter(s => s !== currentSubject);
+                delete subjectChapters[currentSubject];
+                currentWords = currentWords.filter(w => w.subject !== currentSubject);
+                
+                saveToLocal();
+                saveSubjectData();
+                renderSubjectOptions();
+                renderWordList();
+            }
+        }
+
+        function addChapter() {
+            const currentSub = document.getElementById('subjectSelect').value;
+            if (!currentSub) {
+                alert('먼저 과목을 추가해 주세요.');
+                return;
+            }
+
+            const newChapter = prompt(`'${currentSub}' 과목에 추가할 단원명을 입력해 주세요:`);
+            if (newChapter && newChapter.trim()) {
+                const trimmed = newChapter.trim();
+                if (!subjectChapters[currentSub]) subjectChapters[currentSub] = [];
+
+                if (!subjectChapters[currentSub].includes(trimmed)) {
+                    subjectChapters[currentSub].push(trimmed);
+                    saveSubjectData();
+                    renderChapterOptions();
+                    document.getElementById('chapterSelect').value = trimmed;
+                    renderWordList();
+                } else {
+                    alert('해당 과목에 이미 존재하는 단원입니다.');
+                }
+            }
+        }
+
+        function editChapter() {
+            const currentSub = document.getElementById('subjectSelect').value;
+            const currentChapter = document.getElementById('chapterSelect').value;
+            if (!currentSub || !currentChapter) return;
+
+            const updatedChapter = prompt('단원명을 수정하세요:', currentChapter);
+            if (updatedChapter && updatedChapter.trim() && updatedChapter.trim() !== currentChapter) {
+                const trimmed = updatedChapter.trim();
+                
+                currentWords.forEach(w => {
+                    if (w.subject === currentSub && w.chapter === currentChapter) {
+                        w.chapter = trimmed;
+                    }
+                });
+                saveToLocal();
+
+                const chList = subjectChapters[currentSub];
+                const index = chList.indexOf(currentChapter);
+                if (index !== -1) chList[index] = trimmed;
+
+                saveSubjectData();
+                renderChapterOptions();
+                document.getElementById('chapterSelect').value = trimmed;
+                renderWordList();
+            }
+        }
+
+        function deleteChapter() {
+            const currentSub = document.getElementById('subjectSelect').value;
+            const currentChapter = document.getElementById('chapterSelect').value;
+            if (!currentSub || !currentChapter) return;
+
+            const chList = subjectChapters[currentSub] || [];
+
+            if (confirm(`'${currentSub}' 과목의 '${currentChapter}' 단원과 해당 단원의 단어를 삭제하시겠습니까?`)) {
+                subjectChapters[currentSub] = chList.filter(c => c !== currentChapter);
+                currentWords = currentWords.filter(w => !(w.subject === currentSub && w.chapter === currentChapter));
+
+                saveToLocal();
+                saveSubjectData();
+                renderChapterOptions();
+                renderWordList();
+            }
+        }
+
+        function saveSubjectData() {
+            localStorage.setItem('voca_subjects', JSON.stringify(subjects));
+            localStorage.setItem('voca_subject_chapters', JSON.stringify(subjectChapters));
+        }
+
+        function processBulkInput() {
+            const subject = document.getElementById('subjectSelect').value;
+            const chapter = document.getElementById('chapterSelect').value;
+
+            if (!subject || !chapter) {
+                alert('단어를 등록할 과목과 단원을 먼저 만들어 주세요.');
+                return;
+            }
+
+            const bulkText = document.getElementById('bulkText').value.trim();
+
+            if (!bulkText) {
+                alert('등록할 단어를 입력해 주세요.');
+                return;
+            }
+
+            const lines = bulkText.split('\n');
+            let addedCount = 0;
+
+            for (const line of lines) {
+                const parts = line.split(/[:=\-\t]+/);
+                if (parts.length >= 2) {
+                    const word = parts[0].trim();
+                    const meaning = parts[1].trim();
+
+                    if (word && meaning) {
+                        const existingIdx = currentWords.findIndex(w => w.word.toLowerCase() === word.toLowerCase() && w.subject === subject && w.chapter === chapter);
+                        
+                        const newWordObj = {
+                            id: Date.now() + Math.random(),
+                            subject: subject,
+                            chapter: chapter,
+                            word: word,
+                            meaning: meaning
+                        };
+
+                        if (existingIdx >= 0) {
+                            currentWords[existingIdx] = newWordObj;
+                        } else {
+                            currentWords.unshift(newWordObj);
+                        }
+                        addedCount++;
+                    }
+                }
+            }
+
+            if (addedCount > 0) {
+                saveToLocal();
+                renderWordList();
+                document.getElementById('bulkText').value = '';
+                alert(`'${subject} - ${chapter}'에 총 ${addedCount}개의 단어가 성공적으로 등록되었습니다!`);
+            } else {
+                alert('단어 구분 형식(예: apple : 사과)을 확인해주세요.');
+            }
+        }
+
+        function removeWord(id) {
+            currentWords = currentWords.filter(w => w.id !== id);
+            saveToLocal();
+            renderWordList();
+        }
+
+        function clearCurrentCategoryWords() {
+            const subject = document.getElementById('subjectSelect').value;
+            const chapter = document.getElementById('chapterSelect').value;
+
+            if (!subject || !chapter) return;
+
+            if (confirm(`'${subject} - ${chapter}'에 속한 단어만 모두 삭제하시겠습니까?`)) {
+                currentWords = currentWords.filter(w => !(w.subject === subject && w.chapter === chapter));
+                saveToLocal();
+                renderWordList();
+            }
+        }
+
+        function saveToLocal() {
+            localStorage.setItem('voca_words', JSON.stringify(currentWords));
+        }
+
+        function renderWordList() {
+            const container = document.getElementById('wordListContainer');
+            const subject = document.getElementById('subjectSelect').value;
+            const chapter = document.getElementById('chapterSelect').value;
+
+            if (!subject || !chapter) {
+                document.getElementById('filterInfo').innerText = '선택 없음';
+                document.getElementById('wordCount').innerText = 0;
+                container.innerHTML = `
+                    <div style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                        과목과 단원을 추가해 주세요.
+                    </div>`;
+                return;
+            }
+
+            document.getElementById('filterInfo').innerText = `${subject} > ${chapter}`;
+
+            const filteredWords = currentWords.filter(w => w.subject === subject && w.chapter === chapter);
+            document.getElementById('wordCount').innerText = filteredWords.length;
+
+            if (filteredWords.length === 0) {
+                container.innerHTML = `
+                    <div style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                        이 단원에 등록된 단어가 없습니다.<br>왼쪽에서 단어를 등록해 보세요!
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            filteredWords.forEach(item => {
+                html += `
+                    <div class="word-item">
+                        <div class="word-info">
+                            <div>
+                                <strong>${escapeHtml(item.word)}</strong>
+                            </div>
+                            <div class="meaning">${escapeHtml(item.meaning)}</div>
+                        </div>
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                            <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;" onclick="speakWebSpeech('${escapeHtml(item.word)}')">음성</button>
+                            <button type="button" class="btn btn-danger" style="padding: 2px 8px; font-size: 0.75rem;" onclick="removeWord(${item.id})">삭제</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function speakWebSpeech(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function escapeHtml(str) {
+            if(!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function showStatus(el, msg, type) {
+            el.innerText = msg;
+            el.className = `status-msg ${type}`;
+            el.style.display = 'block';
+        }
+
+        function setLoggedIn(loggedIn) {
+            document.getElementById('loginPanel').style.display = loggedIn ? 'none' : 'block';
+            document.getElementById('databaseControls').style.display = loggedIn ? 'block' : 'none';
+        }
+
+        async function login() {
+            const password = document.getElementById('adminPassword').value;
+            const statusEl = document.getElementById('githubStatus');
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ password })
+                });
+                if (!response.ok) throw new Error((await response.json()).error || '로그인에 실패했습니다.');
+                document.getElementById('adminPassword').value = '';
+                setLoggedIn(true);
+                showStatus(statusEl, '관리자 로그인되었습니다.', 'success');
+                await loadFromDatabase();
+            } catch (error) {
+                showStatus(statusEl, error.message || '로그인에 실패했습니다.', 'error');
+            }
+        }
+
+        async function logout() {
+            await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+            setLoggedIn(false);
+            showStatus(document.getElementById('githubStatus'), '로그아웃되었습니다.', 'info');
+        }
+
+        async function loadFromDatabase() {
+            const statusEl = document.getElementById('githubStatus');
+            showStatus(statusEl, '단어장 데이터를 불러오는 중...', 'info');
+            try {
+                const response = await fetch('/api/words', { credentials: 'same-origin' });
+                if (!response.ok) throw new Error((await response.json()).error || '데이터를 읽지 못했습니다.');
+                currentWords = await response.json();
+                saveToLocal();
+                syncCategoriesFromWords();
+                renderSubjectOptions();
+                renderWordList();
+                showStatus(statusEl, `단어장 데이터 불러오기 성공 (${currentWords.length}개 단어)`, 'success');
+            } catch (error) {
+                showStatus(statusEl, error.message || '단어장 데이터를 읽는 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        async function saveToDatabase() {
+            const statusEl = document.getElementById('githubStatus');
+            showStatus(statusEl, '단어장 데이터를 저장하는 중...', 'info');
+            try {
+                const response = await fetch('/api/words', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ words: currentWords })
+                });
+                if (response.status === 401) {
+                    setLoggedIn(false);
+                    throw new Error('세션이 만료되었습니다. 다시 로그인해 주세요.');
+                }
+                if (!response.ok) throw new Error((await response.json()).error || '데이터를 저장하지 못했습니다.');
+                const result = await response.json();
+                showStatus(statusEl, `단어장 저장 완료 (${result.count}개 단어)`, 'success');
+            } catch (error) {
+                showStatus(statusEl, error.message || '단어장 저장 중 오류가 발생했습니다.', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
