@@ -417,7 +417,7 @@
                         if (existingIdx >= 0) {
                             currentWords[existingIdx] = newWordObj;
                         } else {
-                            currentWords.unshift(newWordObj);
+                            currentWords.push(newWordObj);
                         }
                         addedCount++;
                     }
@@ -457,53 +457,58 @@
             localStorage.setItem('voca_words', JSON.stringify(currentWords));
         }
 
-        function renderWordList() {
-            const container = document.getElementById('wordListContainer');
-            const subject = document.getElementById('subjectSelect').value;
-            const chapter = document.getElementById('chapterSelect').value;
+		function renderWordList() {
+			const container = document.getElementById('wordListContainer');
+			const subject = document.getElementById('subjectSelect').value;
+			const chapter = document.getElementById('chapterSelect').value;
 
-            if (!subject || !chapter) {
-                document.getElementById('filterInfo').innerText = '선택 없음';
-                document.getElementById('wordCount').innerText = 0;
-                container.innerHTML = `
-                    <div style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
-                        과목과 단원을 추가해 주세요.
-                    </div>`;
-                return;
-            }
+			if (!subject || !chapter) {
+				document.getElementById('filterInfo').innerText = '선택 없음';
+				document.getElementById('wordCount').innerText = 0;
+				container.innerHTML = `
+					<div style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+						과목과 단원을 추가해 주세요.
+					</div>`;
+				return;
+			}
 
-            document.getElementById('filterInfo').innerText = `${subject} > ${chapter}`;
+			document.getElementById('filterInfo').innerText = `${subject} > ${chapter}`;
 
-            const filteredWords = currentWords.filter(w => w.subject === subject && w.chapter === chapter);
-            document.getElementById('wordCount').innerText = filteredWords.length;
+			// 해당 과목/단원의 단어만 필터링
+			let filteredWords = currentWords.filter(w => w.subject === subject && w.chapter === chapter);
+			
+			// 추가된 순서(id 등록 순서)대로 정렬을 보장하고 싶다면 아래 주석을 해제하세요.
+			// filteredWords.sort((a, b) => a.id - b.id);
 
-            if (filteredWords.length === 0) {
-                container.innerHTML = `
-                    <div style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
-                        이 단원에 등록된 단어가 없습니다.<br>왼쪽에서 단어를 등록해 보세요!
-                    </div>`;
-                return;
-            }
+			document.getElementById('wordCount').innerText = filteredWords.length;
 
-            let html = '';
-            filteredWords.forEach(item => {
-                html += `
-                    <div class="word-item">
-                        <div class="word-info">
-                            <div>
-                                <strong>${escapeHtml(item.word)}</strong>
-                            </div>
-                            <div class="meaning">${escapeHtml(item.meaning)}</div>
-                        </div>
-                        <div style="display: flex; gap: 4px; align-items: center;">
-                            <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;" onclick="speakWebSpeech('${escapeHtml(item.word)}')">음성</button>
-                            <button type="button" class="btn btn-danger" style="padding: 2px 8px; font-size: 0.75rem;" onclick="removeWord(${item.id})">삭제</button>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
+			if (filteredWords.length === 0) {
+				container.innerHTML = `
+					<div style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+						이 단원에 등록된 단어가 없습니다.<br>왼쪽에서 단어를 등록해 보세요!
+					</div>`;
+				return;
+			}
+
+			let html = '';
+			filteredWords.forEach(item => {
+				html += `
+					<div class="word-item">
+						<div class="word-info">
+							<div>
+								<strong>${escapeHtml(item.word)}</strong>
+							</div>
+							<div class="meaning">${escapeHtml(item.meaning)}</div>
+						</div>
+						<div style="display: flex; gap: 4px; align-items: center;">
+							<button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;" onclick="speakWebSpeech('${escapeHtml(item.word)}')">음성</button>
+							<button type="button" class="btn btn-danger" style="padding: 2px 8px; font-size: 0.75rem;" onclick="removeWord(${item.id})">삭제</button>
+						</div>
+					</div>
+				`;
+			});
+			container.innerHTML = html;
+		}
 
         function speakWebSpeech(text) {
             if ('speechSynthesis' in window) {
