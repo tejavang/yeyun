@@ -139,6 +139,7 @@
                     <button type="button" class="btn btn-secondary" style="flex: 1; padding: 10px;" onclick="loadFromDatabase()">단어장 불러오기</button>
                     <button type="button" class="btn btn-success" style="flex: 1; padding: 10px;" onclick="saveToDatabase()">단어장 저장</button>
                 </div>
+                <button type="button" class="btn btn-secondary" style="width:100%; margin-top:6px;" onclick="importFromWordsJson()">기존 words.json 가져와 DB에 저장</button>
                 <button type="button" class="btn btn-secondary" style="width:100%; margin-top:6px;" onclick="logout()">로그아웃</button>
             </div>
 
@@ -590,6 +591,27 @@
                 showStatus(statusEl, `단어장 저장 완료 (${result.count}개 단어)`, 'success');
             } catch (error) {
                 showStatus(statusEl, error.message || '단어장 저장 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        async function importFromWordsJson() {
+            const statusEl = document.getElementById('githubStatus');
+            if (!confirm('현재 Vercel에 배포된 words.json의 단어를 DB에 저장합니다. DB에 이미 저장한 내용은 이 파일 내용으로 교체됩니다. 계속할까요?')) return;
+
+            showStatus(statusEl, '기존 words.json을 읽어오는 중...', 'info');
+            try {
+                const response = await fetch(`words.json?v=${Date.now()}`);
+                if (!response.ok) throw new Error('기존 words.json을 읽지 못했습니다.');
+                const words = await response.json();
+                if (!Array.isArray(words)) throw new Error('기존 words.json 형식이 올바르지 않습니다.');
+                currentWords = words;
+                saveToLocal();
+                syncCategoriesFromWords();
+                renderSubjectOptions();
+                renderWordList();
+                await saveToDatabase();
+            } catch (error) {
+                showStatus(statusEl, error.message || '기존 단어장을 가져오는 중 오류가 발생했습니다.', 'error');
             }
         }
     </script>
