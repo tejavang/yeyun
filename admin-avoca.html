@@ -72,6 +72,32 @@
     <div class="layout-grid">
         <!-- 1열 (왼쪽): 과목/단원 설정 및 단어 등록하기 -->
         <div>
+			<!-- 📸 Gemini 지문 사진 분석 카드 -->
+			<div class="card" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+				<div class="card-title" style="color: #166534;">📸 Gemini 지문 사진 단어 추출</div>
+				
+				<div class="form-group" style="margin-bottom: 8px;">
+					<label for="geminiApiKey" style="font-size: 0.8rem; font-weight: bold;">Gemini API Key</label>
+					<input type="password" id="geminiApiKey" placeholder="AI Studio API Key를 입력하세요" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
+				</div>
+
+				<div class="form-group" style="margin-bottom: 8px;">
+					<label for="passageImage" style="font-size: 0.8rem; font-weight: bold;">영어 지문 사진 선택</label>
+					<input type="file" id="passageImage" accept="image/*" style="width: 100%;">
+				</div>
+
+				<button type="button" class="btn btn-primary" onclick="processPassageImage()" style="width: 100%; background: #166534; color: white; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+					✨ 사진 분석 및 단어 추출하기
+				</button>
+
+				<!-- 분석 결과 안내창 (지문 제목/본문/해석) -->
+				<div id="passageResultArea" style="display: none; margin-top: 12px; padding: 10px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+					<h4 id="resTitle" style="margin-bottom: 4px; color: #0f172a;"></h4>
+					<p><strong>[본문]</strong> <span id="resPassage"></span></p>
+					<p style="margin-top: 4px;"><strong>[해석]</strong> <span id="resTranslation"></span></p>
+				</div>
+			</div>
+
             <div class="card">
                 <div class="form-group">
                     <label>과목 선택 / 관리</label>
@@ -619,6 +645,118 @@
                 showStatus(statusEl, error.message || '기존 단어장을 가져오는 중 오류가 발생했습니다.', 'error');
             }
         }
+		// 페이지 로드시 저장된 API 키 불러오기
+		document.addEventListener('DOMContentLoaded', () => {
+			const savedKey = localStorage.getItem('gemini_api_key');
+			if (savedKey) {
+				const keyInput = document.getElementById('geminiApiKey');
+				if (keyInput) keyInput.value = savedKey;
+			}
+		});
+
+		// Gemini 지문 분석 메인 함수
+		async function processPassageImage() {
+			const apiKeyInput = document.getElementById('geminiApiKey');
+			const fileInput = document.getElementById('passageImage');
+			const apiKey = apiKeyInput.value.trim();
+			const file = fileInput.files[0];
+
+			if (!apiKey) {
+				alert('Gemini API Key를 입력해주세요.');
+				return;
+			}
+			if (!file) {
+				alert('분석할 지문 사진을 선택해주세요.');
+				return;
+			}
+
+			// API 키 로컬 스토리지 저장
+			localStorage.setItem('gemini_api_key', apiKey);
+
+			try {
+				alert('Gemini가 지문과 단어를 분석 중입니다. 잠시만 기다려주세요...');
+
+				// 1. 이미지를 Base64로 변환
+				const base64Data = await new Promise((resolve) => {
+					const reader = new FileReader();
+					reader.onloadend = () => resolve(reader.result.split(',')[1]);
+					reader.readAsDataURL(file);
+				});
+
+				// 2. Gemini API 호출 (gemini-1.5-flash)
+				const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+				const requestBody = {
+					contents: [{
+						parts: [
+							{
+								text: `영어 지문 사진입니다. 지문 분석 후 반드시 아래 지정된 JSON 구조로만 답해주세요:
+		{
+		  "title": "지문 제목 (없으면 요약 제목)",
+		  "passage": "추출한 영어 지문 전체 텍스트",
+		  "translation": "영어 지문의 전체 한국어 해석",
+		  "vocabulary": [
+			{ "word": "영어단어1", "meaning": "지문 문맥에 맞는 한국어 뜻1" },
+			{ "word": "영어단어2", "meaning": "지문 문맥에 맞는 한국어 뜻2" }
+		  ]
+		}
+		※ vocabulary의 단어들은 지문에 처음 등장하는 순서대로 추출하세요.`
+							},
+							{
+								inline_data: {
+									mime_type: file.type,
+									data: base64Data
+								}
+							}
+						]
+					}],
+					generationConfig: {
+						response_mime_type: "application/json"
+					}
+				};
+
+				const response = await fetch(url, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(requestBody)
+				});
+
+				if (!response.ok) {
+					throw new Error(`API 오류: ${response.statusText}`);
+				}
+
+				const data = await response.json();
+				const resultText = data.candidates[0].content.parts[0].text;
+				const result = JSON.parse(resultText);
+
+				// 3. 지문 제목/본문/해석 표시
+				document.getElementById('passageResultArea').style.display = 'block';
+				document.getElementById('resTitle').innerText = `📌 ${result.title || '지문 분석 결과'}`;
+				document.getElementById('resPassage').innerText = result.passage || '';
+				document.getElementById('resTranslation').innerText = result.translation || '';
+
+				// 4. 추출된 단어를 '단어:뜻' 형태로 변환하여 bulkInput 상자에 입력
+				if (result.vocabulary && result.vocabulary.length > 0) {
+					const formattedWords = result.vocabulary
+						.map(v => `${v.word.trim()}:${v.meaning.trim()}`)
+						.join('\n');
+
+					// 기존 bulkInput 요소 가져오기
+					const bulkInput = document.getElementById('bulkInput');
+					if (bulkInput) {
+						bulkInput.value = formattedWords;
+					}
+
+					alert(`총 ${result.vocabulary.length}개의 단어가 추출되어 '단어 등록하기' 상자에 입력되었습니다!`);
+				} else {
+					alert('지문에서 단어를 추출하지 못했습니다.');
+				}
+
+			} catch (err) {
+				console.error(err);
+				alert('사진 분석 중 오류가 발생했습니다. API Key와 사진을 다시 확인해주세요.');
+			}
+		}
     </script>
 </body>
 </html>
