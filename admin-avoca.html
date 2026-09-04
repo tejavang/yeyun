@@ -164,7 +164,9 @@
                     <button type="button" class="btn btn-secondary" style="flex: 1; padding: 10px;" onclick="loadFromDatabase()">단어장 불러오기</button>
                     <button type="button" class="btn btn-success" style="flex: 1; padding: 10px;" onclick="saveToDatabase()">단어장 저장</button>
                 </div>
+				<!--
                 <button type="button" class="btn btn-secondary" style="width:100%; margin-top:6px;" onclick="importFromWordsJson()">기존 words.json 가져와 DB에 저장</button>
+				-->
                 <button type="button" class="btn btn-secondary" style="width:100%; margin-top:6px;" onclick="logout()">로그아웃</button>
             </div>
 
@@ -186,19 +188,50 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            selectedImageMimeType = file.type;
+            const statusEl = document.getElementById('aiStatus');
+            showStatus(statusEl, '이미지 최적화 처리 중...', 'info');
+
             const reader = new FileReader();
-            
             reader.onload = function(e) {
-                // Base64 데이터에서 헤더 'data:image/jpeg;base64,' 부분 제거
-                selectedImageBase64 = e.target.result.split(',')[1];
-                
-                // 미리보기 이미지 표시
-                const preview = document.getElementById('previewImage');
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-                
-                showStatus(document.getElementById('aiStatus'), '사진이 준비되었습니다. [사진 단어 추출] 버튼을 눌러주세요.', 'info');
+                const img = new Image();
+                img.onload = function() {
+                    // 세로 이미지(height > width)면 최대 폭 1200, 가로 이미지(width >= height)면 최대 폭 3000
+                    const isVertical = img.height > img.width;
+                    const maxWidth = isVertical ? 1200 : 3000;
+
+                    let targetWidth = img.width;
+                    let targetHeight = img.height;
+
+                    // 최대 폭을 초과할 경우 비율에 맞게 크기 축소
+                    if (targetWidth > maxWidth) {
+                        targetHeight = Math.round((img.height * maxWidth) / img.width);
+                        targetWidth = maxWidth;
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = targetWidth;
+                    canvas.height = targetHeight;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+                    // JPEG 포맷 (품질 0.85)으로 리사이징된 Base64 추출
+                    const resizedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+                    selectedImageMimeType = 'image/jpeg';
+                    selectedImageBase64 = resizedDataUrl.split(',')[1];
+
+                    // 미리보기 이미지 업데이트
+                    const preview = document.getElementById('previewImage');
+                    preview.src = resizedDataUrl;
+                    preview.style.display = 'block';
+
+                    showStatus(statusEl, `사진 최적화 완료 (${targetWidth}x${targetHeight}px). [사진 단어 추출] 버튼을 눌러주세요.`, 'info');
+                };
+                img.onerror = function() {
+                    showStatus(statusEl, '이미지를 불러올 수 없습니다.', 'error');
+                };
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
@@ -222,8 +255,8 @@
                 const { apiKey } = await keyResponse.json();
                 if (!apiKey) throw new Error('Vercel에 GEMINI_API_KEY 환경변수가 설정되지 않았습니다.');
 
-                // 2. Gemini 3.5 Flash Lite API 호출
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
+                // 2. Gemini 3.5 Flash API 호출
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
                 
                 // 작성된 프롬프트 삽입
                 const promptText = `
