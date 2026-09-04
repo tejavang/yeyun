@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
       FROM words w
       JOIN chapters c ON c.id = w.chapter_id
       JOIN subjects s ON s.id = c.subject_id
-      ORDER BY s.name, c.name, w.created_at, w.word`;
+      ORDER BY s.name, c.name, w.word`;
     res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300');
     return res.status(200).json(rows);
   }
