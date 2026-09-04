@@ -22,12 +22,13 @@ function validateWords(value) {
     const chapter = item.chapter.trim();
     const word = item.word.trim();
     const meaning = item.meaning.trim();
-    if (!subject || !chapter || !word || !meaning || subject.length > 200 || chapter.length > 300 || word.length > 300 || meaning.length > 1000) return null;
+    const sortOrder = typeof item.sort_order === 'number' ? item.sort_order : 0; // <--- 인덱스 추출
+
     const wordKey = word.toLocaleLowerCase('en-US');
     const key = `${subject}\u0000${chapter}\u0000${wordKey}`;
     if (seen.has(key)) return null;
     seen.add(key);
-    words.push({ subject, chapter, word, wordKey, meaning });
+    words.push({ subject, chapter, word, wordKey, meaning, sortOrder });
   }
   return words;
 }
@@ -40,11 +41,11 @@ module.exports = async function handler(req, res) {
   const sql = neon(process.env.DATABASE_URL);
   if (req.method === 'GET') {
     const rows = await sql`
-      SELECT w.id, s.name AS subject, c.name AS chapter, w.word, w.meaning
+      SELECT w.id, s.name AS subject, c.name AS chapter, w.word, w.meaning, w.sort_order
       FROM words w
       JOIN chapters c ON c.id = w.chapter_id
       JOIN subjects s ON s.id = c.subject_id
-      ORDER BY s.name, c.name, w.id`;
+      ORDER BY s.name, c.name, w.sort_order`;
     res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300');
     return res.status(200).json(rows);
   }
@@ -59,15 +60,16 @@ module.exports = async function handler(req, res) {
     sql`DELETE FROM chapters`,
     sql`DELETE FROM subjects`
   ];
-  for (const item of words) {
+  for (let i = 0; i < words.length; i++) {
+    const item = words[i];
     queries.push(sql`INSERT INTO subjects (name) VALUES (${item.subject}) ON CONFLICT (name) DO NOTHING`);
     queries.push(sql`
       INSERT INTO chapters (subject_id, name)
       SELECT id, ${item.chapter} FROM subjects WHERE name = ${item.subject}
       ON CONFLICT (subject_id, name) DO NOTHING`);
     queries.push(sql`
-      INSERT INTO words (chapter_id, word, word_key, meaning)
-      SELECT c.id, ${item.word}, ${item.wordKey}, ${item.meaning}
+      INSERT INTO words (chapter_id, word, word_key, meaning, sort_order)
+      SELECT c.id, ${item.word}, ${item.wordKey}, ${item.meaning}, ${i}
       FROM chapters c JOIN subjects s ON s.id = c.subject_id
       WHERE s.name = ${item.subject} AND c.name = ${item.chapter}`);
   }
