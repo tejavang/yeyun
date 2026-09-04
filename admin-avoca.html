@@ -475,7 +475,14 @@ JSON Format:
             
             const bulkText = document.getElementById('bulkText').value.trim();
             if (!bulkText) return alert('등록할 단어를 입력해 주세요.');
-
+            
+			// 1. 해당 과목/단원에 이미 등록된 단어 중 가장 큰 sort_order 구하기
+			const categoryWords = currentWords.filter(w => w.subject === subject && w.chapter === chapter);
+			let maxSortOrder = categoryWords.reduce((max, w) => {
+				const order = Number(w.sort_order) || 0;
+				return order > max ? order : max;
+			}, 0);
+            
             const lines = bulkText.split('\n');
             let addedCount = 0;
 
@@ -487,10 +494,24 @@ JSON Format:
 
                     if (word && meaning) {
                         const existingIdx = currentWords.findIndex(w => w.word.toLowerCase() === word.toLowerCase() && w.subject === subject && w.chapter === chapter);
-                        const newWordObj = { id: Date.now() + Math.random(), subject: subject, chapter: chapter, word: word, meaning: meaning };
-                        if (existingIdx >= 0) currentWords[existingIdx] = newWordObj;
-                        else currentWords.push(newWordObj);
-                        addedCount++;
+						if (existingIdx >= 0) {
+							// 이미 존재하는 단어 수정 시 기존 sort_order 유지
+							currentWords[existingIdx].word = word;
+							currentWords[existingIdx].meaning = meaning;
+						} else {
+							// 새 단어 추가 시 기존 최댓값 + 1부터 인덱싱
+							maxSortOrder++;
+							const newWordObj = {
+								id: Date.now() + Math.random(),
+								subject: subject,
+								chapter: chapter,
+								word: word,
+								meaning: meaning,
+								sort_order: maxSortOrder // <--- 순서 인덱스 추가
+							};
+							currentWords.push(newWordObj);
+						}
+						addedCount++;
                     }
                 }
             }
