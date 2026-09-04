@@ -228,7 +228,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 18px; /* [수정] 폰트 확장에 맞춘 패딩 조정 */
+            padding: 16px 18px; 
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             user-select: none;
@@ -239,18 +239,18 @@
         }
         .list-item:last-child { border-bottom: none; }
         
-        /* [수정] 단어(영어) 폰트 크기 150% 확대: 1.15rem -> 1.725rem */
+        /* [수정] 단어(영어) 폰트 크기 기존 대비 90% 축소: 1.725rem * 0.9 = 1.5rem */
         .list-item .w-eng { 
             font-weight: 800; 
             color: var(--primary); 
-            font-size: 1.725rem; 
+            font-size: 1.5rem; 
             text-align: left;
             word-break: break-word;
         }
         
-        /* [수정] 뜻(한글) 폰트 크기 150% 확대: 1.05rem -> 1.575rem */
+        /* [수정] 뜻(한글) 폰트 크기 기존 대비 90% 축소: 1.575rem * 0.9 = 1.4rem */
         .list-item .w-kor { 
-            font-size: 1.575rem; 
+            font-size: 1.4rem; 
             font-weight: 700;
             color: var(--text-main); 
             text-align: right;
@@ -359,7 +359,7 @@
 
         <nav>
             <button class="nav-btn active" onclick="switchTab('listTab', this)">전체 목록</button>
-            <button id="cardTabBtn" class="nav-btn" onclick="switchTab('cardTab', this)">카드 공부</button>
+            <button id="cardTabBtn" class="nav-btn" onclick="switchTab('cardTab', this)">카드 공부 ➡️</button>
             <button class="nav-btn" onclick="switchTab('quizTab', this)">연습 시험</button>
             <button class="nav-btn" onclick="switchTab('testTab', this)">최종 시험</button>
         </nav>
@@ -422,21 +422,7 @@
 
             <div id="testTab" class="tab-content">
                 <div class="study-layout" id="testLayout">
-                    <div class="progress-bar"><div id="testProgress" class="progress-fill"></div></div>
-
-                    <div class="card-wrapper">
-                        <div class="flashcard">
-                            <div class="card-face">
-                                <div class="card-meaning" id="testTargetMeaning">-</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="height:42px;">
-                        <input type="text" id="testInput" class="test-input" placeholder="영어 단어 입력" autocomplete="off" onkeyup="handleTestKey(event)">
-                    </div>
-
-                    <button class="btn btn-primary" style="width:100%;" onclick="submitTestAnswer()">정답 제출</button>
+                    <!-- 최종 시험 레이아웃은 initTest()에서 동적으로 생성됩니다 -->
                 </div>
             </div>
         </main>
@@ -550,7 +536,11 @@
             const currentSub = document.getElementById('subjectSelect').value;
             const currentCh = document.getElementById('chapterSelect').value;
 
-            originalFilteredWords = allWords.filter(w => w.subject === currentSub && w.chapter === currentCh);
+            // [수정] abc 순서가 아닌 고유 id 순서대로 단어장(입력) 순서를 보장합니다.
+            originalFilteredWords = allWords
+                .filter(w => w.subject === currentSub && w.chapter === currentCh)
+                .sort((a, b) => (a.id || 0) - (b.id || 0));
+
             filteredWords = [...originalFilteredWords];
             
             resetCardShuffleState();
@@ -566,7 +556,7 @@
             isCardShuffled = false;
             filteredWords = [...originalFilteredWords];
             const btn = document.getElementById('cardTabBtn');
-            if (btn) btn.innerText = "카드 공부";
+            if (btn) btn.innerText = "카드 공부 ➡️"; // [수정] 랜덤이 아닐 때 원래 순서 아이콘 추가
         }
 
         function switchTab(tabId, btnEl) {
@@ -580,7 +570,7 @@
                     btnEl.innerText = "카드 공부 🔀";
                     filteredWords = [...originalFilteredWords].sort(() => Math.random() - 0.5);
                 } else {
-                    btnEl.innerText = "카드 공부";
+                    btnEl.innerText = "카드 공부 ➡️"; // [수정] 랜덤이 아닐 때 원래 순서 아이콘 추가
                     filteredWords = [...originalFilteredWords];
                 }
                 renderCard(true);
@@ -871,6 +861,7 @@
             }, 300);
         }
 
+        // [수정] 최종 시험 초기화 및 알파벳 카드 레이아웃 생성
         function initTest() {
             testIndex = 0;
             testScore = 0;
@@ -888,10 +879,14 @@
                         </div>
                     </div>
                 </div>
-                <div style="height:42px;">
-                    <input type="text" id="testInput" class="test-input" placeholder="영어 단어 입력" autocomplete="off" onkeyup="handleTestKey(event)">
+                
+                <div id="testLetterInputDisplay" class="test-input" style="display:flex; align-items:center; justify-content:center; height: 42px; font-weight: bold; font-size: 1.2rem; letter-spacing: 2px;"></div>
+                <div id="testLetterCards" style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:12px; margin-bottom: 12px; min-height: 88px; align-content: flex-start;"></div>
+                
+                <div class="row-group">
+                    <button class="btn btn-secondary" style="flex:1;" onclick="undoTestLetter()">지우기</button>
+                    <button class="btn btn-primary" style="flex:2;" onclick="submitTestAnswer()">정답 제출</button>
                 </div>
-                <button class="btn btn-primary" style="width:100%;" onclick="submitTestAnswer()">정답 제출</button>
             `;
 
             renderTestStep();
@@ -946,26 +941,61 @@
             const target = testWords[testIndex];
             document.getElementById('testTargetMeaning').innerText = target.meaning;
             
-            const input = document.getElementById('testInput');
-            if (input) {
-                input.value = '';
-                input.focus();
-            }
+            // [수정] 시험 단어의 알파벳을 분리하여 카드 상태 생성 (띄어쓰기 제외)
+            window.currentTestLetters = target.word.replace(/\s+/g, '').split('');
+            window.testLetterCardsState = window.currentTestLetters.map((char, i) => ({ char, id: i, used: false })).sort(() => Math.random() - 0.5);
+            window.testUserInput = [];
+            
+            renderTestLetters();
         }
 
-        function handleTestKey(e) {
-            if (e.key === 'Enter') {
-                submitTestAnswer();
-            }
+        // [수정] 알파벳 카드 렌더링 함수
+        function renderTestLetters() {
+            const display = document.getElementById('testLetterInputDisplay');
+            const cardsContainer = document.getElementById('testLetterCards');
+            
+            if (!display || !cardsContainer) return;
+            
+            display.innerText = window.testUserInput.join('');
+            
+            cardsContainer.innerHTML = window.testLetterCardsState.map(item => {
+                if (item.used) {
+                    return '<button disabled style="width:40px; height:40px; border-radius:6px; border:1px solid #e2e8f0; background:#f1f5f9; color:#94a3b8; font-weight:bold; font-size:1.1rem;">' + escapeHtml(item.char) + '</button>';
+                } else {
+                    return '<button onclick="clickTestLetter(' + item.id + ')" style="width:40px; height:40px; border-radius:6px; border:1px solid var(--primary); background:#fff; color:var(--primary); font-weight:bold; cursor:pointer; font-size:1.1rem; box-shadow:0 2px 4px rgba(0,0,0,0.05);">' + escapeHtml(item.char) + '</button>';
+                }
+            }).join('');
         }
 
+        // [수정] 알파벳 카드 클릭 이벤트
+        window.clickTestLetter = function(id) {
+            const item = window.testLetterCardsState.find(x => x.id === id);
+            if (item && !item.used) {
+                item.used = true;
+                window.testUserInput.push(item.char);
+                renderTestLetters();
+            }
+        };
+
+        // [수정] 알파벳 입력 지우기(Undo) 기능
+        window.undoTestLetter = function() {
+            if (window.testUserInput && window.testUserInput.length > 0) {
+                const lastChar = window.testUserInput.pop();
+                const usedItems = window.testLetterCardsState.filter(x => x.used && x.char === lastChar);
+                if (usedItems.length > 0) {
+                    usedItems[usedItems.length - 1].used = false;
+                }
+                renderTestLetters();
+            }
+        };
+
+        // [수정] 알파벳 카드로 입력된 값을 정답과 비교
         function submitTestAnswer() {
-            const input = document.getElementById('testInput');
-            if (!input) return;
-
-            const val = input.value.trim().toLowerCase();
+            const val = (window.testUserInput || []).join('').toLowerCase();
             const target = testWords[testIndex];
-            const isCorrect = (val === target.word.trim().toLowerCase());
+            const expected = target.word.replace(/\s+/g, '').toLowerCase();
+
+            const isCorrect = (val === expected);
 
             if (isCorrect) {
                 testScore++;
