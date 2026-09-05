@@ -905,9 +905,35 @@
                 if (isFullMark) {
                     const currentSub = document.getElementById('subjectSelect').value;
                     const currentCh = document.getElementById('chapterSelect').value;
-                    passedChapters.add(`${currentSub}_${currentCh}`);
-                    savePassedChapters();
-                    updateChapterSelect(); 
+                    const chapterKey = `${currentSub}_${currentCh}`;
+                
+                    // 이전에 통과하지 않았던 새로운 단원인 경우에만 로직 실행
+                    if (!passedChapters.has(chapterKey)) {
+                        passedChapters.add(chapterKey);
+                        savePassedChapters();
+                        updateChapterSelect(); 
+                        
+                        // --- [추가된 백엔드 별 적립 로직] ---
+                        const userId = localStorage.getItem('tetris_user_id');
+                        const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
+                        
+                        if (userId) {
+                            // 사용자 ID가 있을 경우 백엔드로 1개 추가 요청
+                            fetch(`${apiBase}/api/add-star`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ userId: userId, amount: 1 })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if(data.success) {
+                                    console.log('별이 서버에 안전하게 적립되었습니다.');
+                                }
+                            })
+                            .catch(err => console.error('별 적립 서버 통신 에러:', err));
+                        }
+                        // ------------------------------------
+                    }
                 }
 
                 let wrongHtml = '';
