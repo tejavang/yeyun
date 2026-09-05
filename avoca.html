@@ -888,7 +888,7 @@
 			renderTestStep();
 		}
 
-		function renderTestStep() {
+		async function renderTestStep() {
 			const layout = document.getElementById('testLayout');
 			if (testWords.length === 0) {
 				layout.innerHTML = `<div class="empty-msg">시험을 볼 단어가 없습니다.</div>`;
@@ -913,21 +913,41 @@
 					if (!wasAlreadyPassed) {
 						titleMsg = '🎉 만점 축하합니다! (⭐+1)';
 						
-						const prevStars = window.currentServerStars || 0;
+						const userId = localStorage.getItem('tetris_user_id');
+						const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
+						
+						let prevStars = 0;
+						
+						// 🚀 window.currentServerStars 대신 서버에서 별 개수 FETCH 
+						if (userId) {
+							try {
+								const res = await fetch(`${apiBase}/api/game?userId=${userId}`);
+								const data = await res.json();
+								
+								if (!res.ok) {
+									console.error('API Error:', data);
+								} else if (data.stars !== undefined) {
+									prevStars = data.stars;
+								}
+							} catch (err) {
+								console.error('별 조회 실패:', err);
+							}
+						}
+						
 						const nextStars = prevStars + 1;
-						window.currentServerStars = nextStars; // 로컬 변수 즉시 증가
 
 						starAnimHtml = `
 							<div style="font-size: 1.3rem; margin: 12px 0; font-weight: bold; background: #f8fafc; padding: 10px; border-radius: 8px; display: inline-block;">
-								⭐ 별: <span id="starAnimText" style="transition: all 0.5s;">${prevStars}개</span>
+								⭐ 별: <span id="starAnimText" style="display: inline-block; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #333;">${prevStars}개</span>
 							</div>
 						`;
 
-						// 별 증가 애니메이션 연출 (0.6초 뒤 실행)
 						setTimeout(() => {
 							const animText = document.getElementById('starAnimText');
 							if(animText) {
-								animText.innerHTML = `<span style="text-decoration: line-through; color: #94a3b8;">${prevStars}개</span> <span style="color: #ff9800; font-size: 1.5rem; margin-left: 8px;">➡️ ${nextStars}개!</span>`;
+								animText.style.color = '#ff9800';
+								animText.style.transform = 'scale(1.3)';
+								animText.innerHTML = `${nextStars}개!`;
 							}
 						}, 600);
 						
@@ -935,20 +955,12 @@
 						savePassedChapters();
 						updateChapterSelect(); 
 				
-						const userId = localStorage.getItem('tetris_user_id');
-						const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
-						
+						// 증가된 별 서버에 저장
 						if (userId) {
 							fetch(`${apiBase}/api/game`, {
 								method: 'POST',
 								headers: { 'Content-Type': 'application/json' },
 								body: JSON.stringify({ action: 'add_star', userId: userId, amount: 1 })
-							})
-							.then(res => res.json())
-							.then(data => {
-								if (data.success && typeof data.stars === 'number') {
-									window.currentServerStars = data.stars;
-								}
 							}).catch(err => console.error('서버 별 증가 실패:', err));
 						}
 					} else {
@@ -994,7 +1006,6 @@
 			
 			renderTestLetters();
 		}
-
 		function renderTestLetters() {
 			const display = document.getElementById('testLetterInputDisplay');
 			const cardsContainer = document.getElementById('testLetterCards');
