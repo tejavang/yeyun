@@ -226,17 +226,66 @@
     <script>
         const ALLOWED_USERS = ['yeyun', 'woosong', 'jinyoung'];
 
+        // 기존 script 영역의 loadUserId 함수를 수정하고 새로운 함수를 추가합니다.
+        
         function loadUserId() {
             const savedId = localStorage.getItem('tetris_user_id');
             const displayTag = document.getElementById('portal-user-id');
             const inputArea = document.getElementById('user-input-area');
-
+            const walletArea = document.getElementById('user-wallet-area');
+        
             if (savedId && ALLOWED_USERS.includes(savedId)) {
                 displayTag.innerText = savedId;
                 inputArea.style.display = 'none';
+                walletArea.style.display = 'flex'; // 로그인 성공 시 지갑 영역 표시
+                fetchUserData(savedId); // 서버에서 별/코인 개수 가져오기
             } else {
                 displayTag.innerText = '미설정';
                 inputArea.style.display = 'flex';
+                walletArea.style.display = 'none';
+            }
+        }
+        
+        // 유저 데이터(별, 코인) 불러오기
+        function fetchUserData(userId) {
+            // 백엔드 주소가 필요합니다. (예: http://localhost:3000)
+            fetch(`/api/user-data?userId=${userId}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('portal-stars').innerText = data.stars || 0;
+                    document.getElementById('portal-coins').innerText = data.coins || 0;
+                })
+                .catch(err => console.error('데이터 불러오기 실패:', err));
+        }
+        
+        // 별을 코인으로 교환 (예: 1별 = 10코인)
+        function exchangeStarToCoin() {
+            const userId = localStorage.getItem('tetris_user_id');
+            const currentStars = parseInt(document.getElementById('portal-stars').innerText);
+        
+            if (currentStars <= 0) {
+                alert("교환할 별이 부족합니다!");
+                return;
+            }
+        
+            if (confirm(`현재 ${currentStars}개의 별이 있습니다. 코인으로 교환하시겠습니까? (1⭐ = 10🪙)`)) {
+                fetch('/api/exchange-stars', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userId })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("성공적으로 교환되었습니다!");
+                        // UI 즉시 업데이트 (서버 응답 데이터 기반)
+                        document.getElementById('portal-stars').innerText = data.stars;
+                        document.getElementById('portal-coins').innerText = data.coins;
+                    } else {
+                        alert(data.message || "교환에 실패했습니다.");
+                    }
+                })
+                .catch(err => alert("서버 오류가 발생했습니다."));
             }
         }
 
