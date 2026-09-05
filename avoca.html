@@ -898,48 +898,48 @@
                 layout.innerHTML = `<div class="empty-msg">시험을 볼 단어가 없습니다.</div>`;
                 return;
             }
-
+        
+            // 모든 문제를 다 풀었을 때
             if (testIndex >= testWords.length) {
-                const isFullMark = (testScore === testWords.length);
+                const isFullMark = (testScore === testWords.length && testWords.length > 0);
                 
-				if (isFullMark) {
-					const currentSub = document.getElementById('subjectSelect').value;
-					const currentCh = document.getElementById('chapterSelect').value;
-					const chapterKey = `${currentSub}_${currentCh}`;
-				
-					if (!passedChapters.has(chapterKey)) {
-						passedChapters.add(chapterKey);
-						savePassedChapters();
-						updateChapterSelect(); 
-				
-						// --- Neon 백엔드 별 추가 요청 ---
-						const userId = localStorage.getItem('tetris_user_id');
-						const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
-						
-						if (userId) {
-							fetch(`${apiBase}/api/game`, {
-								method: 'POST',
-								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify({ 
-									action: 'add_star',  // 'addStar' -> 'add_star'로 변경
-									userId: userId, 
-									amount: 1 
-								})
-							})
-							.then(res => res.json())
-							.then(data => {
-								console.log('별 적립 성공:', data);
-								// DB에서 최신 별 개수를 돌려받은 경우 화면 즉시 갱신
-								if (data.success && typeof data.stars === 'number') {
-									document.getElementById('starCountDisplay').innerText = `⭐ ${data.stars}개`;
-								}
-							})
-							.catch(err => console.error('접속 실패:', err));
-						}
-						// ------------------------------
-					}
-				}
-
+                // 만점일 때 별 적립 실행
+                if (isFullMark) {
+                    const currentSub = document.getElementById('subjectSelect').value;
+                    const currentCh = document.getElementById('chapterSelect').value;
+                    const chapterKey = `${currentSub}_${currentCh}`;
+                
+                    if (!passedChapters.has(chapterKey)) {
+                        passedChapters.add(chapterKey);
+                        savePassedChapters();
+                        updateChapterSelect(); 
+                
+                        // --- Neon 백엔드 별 추가 요청 ---
+                        const userId = localStorage.getItem('tetris_user_id');
+                        const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
+                
+                        if (userId) {
+                            fetch(`${apiBase}/api/game`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ 
+                                    action: 'add_star', // 서버 action명과 일치
+                                    userId: userId, 
+                                    amount: 1 
+                                })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                console.log('별 적립 성공:', data);
+                                if (data.success && typeof data.stars === 'number') {
+                                    document.getElementById('starCountDisplay').innerText = `⭐ ${data.stars}개`;
+                                }
+                            })
+                            .catch(err => console.error('접속 실패:', err));
+                        }
+                    }
+                }
+        
                 let wrongHtml = '';
                 if (testWrongList.length > 0) {
                     wrongHtml = `
@@ -954,24 +954,24 @@
                         </div>
                     `;
                 }
-
+        
                 layout.innerHTML = `
                     <div style="text-align:center; padding: 20px 0;">
-                        <h2 style="color:var(--primary); margin-bottom:8px;">최종 시험 완료!</h2>
+                        <h2 style="color:var(--primary); margin-bottom:8px;">${isFullMark ? '🎉 만점 축하합니다! ⭐+1' : '최종 시험 완료!'}</h2>
                         <p style="font-size:1.1rem; font-weight:700;">점수: ${testScore} / ${testWords.length}</p>
                         ${wrongHtml}
                         <button class="btn btn-primary" style="margin:16px auto 0; padding:0 30px;" onclick="initTest()">다시 풀어보기</button>
                     </div>`;
                 return;
             }
-
+        
+            // 다음 문제 렌더링 로직 (기존과 동일)
             const progress = ((testIndex + 1) / testWords.length) * 100;
             document.getElementById('testProgress').style.width = `${progress}%`;
-
+        
             const target = testWords[testIndex];
             document.getElementById('testTargetMeaning').innerText = target.meaning;
             
-            // [수정] 시험 단어의 알파벳을 분리하여 카드 상태 생성 (띄어쓰기 제외)
             window.currentTestLetters = target.word.replace(/\s+/g, '').split('');
             window.testLetterCardsState = window.currentTestLetters.map((char, i) => ({ char, id: i, used: false })).sort(() => Math.random() - 0.5);
             window.testUserInput = [];
@@ -1019,22 +1019,26 @@
             }
         };
 
-        // [수정] 알파벳 카드로 입력된 값을 정답과 비교
+        // 알파벳 카드로 입력된 값을 정답과 비교 및 채점 로직 수정
         function submitTestAnswer() {
-            const val = (window.testUserInput || []).join('').toLowerCase();
+            // 사용자가 입력한 알파벳 결합 (공백 제거 및 소문자화)
+            const val = (window.testUserInput || []).join('').replace(/\s+/g, '').toLowerCase();
             const target = testWords[testIndex];
+            
+            // 정답 단어 (공백 제거 및 소문자화)
             const expected = target.word.replace(/\s+/g, '').toLowerCase();
-
-            const isCorrect = (val === expected);
-
+        
+            // 두 값이 정확히 일치하는지 확인
+            const isCorrect = (val.length > 0 && val === expected);
+        
             if (isCorrect) {
-                testScore++;
+                testScore++; // 정답 시 정상적으로 점수 증가
                 showFeedbackToast(true, "⭕ 정답!");
             } else {
                 testWrongList.push(target);
                 showFeedbackToast(false, `❌ 오답\n(정답: ${target.word})`);
             }
-
+        
             testIndex++;
             setTimeout(() => {
                 renderTestStep();
