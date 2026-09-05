@@ -154,11 +154,25 @@
     </header>
 
     <!-- 접속 사용자 아이디 입력 및 표시 영역 -->
-    <div class="user-section">
-        <div class="user-status">ID: <b id="portal-user-id">미설정</b></div>
-        <div class="user-input-container" id="user-input-area">
-            <input type="text" id="portal-id-input" placeholder="yeyun 등">
-            <button onclick="savePortalUserId()">등록</button>
+    <!-- 기존 .user-section을 이렇게 교체하세요 -->
+    <div class="user-section" style="flex-direction: column; align-items: stretch; gap: 10px;">
+        <!-- 상단: 아이디 입력 및 상태 -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="user-status">ID: <b id="portal-user-id">미설정</b></div>
+            <div class="user-input-container" id="user-input-area">
+                <input type="text" id="portal-id-input" placeholder="yeyun 등">
+                <button onclick="savePortalUserId()">등록</button>
+            </div>
+        </div>
+        
+        <!-- 하단: 재화 상태 및 교환 버튼 (로그인 시에만 표시되도록 제어) -->
+        <div id="user-wallet-area" style="display: none; justify-content: space-between; align-items: center; border-top: 1px solid #f0f0f0; padding-top: 10px; margin-top: 5px;">
+            <div style="font-size: 13px; font-weight: 600;">
+                ⭐ <span id="portal-stars">0</span> | 🪙 <span id="portal-coins">0</span>
+            </div>
+            <button onclick="exchangeStarToCoin()" style="padding: 4px 10px; background-color: #f39c12; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;">
+                별 ➔ 코인 교환
+            </button>
         </div>
     </div>
 
