@@ -333,7 +333,7 @@
         </div>
 
         <div class="leaderboard-box">
-          <div class="leaderboard-title">🏆 TOP 10 🏆</div>
+          <div class="leaderboard-title">🏆 TOP 5 🏆</div>
           <ul id="leaderboard-list">
             <li style="justify-content: center; color: #a0a0a0;">로딩 중...</li>
           </ul>
@@ -341,7 +341,7 @@
 
         <div class="coin-info-box">
           <div class="user-tag">접속 ID: <b id="display-user-id" style="color:#f1c40f;">미설정</b></div>
-          <div class="coin-info-line">🪙 보유 코인: <span id="coin-count">--</span>개</div>
+          <div class="coin-info-line">🪙:<span id="coin-count">--</span>개</div>
           
           <div class="user-input-box" id="id-input-area">
             <input type="text" id="user-id-input" placeholder="yeyun 등">
@@ -349,7 +349,7 @@
           </div>
         </div>
 
-        <button class="overlay-restart-btn" id="restart-btn" onclick="tryStartGame()">게임 시작</button>
+        <button class="overlay-restart-btn" id="restart-btn" onclick="tryStartGame()">게임 시작(🪙×1)</button>
       </div>
     </div>
 
@@ -469,7 +469,8 @@
         list.innerHTML = '<li style="justify-content: center; color: #a0a0a0;">기록이 없습니다.</li>';
         return;
       }
-      leaderboardArray.forEach((entry, idx) => {
+      const top5 = leaderboardArray.slice(0, 5);
+      top5.forEach((entry, idx) => {
         const li = document.createElement('li');
         li.innerHTML = `
           <span class="lb-rank">${idx + 1}.</span> 
@@ -509,10 +510,11 @@
         const restartBtn = document.getElementById('restart-btn');
         if (currentCoins < 1) {
           restartBtn.disabled = true;
-          restartBtn.innerText = "코인 부족 🪙";
+          restartBtn.innerText = "코인 부족🪙";
         } else {
           restartBtn.disabled = false;
-          restartBtn.innerText = isGameOver && player.score > 0 ? "다시 시작" : "게임 시작";
+          const btnLabel = isGameOver && player.score > 0 ? "다시 시작" : "게임 시작";
+          restartBtn.innerText = `${btnLabel}(🪙)`;
         }
       } catch (err) {
         console.error('통신 실패 detail:', err);
