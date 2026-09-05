@@ -240,6 +240,10 @@
       color: #ffffff;
       font-weight: bold;
       margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
     }
 
     .user-tag {
@@ -252,6 +256,7 @@
       display: flex;
       gap: 6px;
       margin-top: 6px;
+      justify-content: center;
     }
 
     .user-input-box input {
@@ -278,7 +283,7 @@
     }
 
     .overlay-restart-btn {
-      padding: 8px 24px;
+      padding: 8px 20px;
       background: #2ecc71;
       border: 3px solid #27ae60;
       border-radius: 8px;
@@ -287,6 +292,10 @@
       font-weight: 900;
       cursor: pointer;
       box-shadow: 0 4px 0 #1e8449;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
 
     .overlay-restart-btn:disabled {
@@ -294,6 +303,27 @@
       border-color: #95a5a6;
       box-shadow: none;
       cursor: not-allowed;
+    }
+
+    /* === 금화 아이콘 및 회전 애니메이션 === */
+    .coin-icon {
+      display: inline-block;
+      vertical-align: middle;
+      animation: coinSpin 2s infinite linear;
+      transform-style: preserve-3d;
+      flex-shrink: 0;
+    }
+
+    @keyframes coinSpin {
+      0% {
+        transform: rotateY(0deg);
+      }
+      50% {
+        transform: rotateY(180deg);
+      }
+      100% {
+        transform: rotateY(360deg);
+      }
     }
   </style>
 </head>
@@ -341,7 +371,16 @@
 
         <div class="coin-info-box">
           <div class="user-tag">접속 ID: <b id="display-user-id" style="color:#f1c40f;">미설정</b></div>
-          <div class="coin-info-line">🪙:<span id="coin-count">--</span>개</div>
+          <div class="coin-info-line">
+            <svg class="coin-icon" viewBox="0 0 24 32" width="15" height="19">
+              <ellipse cx="12" cy="16" rx="10" ry="14" fill="#d35400" />
+              <ellipse cx="12" cy="15" rx="10" ry="14" fill="#f39c12" />
+              <ellipse cx="12" cy="15" rx="8.5" ry="12.5" fill="#f1c40f" />
+              <ellipse cx="12" cy="15" rx="5" ry="8" fill="#f39c12" />
+              <ellipse cx="12" cy="15" rx="3.5" ry="6.5" fill="#f1c40f" />
+              <path d="M 6 8 A 7 11 0 0 1 12 4 A 7 11 0 0 0 8 10 Z" fill="#ffffff" opacity="0.6" />
+            </svg> : <span id="coin-count">--</span>개
+          </div>
           
           <div class="user-input-box" id="id-input-area">
             <input type="text" id="user-id-input" placeholder="yeyun 등">
@@ -349,7 +388,16 @@
           </div>
         </div>
 
-        <button class="overlay-restart-btn" id="restart-btn" onclick="tryStartGame()">게임 시작(🪙×1)</button>
+        <button class="overlay-restart-btn" id="restart-btn" onclick="tryStartGame()">
+          게임 시작 (<svg class="coin-icon" viewBox="0 0 24 32" width="15" height="19">
+            <ellipse cx="12" cy="16" rx="10" ry="14" fill="#d35400" />
+            <ellipse cx="12" cy="15" rx="10" ry="14" fill="#f39c12" />
+            <ellipse cx="12" cy="15" rx="8.5" ry="12.5" fill="#f1c40f" />
+            <ellipse cx="12" cy="15" rx="5" ry="8" fill="#f39c12" />
+            <ellipse cx="12" cy="15" rx="3.5" ry="6.5" fill="#f1c40f" />
+            <path d="M 6 8 A 7 11 0 0 1 12 4 A 7 11 0 0 0 8 10 Z" fill="#ffffff" opacity="0.6" />
+          </svg>)
+        </button>
       </div>
     </div>
 
@@ -366,6 +414,15 @@
   <script>
     const ALLOWED_USERS = ['yeyun', 'woosong', 'jinyoung'];
     const GAME_ID = 'tetris';
+
+    const COIN_SVG = `<svg class="coin-icon" viewBox="0 0 24 32" width="15" height="19">
+      <ellipse cx="12" cy="16" rx="10" ry="14" fill="#d35400" />
+      <ellipse cx="12" cy="15" rx="10" ry="14" fill="#f39c12" />
+      <ellipse cx="12" cy="15" rx="8.5" ry="12.5" fill="#f1c40f" />
+      <ellipse cx="12" cy="15" rx="5" ry="8" fill="#f39c12" />
+      <ellipse cx="12" cy="15" rx="3.5" ry="6.5" fill="#f1c40f" />
+      <path d="M 6 8 A 7 11 0 0 1 12 4 A 7 11 0 0 0 8 10 Z" fill="#ffffff" opacity="0.6" />
+    </svg>`;
 
     const canvas = document.getElementById('tetris');
     const context = canvas.getContext('2d');
@@ -486,7 +543,7 @@
         document.getElementById('coin-count').innerText = '--';
         const restartBtn = document.getElementById('restart-btn');
         restartBtn.disabled = true;
-        restartBtn.innerText = "아이디를 입력하세요";
+        restartBtn.innerHTML = "아이디를 입력하세요";
         return;
       }
 
@@ -510,11 +567,11 @@
         const restartBtn = document.getElementById('restart-btn');
         if (currentCoins < 1) {
           restartBtn.disabled = true;
-          restartBtn.innerText = "코인 부족🪙";
+          restartBtn.innerHTML = `코인 부족 ${COIN_SVG}`;
         } else {
           restartBtn.disabled = false;
           const btnLabel = isGameOver && player.score > 0 ? "다시 시작" : "게임 시작";
-          restartBtn.innerText = `${btnLabel}(🪙)`;
+          restartBtn.innerHTML = `${btnLabel} (${COIN_SVG})`;
         }
       } catch (err) {
         console.error('통신 실패 detail:', err);
