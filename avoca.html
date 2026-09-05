@@ -416,6 +416,8 @@
 
     <script src="voca-config.js"></script>
     <script>
+		window.currentServerStars = 0; // 서버에서 가져온 별 개수를 임시 저장할 변수
+
 		let allWords = [];
 		let originalFilteredWords = [];
 		let filteredWords = [];
@@ -452,7 +454,10 @@
 				localStorage.setItem('tetris_user_id', userId);
 			}
 			
-			// 2. 단원 통과 기록 불러오기 (아이디별로 구분하여 관리)
+			// 2. 상단 우측에 아이디만 표시
+			document.getElementById('starCountDisplay').innerHTML = `👤 ${escapeHtml(userId)}`;
+
+			// 3. 단원 통과 기록 불러오기
 			const savedChapters = localStorage.getItem(`voca_passed_chapters_${userId}`);
 			if (savedChapters) {
 				try { passedChapters = new Set(JSON.parse(savedChapters)); } catch(e){}
@@ -460,7 +465,7 @@
 			
 			await loadWords();
 			
-			// 3. 서버에서 별 개수 동기화
+			// 4. 백그라운드에서 별 개수 동기화 (화면엔 표시 안 함)
 			await syncUserStarsOnly(); 
 		};
 
@@ -469,8 +474,6 @@
 			const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
 
 			if (!userId) return;
-
-			document.getElementById('starCountDisplay').innerHTML = `👤 ${userId} ⏳`; 
 
 			try {
 				const res = await fetch(`${apiBase}/api/game`, {
@@ -481,14 +484,10 @@
 				const data = await res.json();
 				
 				if (data.success || data.stars !== undefined) {
-					const stars = data.stars || 0;
-					document.getElementById('starCountDisplay').innerHTML = `👤 ${userId} ⭐ ${stars}개`;
-				} else {
-					document.getElementById('starCountDisplay').innerHTML = `👤 ${userId} ⭐ 0개`;
+					window.currentServerStars = data.stars || 0;
 				}
 			} catch (err) {
 				console.error('별 개수 동기화 실패:', err);
-				document.getElementById('starCountDisplay').innerHTML = `👤 ${userId} (오프라인)`;
 			}
 		}
 
@@ -899,6 +898,7 @@
 				const isFullMark = (currentScore === totalCount && totalCount > 0);
 				
 				let titleMsg = '최종 시험 완료!';
+				let starAnimHtml = '';
 
 				if (isFullMark) {
 					const currentSub = document.getElementById('subjectSelect').value;
@@ -908,7 +908,25 @@
 					const wasAlreadyPassed = passedChapters.has(chapterKey);
 				
 					if (!wasAlreadyPassed) {
-						titleMsg = '🎉 만점 축하합니다! ⭐+1';
+						titleMsg = '🎉 만점 축하합니다! (⭐+1)';
+						
+						const prevStars = window.currentServerStars || 0;
+						const nextStars = prevStars + 1;
+						window.currentServerStars = nextStars; // 로컬 변수 즉시 증가
+
+						starAnimHtml = `
+							<div style="font-size: 1.3rem; margin: 12px 0; font-weight: bold; background: #f8fafc; padding: 10px; border-radius: 8px; display: inline-block;">
+								⭐ 별: <span id="starAnimText" style="transition: all 0.5s;">${prevStars}개</span>
+							</div>
+						`;
+
+						// 별 증가 애니메이션 연출 (0.6초 뒤 실행)
+						setTimeout(() => {
+							const animText = document.getElementById('starAnimText');
+							if(animText) {
+								animText.innerHTML = `<span style="text-decoration: line-through; color: #94a3b8;">${prevStars}개</span> <span style="color: #ff9800; font-size: 1.5rem; margin-left: 8px;">➡️ ${nextStars}개!</span>`;
+							}
+						}, 600);
 						
 						passedChapters.add(chapterKey);
 						savePassedChapters();
@@ -921,22 +939,17 @@
 							fetch(`${apiBase}/api/game`, {
 								method: 'POST',
 								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify({ 
-									action: 'add_star', 
-									userId: userId, 
-									amount: 1
-								})
+								body: JSON.stringify({ action: 'add_star', userId: userId, amount: 1 })
 							})
 							.then(res => res.json())
 							.then(data => {
 								if (data.success && typeof data.stars === 'number') {
-									document.getElementById('starCountDisplay').innerHTML = `👤 ${userId} ⭐ ${data.stars}개`;
+									window.currentServerStars = data.stars;
 								}
-							})
-							.catch(err => console.error('서버 별 증가 실패:', err));
+							}).catch(err => console.error('서버 별 증가 실패:', err));
 						}
 					} else {
-						titleMsg = '🎉 만점 축하합니다! (이미 통과 완료)';
+						titleMsg = '🎉 만점 축하합니다!';
 					}
 				}
 
@@ -958,7 +971,8 @@
 				layout.innerHTML = `
 					<div style="text-align:center; padding: 20px 0;">
 						<h2 style="color:var(--primary); margin-bottom:8px;">${titleMsg}</h2>
-						<p style="font-size:1.1rem; font-weight:700;">점수: ${currentScore} / ${totalCount}</p>
+						${starAnimHtml}
+						<p style="font-size:1.1rem; font-weight:700; margin-top: 10px;">점수: ${currentScore} / ${totalCount}</p>
 						${wrongHtml}
 						<button class="btn btn-primary" style="margin:16px auto 0; padding:0 30px;" onclick="initTest()">다시 풀어보기</button>
 					</div>`;
