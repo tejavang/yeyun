@@ -18,7 +18,8 @@
             --accent-pink: #ec4899;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        /* 아이폰 더블 탭 확대 방지를 위해 touch-action: manipulation 유지 */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; touch-action: manipulation; }
         
         html, body { 
             height: 100vh;
@@ -287,7 +288,7 @@
             text-align: center;
             outline: none;
             background: #fff;
-            white-space: pre-wrap; /* 공백문자 시각화를 위해 추가 */
+            white-space: pre-wrap;
         }
         .test-input:focus { border-color: var(--primary); }
 
@@ -347,8 +348,7 @@
 
         <header>
             <div class="header-title">🥑 VOCA</div>
-            <!-- ID와 서버 연동 별 개수가 표시될 영역 -->
-            <div class="star-count" id="starCountDisplay">👤 Guest ⭐ 0개</div>
+            <div class="star-count" id="starCountDisplay">👤 연결중 ⏳</div>
         </header>
 
         <div class="category-container">
@@ -404,13 +404,11 @@
 
             <div id="quizTab" class="tab-content">
                 <div class="study-layout" id="quizLayout">
-                    <!-- 연습 시험 레이아웃 -->
                 </div>
             </div>
 
             <div id="testTab" class="tab-content">
                 <div class="study-layout" id="testLayout">
-                    <!-- 최종 시험 레이아웃은 initTest()에서 동적으로 생성됩니다 -->
                 </div>
             </div>
         </main>
@@ -432,33 +430,36 @@
 
         let testWords = [];
         let testIndex = 0;
-        let testScore = 0; // 전역 스코프 유지
+        let testScore = 0; 
         let testWrongList = [];
 
         let recognition = null;
         let isRecording = false;
 
-        window.onload = function() {
-            loadWords();
+        // [수정 핵심] async/await를 적용하여 비동기 실행 순서를 엄격하게 제어합니다.
+        window.onload = async function() {
             initSpeechRecognition();
-            syncUserData(); // 서버로부터 유저 데이터(별 갯수, 만점 단원) 동기화
+            
+            // 1. 단어장 데이터를 불러와서 select 요소를 화면에 그리는 작업을 완전히 끝낼 때까지 대기
+            await loadWords();
+            
+            // 2. 단어장이 화면에 생성된 이후에 서버 데이터를 가져와서 별 개수와 통과 목록을 덮어씌움
+            await syncUserData(); 
         };
 
-        // --- 1. 유저 데이터 서버 동기화 함수 ---
         async function syncUserData() {
             const userId = localStorage.getItem('tetris_user_id');
             const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
-            
+
             if (!userId) {
                 document.getElementById('starCountDisplay').innerHTML = `👤 Guest ⭐ 0개`;
+                updateChapterSelect();
                 return;
             }
 
             document.getElementById('starCountDisplay').innerHTML = `👤 ${userId} ⏳`; 
 
             try {
-                // 백엔드의 get_user_info 액션을 호출하여 별 개수와 통과 단원을 받아옵니다.
-                // (서버 game.js에 이 액션 처리가 추가되어 있어야 온전히 동작합니다.)
                 const res = await fetch(`${apiBase}/api/game`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -470,66 +471,43 @@
                     const stars = data.stars || 0;
                     document.getElementById('starCountDisplay').innerHTML = `👤 ${userId} ⭐ ${stars}개`;
                     
-                    // 서버에서 넘겨주는 통과 단원 정보가 있다면 동기화 
                     if (data.passedChapters && Array.isArray(data.passedChapters)) {
                         passedChapters = new Set(data.passedChapters);
-                    } else {
-                        // 서버 미지원 시 로컬 데이터라도 우선 백업
-                        const saved = localStorage.getItem('voca_passed_chapters');
-                        if (saved) { try { passedChapters = new Set(JSON.parse(saved)); } catch(e){} }
                     }
                     updateChapterSelect(); 
                 }
             } catch (err) {
                 console.error('유저 정보 동기화 실패:', err);
-                const saved = localStorage.getItem('voca_passed_chapters');
-                if (saved) { try { passedChapters = new Set(JSON.parse(saved)); } catch(e){} }
-                updateChapterSelect();
                 document.getElementById('starCountDisplay').innerHTML = `👤 ${userId} (오프라인)`;
+                updateChapterSelect();
             }
         }
 
-        // 로컬 백업용 챕터 저장 함수
-        function savePassedChapters() {
-            localStorage.setItem('voca_passed_chapters', JSON.stringify(Array.from(passedChapters)));
-        }
-
-        function loadWords() {
+        async function loadWords() {
             const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
             const source = apiBase ? `${apiBase}/api/words` : `words.json?v=${new Date().getTime()}`;
-            fetch(source)
-                .then(response => {
-                    if (!response.ok) throw new Error('네트워크 응답 오류');
-                    return response.json();
-                })
-                .then(data => {
-                    allWords = data;
-                    localStorage.setItem('voca_words', JSON.stringify(allWords));
-                    initCategorySelects();
-                })
-                .catch(error => {
-                    console.error('JSON 불러오기 실패, 로컬 백업 사용:', error);
-                    const saved = localStorage.getItem('voca_words');
-                    if (saved) {
-                        try { allWords = JSON.parse(saved); } catch(e) { allWords = []; }
-                    } else {
-                        allWords = [
-                            { id: 1, subject: "초등 5학년 영어", chapter: "1단원", word: "come true", meaning: "이루어지다" },
-                            { id: 2, subject: "초등 5학년 영어", chapter: "1단원", word: "apple", meaning: "사과" }
-                        ];
-                    }
-                    initCategorySelects();
-                });
+            
+            try {
+                const response = await fetch(source);
+                if (!response.ok) throw new Error('네트워크 응답 오류');
+                allWords = await response.json();
+                initCategorySelects();
+            } catch (error) {
+                console.error('단어 데이터 불러오기 실패:', error);
+                allWords = [
+                    { id: 1, subject: "기본 단어장", chapter: "1단원", word: "connection", meaning: "연결" }
+                ];
+                initCategorySelects();
+            }
         }
 
         function initCategorySelects() {
             const subjectSelect = document.getElementById('subjectSelect');
 
             let subjects = Array.from(new Set(allWords.map(w => w.subject)));
-            if (subjects.length === 0) subjects = ["초등 5학년 영어"];
+            if (subjects.length === 0) subjects = ["기본 단어장"];
 
             subjectSelect.innerHTML = subjects.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
-
             updateChapterSelect();
         }
 
@@ -537,6 +515,8 @@
             const subjectSelect = document.getElementById('subjectSelect');
             const chapterSelect = document.getElementById('chapterSelect');
             const currentSub = subjectSelect.value;
+
+            if(!currentSub || allWords.length === 0) return;
 
             let chapters = Array.from(new Set(allWords.filter(w => w.subject === currentSub).map(w => w.chapter)));
             if (chapters.length === 0) chapters = ["1단원"];
@@ -547,8 +527,6 @@
                 return `<option value="${escapeHtml(c)}">${escapeHtml(c)}${isPassed ? ' ⭐' : ''}</option>`;
             }).join('');
 
-            // UI 갱신을 위해 onCategoryChange 직접 호출 금지(무한루프 방지)
-            // 대신 탭이 리스트 탭일때만 새로고침 되도록 제어
             if(document.getElementById('listTab').classList.contains('active')){
                 onCategoryChange();
             }
@@ -759,26 +737,6 @@
             }
         }
 
-        function startSpeechRecognition(e) {
-            if (e) e.stopPropagation();
-            if (filteredWords.length === 0) return;
-
-            if (!recognition) {
-                alert("이 브라우저는 음성 인식을 지원하지 않습니다. (구글 크롬/사파리 권장)");
-                return;
-            }
-
-            if (isRecording) {
-                recognition.stop();
-            } else {
-                try {
-                    recognition.start();
-                } catch(err) {
-                    recognition.stop();
-                }
-            }
-        }
-
         function initQuiz() {
             quizIndex = 0;
             quizScore = 0;
@@ -882,10 +840,9 @@
             }, 500);
         }
 
-        // --- 2. 최종 시험 초기화 및 공백 카드 로직 적용 ---
         function initTest() {
             testIndex = 0;
-            window.testScore = 0; // 전역 스코프 유지 방어 코드
+            window.testScore = 0;
             testWrongList = [];
 
             testWords = [...originalFilteredWords].sort(() => Math.random() - 0.5);
@@ -920,13 +877,11 @@
                 return;
             }
         
-            // 모든 문제를 다 풀었을 때 (점수 정상 확인)
             if (testIndex >= testWords.length) {
                 const currentScore = window.testScore || 0; 
                 const totalCount = testWords.length;
                 const isFullMark = (currentScore === totalCount && totalCount > 0);
                 
-                // 만점일 때 별 적립 실행 (서버로 단원 정보도 함께 전송)
                 if (isFullMark) {
                     const currentSub = document.getElementById('subjectSelect').value;
                     const currentCh = document.getElementById('chapterSelect').value;
@@ -934,12 +889,11 @@
                 
                     if (!passedChapters.has(chapterKey)) {
                         passedChapters.add(chapterKey);
-                        savePassedChapters();
                         updateChapterSelect(); 
                 
                         const userId = localStorage.getItem('tetris_user_id');
                         const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
-                
+                        
                         if (userId) {
                             fetch(`${apiBase}/api/game`, {
                                 method: 'POST',
@@ -948,17 +902,21 @@
                                     action: 'add_star', 
                                     userId: userId, 
                                     amount: 1,
-                                    chapterKey: chapterKey // 서버에서 단원 통과 기록을 저장하도록 전달
+                                    chapterKey: chapterKey 
                                 })
                             })
                             .then(res => res.json())
                             .then(data => {
-                                console.log('서버 연동 성공:', data);
                                 if (data.success && typeof data.stars === 'number') {
                                     document.getElementById('starCountDisplay').innerHTML = `👤 ${userId} ⭐ ${data.stars}개`;
                                 }
                             })
                             .catch(err => console.error('접속 실패:', err));
+                        } else {
+                            // 게스트용 임시 별 개수 렌더링
+                            const currentText = document.getElementById('starCountDisplay').innerText;
+                            const guestStars = parseInt(currentText.replace(/[^0-9]/g, '')) || 0;
+                            document.getElementById('starCountDisplay').innerHTML = `👤 Guest ⭐ ${guestStars + 1}개`;
                         }
                     }
                 }
@@ -988,14 +946,12 @@
                 return;
             }
         
-            // 공백을 제거하지 않고 그대로 분리하여 카드 생성
             const progress = ((testIndex + 1) / testWords.length) * 100;
             document.getElementById('testProgress').style.width = `${progress}%`;
         
             const target = testWords[testIndex];
             document.getElementById('testTargetMeaning').innerText = target.meaning;
             
-            // 핵심: replace(/\s+/g, '') 구문 삭제하여 공백을 카드 데이터로 유지
             window.currentTestLetters = target.word.split(''); 
             window.testLetterCardsState = window.currentTestLetters.map((char, i) => ({ char, id: i, used: false })).sort(() => Math.random() - 0.5);
             window.testUserInput = [];
@@ -1009,11 +965,9 @@
             
             if (!display || !cardsContainer) return;
             
-            // test-input 영역에 입력된 문자열 렌더링 (CSS white-space: pre-wrap 적용됨)
             display.textContent = window.testUserInput.join('');
             
             cardsContainer.innerHTML = window.testLetterCardsState.map(item => {
-                // 공백 카드는 시각적으로 '␣' 로 표기하여 인지할 수 있게 만듦
                 const displayChar = item.char === ' ' ? '␣' : escapeHtml(item.char);
                 
                 if (item.used) {
@@ -1044,20 +998,15 @@
             }
         };
 
-        // --- 3. 공백 위치까지 완벽히 검사하여 채점 ---
         function submitTestAnswer() {
-            // 사용자가 누른 카드 배열 그대로 결합 (공백 유지)
             const val = (window.testUserInput || []).join('').toLowerCase();
             const target = testWords[testIndex];
-            
-            // 정답 단어도 공백 유지 소문자화
             const expected = target.word.toLowerCase();
         
-            // 두 값이 띄어쓰기 위치까지 정확히 일치하는지 확인
             const isCorrect = (val.length > 0 && val === expected);
         
             if (isCorrect) {
-                window.testScore = (window.testScore || 0) + 1; // 점수 확실히 증가시킴
+                window.testScore = (window.testScore || 0) + 1; 
                 showFeedbackToast(true, "⭕ 정답!");
             } else {
                 testWrongList.push(target);
