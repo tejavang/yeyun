@@ -422,43 +422,47 @@
         let cardIndex = 0;
         let isCardShuffled = false;
         let passedChapters = new Set(); 
-
+        
         let quizWords = [];
         let quizIndex = 0;
         let quizScore = 0;
         let quizWrongList = [];
-
+        
         let testWords = [];
         let testIndex = 0;
         let testScore = 0; 
         let testWrongList = [];
-
+        
         let recognition = null;
         let isRecording = false;
-
-        // [수정 핵심] async/await를 적용하여 비동기 실행 순서를 엄격하게 제어합니다.
+        
         window.onload = async function() {
             initSpeechRecognition();
             
-            // 1. 단어장 데이터를 불러와서 select 요소를 화면에 그리는 작업을 완전히 끝낼 때까지 대기
+            // 1. 페이지 접속 즉시 로컬 스토리지에서 만점 단원 기록을 무조건 불러옴 (서버에 의존하지 않음)
+            const savedChapters = localStorage.getItem('voca_passed_chapters');
+            if (savedChapters) {
+                try { passedChapters = new Set(JSON.parse(savedChapters)); } catch(e){}
+            }
+            
+            // 2. 단어장 데이터를 불러와서 화면(셀렉트 박스 등)을 구성
             await loadWords();
             
-            // 2. 단어장이 화면에 생성된 이후에 서버 데이터를 가져와서 별 개수와 통과 목록을 덮어씌움
-            await syncUserData(); 
+            // 3. 서버에서는 '별 개수'만 가져와서 상단 UI에 업데이트
+            await syncUserStarsOnly(); 
         };
-
-        async function syncUserData() {
+        
+        async function syncUserStarsOnly() {
             const userId = localStorage.getItem('tetris_user_id');
             const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
-
+        
             if (!userId) {
                 document.getElementById('starCountDisplay').innerHTML = `👤 Guest ⭐ 0개`;
-                updateChapterSelect();
                 return;
             }
-
+        
             document.getElementById('starCountDisplay').innerHTML = `👤 ${userId} ⏳`; 
-
+        
             try {
                 const res = await fetch(`${apiBase}/api/game`, {
                     method: 'POST',
@@ -470,19 +474,18 @@
                 if (data.success || data.stars !== undefined) {
                     const stars = data.stars || 0;
                     document.getElementById('starCountDisplay').innerHTML = `👤 ${userId} ⭐ ${stars}개`;
-                    
-                    if (data.passedChapters && Array.isArray(data.passedChapters)) {
-                        passedChapters = new Set(data.passedChapters);
-                    }
-                    updateChapterSelect(); 
                 }
             } catch (err) {
-                console.error('유저 정보 동기화 실패:', err);
+                console.error('별 개수 동기화 실패:', err);
                 document.getElementById('starCountDisplay').innerHTML = `👤 ${userId} (오프라인)`;
-                updateChapterSelect();
             }
         }
-
+        
+        // 만점 단원 기록을 브라우저에 저장하는 함수
+        function savePassedChapters() {
+            localStorage.setItem('voca_passed_chapters', JSON.stringify(Array.from(passedChapters)));
+        }
+        
         async function loadWords() {
             const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
             const source = apiBase ? `${apiBase}/api/words` : `words.json?v=${new Date().getTime()}`;
@@ -500,71 +503,71 @@
                 initCategorySelects();
             }
         }
-
+        
         function initCategorySelects() {
             const subjectSelect = document.getElementById('subjectSelect');
-
+        
             let subjects = Array.from(new Set(allWords.map(w => w.subject)));
             if (subjects.length === 0) subjects = ["기본 단어장"];
-
+        
             subjectSelect.innerHTML = subjects.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
             updateChapterSelect();
         }
-
+        
         function updateChapterSelect() {
             const subjectSelect = document.getElementById('subjectSelect');
             const chapterSelect = document.getElementById('chapterSelect');
             const currentSub = subjectSelect.value;
-
+        
             if(!currentSub || allWords.length === 0) return;
-
+        
             let chapters = Array.from(new Set(allWords.filter(w => w.subject === currentSub).map(w => w.chapter)));
             if (chapters.length === 0) chapters = ["1단원"];
-
+        
             chapterSelect.innerHTML = chapters.map(c => {
                 const key = `${currentSub}_${c}`;
                 const isPassed = passedChapters.has(key);
                 return `<option value="${escapeHtml(c)}">${escapeHtml(c)}${isPassed ? ' ⭐' : ''}</option>`;
             }).join('');
-
+        
             if(document.getElementById('listTab').classList.contains('active')){
                 onCategoryChange();
             }
         }
-
+        
         function onCategoryChange() {
             const currentSub = document.getElementById('subjectSelect').value;
             const currentCh = document.getElementById('chapterSelect').value;
-
+        
             originalFilteredWords = allWords
                 .filter(w => w.subject === currentSub && w.chapter === currentCh)
                 .sort((a, b) => (a.id || 0) - (b.id || 0));
-
+        
             filteredWords = [...originalFilteredWords];
             
             resetCardShuffleState();
             cardIndex = 0;
-
+        
             renderList();
             renderCard(false);
             initQuiz();
             initTest();
         }
-
+        
         function resetCardShuffleState() {
             isCardShuffled = false;
             filteredWords = [...originalFilteredWords];
             const btn = document.getElementById('cardTabBtn');
             if (btn) btn.innerText = "카드 공부 ➡️";
         }
-
+        
         function switchTab(tabId, btnEl) {
             const isCardTabCurrentlyActive = document.getElementById('cardTab').classList.contains('active');
-
+        
             if (tabId === 'cardTab' && isCardTabCurrentlyActive) {
                 isCardShuffled = !isCardShuffled;
                 cardIndex = 0;
-
+        
                 if (isCardShuffled) {
                     btnEl.innerText = "카드 공부 🔀";
                     filteredWords = [...originalFilteredWords].sort(() => Math.random() - 0.5);
@@ -575,20 +578,20 @@
                 renderCard(true);
                 return;
             }
-
+        
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-
+        
             document.getElementById(tabId).classList.add('active');
             btnEl.classList.add('active');
-
+        
             if (tabId === 'cardTab') {
                 resetCardShuffleState();
                 cardIndex = 0;
                 renderCard(true);
             } else {
                 resetCardShuffleState();
-
+        
                 if (tabId === 'quizTab') {
                     initQuiz();
                 } else if (tabId === 'testTab') {
@@ -596,80 +599,80 @@
                 }
             }
         }
-
+        
         function showFeedbackToast(isCorrect, text) {
             const popup = document.getElementById('toastPopup');
             popup.innerText = text;
             popup.className = `toast-popup ${isCorrect ? 'correct' : 'wrong'} show`;
-
+        
             setTimeout(() => {
                 popup.classList.remove('show');
             }, 500);
         }
-
+        
         function renderList() {
             const container = document.getElementById('wordListContainer');
             if (originalFilteredWords.length === 0) {
                 container.innerHTML = `<div class="empty-msg">등록된 단어가 없습니다.</div>`;
                 return;
             }
-
+        
             const itemsHtml = originalFilteredWords.map(w => `
                 <div class="list-item" onclick="speakText('${escapeHtml(w.word)}')">
                     <span class="w-eng">${escapeHtml(w.word)}</span>
                     <span class="w-kor">${escapeHtml(w.meaning)}</span>
                 </div>
             `).join('');
-
+        
             container.innerHTML = itemsHtml + `<div class="list-bottom-spacer" aria-hidden="true"></div>`;
         }
-
+        
         function renderCard(autoSpeak = true) {
             const card = document.getElementById('flashcard');
             card.classList.remove('flipped');
-
+        
             if (filteredWords.length === 0) {
                 document.getElementById('cardWord').innerText = "단어 없음";
                 document.getElementById('cardMeaning').innerText = "등록된 단어가 없습니다.";
                 document.getElementById('cardProgress').style.width = '0%';
                 return;
             }
-
+        
             const item = filteredWords[cardIndex];
             document.getElementById('cardWord').innerText = item.word;
             document.getElementById('cardMeaning').innerText = item.meaning;
-
+        
             const progress = ((cardIndex + 1) / filteredWords.length) * 100;
             document.getElementById('cardProgress').style.width = `${progress}%`;
-
+        
             if (autoSpeak) {
                 speakCurrentWord();
             }
         }
-
+        
         function flipCard() {
             if (filteredWords.length === 0) return;
             document.getElementById('flashcard').classList.toggle('flipped');
         }
-
+        
         function nextCard() {
             if (filteredWords.length === 0) return;
             cardIndex = (cardIndex + 1) % filteredWords.length;
             renderCard(true);
         }
-
+        
         function prevCard() {
             if (filteredWords.length === 0) return;
             cardIndex = (cardIndex - 1 + filteredWords.length) % filteredWords.length;
             renderCard(true);
         }
-
+        
         function speakCurrentWord(e) {
             if (e) e.stopPropagation();
             if (filteredWords.length === 0) return;
             speakText(filteredWords[cardIndex].word);
         }
-
+        
         function speakText(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
@@ -679,7 +682,7 @@
                 window.speechSynthesis.speak(utterance);
             }
         }
-
+        
         function openDictionary(e) {
             if (e) e.stopPropagation();
             if (filteredWords.length === 0) return;
@@ -690,7 +693,7 @@
             
             window.open(searchUrl, '_blank');
         }
-
+        
         function initSpeechRecognition() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
@@ -698,7 +701,7 @@
                 recognition.lang = 'en-US';
                 recognition.interimResults = false;
                 recognition.maxAlternatives = 1;
-
+        
                 recognition.onstart = function() {
                     isRecording = true;
                     const btn = document.getElementById('speechRecBtn');
@@ -707,25 +710,25 @@
                         btn.innerHTML = '🔴 듣는 중...';
                     }
                 };
-
+        
                 recognition.onresult = function(event) {
                     const spokenText = event.results[0][0].transcript.toLowerCase().trim();
                     const targetWord = filteredWords[cardIndex].word.toLowerCase().trim();
                     
                     const cleanSpoken = spokenText.replace(/[^a-z0-9 ]/g, '');
                     const cleanTarget = targetWord.replace(/[^a-z0-9 ]/g, '');
-
+        
                     if (cleanSpoken === cleanTarget) {
                         showFeedbackToast(true, `⭕ 정답!\n("${spokenText}")`);
                     } else {
                         showFeedbackToast(false, `❌ 다시 해봐요\n("${spokenText}")`);
                     }
                 };
-
+        
                 recognition.onerror = function(event) {
                     showFeedbackToast(false, "❌ 인식 실패");
                 };
-
+        
                 recognition.onend = function() {
                     isRecording = false;
                     const btn = document.getElementById('speechRecBtn');
@@ -736,14 +739,14 @@
                 };
             }
         }
-
+        
         function initQuiz() {
             quizIndex = 0;
             quizScore = 0;
             quizWrongList = [];
             
             quizWords = [...originalFilteredWords].sort(() => Math.random() - 0.5);
-
+        
             const layout = document.getElementById('quizLayout');
             layout.innerHTML = `
                 <div class="progress-bar"><div id="quizProgress" class="progress-fill"></div></div>
@@ -760,14 +763,14 @@
             
             renderQuizStep();
         }
-
+        
         function renderQuizStep() {
             const layout = document.getElementById('quizLayout');
             if (quizWords.length === 0) {
                 layout.innerHTML = `<div class="empty-msg">연습할 단어가 없습니다.</div>`;
                 return;
             }
-
+        
             if (quizIndex >= quizWords.length) {
                 let wrongHtml = '';
                 if (quizWrongList.length > 0) {
@@ -783,7 +786,7 @@
                         </div>
                     `;
                 }
-
+        
                 layout.innerHTML = `
                     <div style="text-align:center; padding: 20px 0;">
                         <h2 style="color:var(--primary); margin-bottom:8px;">연습 시험 완료!</h2>
@@ -793,13 +796,13 @@
                     </div>`;
                 return;
             }
-
+        
             const progress = ((quizIndex + 1) / quizWords.length) * 100;
             document.getElementById('quizProgress').style.width = `${progress}%`;
-
+        
             const target = quizWords[quizIndex];
             document.getElementById('quizTargetMeaning').innerText = target.meaning;
-
+        
             let options = [target.word];
             let otherWords = allWords.filter(w => w.word.toLowerCase() !== target.word.toLowerCase()).map(w => w.word);
             otherWords = Array.from(new Set(otherWords));
@@ -809,19 +812,19 @@
                 options.push(otherWords.splice(randIdx, 1)[0]);
             }
             options.sort(() => Math.random() - 0.5);
-
+        
             const row1 = document.getElementById('quizOptionsRow1');
             const row2 = document.getElementById('quizOptionsRow2');
-
+        
             row1.innerHTML = options.slice(0, 2).map(opt => `
                 <button class="opt-btn" onclick="checkQuizAnswer('${escapeHtml(opt)}')">${escapeHtml(opt)}</button>
             `).join('');
-
+        
             row2.innerHTML = options.slice(2, 4).map(opt => `
                 <button class="opt-btn" onclick="checkQuizAnswer('${escapeHtml(opt)}')">${escapeHtml(opt)}</button>
             `).join('');
         }
-
+        
         function checkQuizAnswer(selectedWord) {
             const target = quizWords[quizIndex];
             const isCorrect = (selectedWord.trim().toLowerCase() === target.word.trim().toLowerCase());
@@ -833,20 +836,20 @@
                 quizWrongList.push(target);
                 showFeedbackToast(false, "❌ 오답");
             }
-
+        
             quizIndex++;
             setTimeout(() => {
                 renderQuizStep();
             }, 500);
         }
-
+        
         function initTest() {
             testIndex = 0;
             window.testScore = 0;
             testWrongList = [];
-
+        
             testWords = [...originalFilteredWords].sort(() => Math.random() - 0.5);
-
+        
             const layout = document.getElementById('testLayout');
             layout.innerHTML = `
                 <div class="progress-bar"><div id="testProgress" class="progress-fill"></div></div>
@@ -866,10 +869,10 @@
                     <button class="btn btn-primary" style="flex:2;" onclick="submitTestAnswer()">정답 제출</button>
                 </div>
             `;
-
+        
             renderTestStep();
         }
-
+        
         function renderTestStep() {
             const layout = document.getElementById('testLayout');
             if (testWords.length === 0) {
@@ -888,12 +891,15 @@
                     const chapterKey = `${currentSub}_${currentCh}`;
                 
                     if (!passedChapters.has(chapterKey)) {
+                        // 1. 단원 통과 기록은 로컬 스토리지에만 저장
                         passedChapters.add(chapterKey);
+                        savePassedChapters();
                         updateChapterSelect(); 
                 
                         const userId = localStorage.getItem('tetris_user_id');
                         const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
                         
+                        // 2. 별 획득(점수)은 서버에 전송하여 저장
                         if (userId) {
                             fetch(`${apiBase}/api/game`, {
                                 method: 'POST',
@@ -901,8 +907,7 @@
                                 body: JSON.stringify({ 
                                     action: 'add_star', 
                                     userId: userId, 
-                                    amount: 1,
-                                    chapterKey: chapterKey 
+                                    amount: 1
                                 })
                             })
                             .then(res => res.json())
@@ -911,9 +916,8 @@
                                     document.getElementById('starCountDisplay').innerHTML = `👤 ${userId} ⭐ ${data.stars}개`;
                                 }
                             })
-                            .catch(err => console.error('접속 실패:', err));
+                            .catch(err => console.error('서버 별 증가 실패:', err));
                         } else {
-                            // 게스트용 임시 별 개수 렌더링
                             const currentText = document.getElementById('starCountDisplay').innerText;
                             const guestStars = parseInt(currentText.replace(/[^0-9]/g, '')) || 0;
                             document.getElementById('starCountDisplay').innerHTML = `👤 Guest ⭐ ${guestStars + 1}개`;
@@ -958,7 +962,7 @@
             
             renderTestLetters();
         }
-
+        
         function renderTestLetters() {
             const display = document.getElementById('testLetterInputDisplay');
             const cardsContainer = document.getElementById('testLetterCards');
@@ -977,7 +981,7 @@
                 }
             }).join('');
         }
-
+        
         window.clickTestLetter = function(id) {
             const item = window.testLetterCardsState.find(x => x.id === id);
             if (item && !item.used) {
@@ -986,7 +990,7 @@
                 renderTestLetters();
             }
         };
-
+        
         window.undoTestLetter = function() {
             if (window.testUserInput && window.testUserInput.length > 0) {
                 const lastChar = window.testUserInput.pop();
@@ -997,7 +1001,7 @@
                 renderTestLetters();
             }
         };
-
+        
         function submitTestAnswer() {
             const val = (window.testUserInput || []).join('').toLowerCase();
             const target = testWords[testIndex];
@@ -1018,7 +1022,7 @@
                 renderTestStep();
             }, 500);
         }
-
+        
         function escapeHtml(str) {
             if (typeof str !== 'string') return str;
             return str
