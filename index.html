@@ -20,8 +20,8 @@
             padding: 20px 15px;
         }
         header {
-            margin-top: 15px;
-            margin-bottom: 25px;
+            margin-top: 10px;
+            margin-bottom: 15px;
             text-align: center;
         }
         header h1 {
@@ -30,7 +30,59 @@
             font-weight: 800;
             letter-spacing: -0.5px;
         }
-        
+
+        /* 로그인 / 아이디 박스 스타일 */
+        .user-section {
+            background-color: #ffffff;
+            padding: 10px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .user-status {
+            color: #555;
+            font-weight: 600;
+        }
+
+        .user-status b {
+            color: #f39c12;
+        }
+
+        .user-input-container {
+            display: flex;
+            gap: 6px;
+        }
+
+        .user-input-container input {
+            width: 85px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            font-size: 12px;
+            outline: none;
+            text-align: center;
+        }
+
+        .user-input-container button {
+            padding: 4px 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .user-input-container button:active {
+            opacity: 0.8;
+        }
+
         /* 3x4 그리드 레이아웃 */
         .grid-container {
             display: grid;
@@ -74,6 +126,9 @@
             font-size: 32px;
             margin-bottom: 8px;
             line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .card .title {
@@ -98,6 +153,15 @@
         <h1>Portal</h1>
     </header>
 
+    <!-- 접속 사용자 아이디 입력 및 표시 영역 -->
+    <div class="user-section">
+        <div class="user-status">ID: <b id="portal-user-id">미설정</b></div>
+        <div class="user-input-container" id="user-input-area">
+            <input type="text" id="portal-id-input" placeholder="yeyun 등">
+            <button onclick="savePortalUserId()">등록</button>
+        </div>
+    </div>
+
     <main class="grid-container">
         <!-- 1. D사전 -->
         <a href="https://small.dic.daum.net/index.do?dic=eng" class="card">
@@ -117,8 +181,24 @@
             <div class="title">VOCA</div>
         </a>
 
-        <!-- 4~12번 빈 슬롯 -->
-        <div class="card empty"></div>
+        <!-- 4. Tetris (테트리스 블록 SVG 아이콘 적용) -->
+        <a href="tetris.html" class="card">
+            <div class="icon">
+                <svg width="36" height="36" viewBox="0 0 40 40">
+                    <!-- 레고 느낌의 테트리스 미노 블록 구성 -->
+                    <rect x="14" y="4" width="12" height="12" rx="2" fill="#9b59b6" stroke="#111" stroke-width="1.5" />
+                    <rect x="2" y="16" width="12" height="12" rx="2" fill="#9b59b6" stroke="#111" stroke-width="1.5" />
+                    <rect x="14" y="16" width="12" height="12" rx="2" fill="#9b59b6" stroke="#111" stroke-width="1.5" />
+                    <rect x="26" y="16" width="12" height="12" rx="2" fill="#9b59b6" stroke="#111" stroke-width="1.5" />
+                    <rect x="2" y="28" width="12" height="12" rx="2" fill="#00a8ff" stroke="#111" stroke-width="1.5" />
+                    <rect x="14" y="28" width="12" height="12" rx="2" fill="#f1c40f" stroke="#111" stroke-width="1.5" />
+                    <rect x="26" y="28" width="12" height="12" rx="2" fill="#f1c40f" stroke="#111" stroke-width="1.5" />
+                </svg>
+            </div>
+            <div class="title">Tetris</div>
+        </a>
+
+        <!-- 5~12번 빈 슬롯 -->
         <div class="card empty"></div>
         <div class="card empty"></div>
         <div class="card empty"></div>
@@ -129,5 +209,35 @@
         <div class="card empty"></div>
     </main>
 
+    <script>
+        const ALLOWED_USERS = ['yeyun', 'woosong', 'jinyoung'];
+
+        function loadUserId() {
+            const savedId = localStorage.getItem('tetris_user_id');
+            const displayTag = document.getElementById('portal-user-id');
+            const inputArea = document.getElementById('user-input-area');
+
+            if (savedId && ALLOWED_USERS.includes(savedId)) {
+                displayTag.innerText = savedId;
+                inputArea.style.display = 'none';
+            } else {
+                displayTag.innerText = '미설정';
+                inputArea.style.display = 'flex';
+            }
+        }
+
+        function savePortalUserId() {
+            const inputVal = document.getElementById('portal-id-input').value.trim().toLowerCase();
+            if (!ALLOWED_USERS.includes(inputVal)) {
+                alert('허용되지 않은 아이디입니다.\n');
+                return;
+            }
+            localStorage.setItem('tetris_user_id', inputVal);
+            loadUserId();
+        }
+
+        // 페이지 로드 시 사용자 아이디 불러오기
+        loadUserId();
+    </script>
 </body>
 </html>
