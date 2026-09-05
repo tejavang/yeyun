@@ -14,8 +14,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 2. sql`쿼리` 형태를 sql('쿼리', [파라미터]) 또는 sql`쿼리` 형태로 호출
-    const userRes = await sql(`SELECT coins, stars, last_daily_grant FROM users WHERE user_id = $1`, [userId]);
+    // 2. 태그드 템플릿 형태로 변수 바인딩 사용 (sql`쿼리`)
+    const userRes = await sql`SELECT coins, stars, last_daily_grant FROM users WHERE user_id = ${userId}`;
     
     if (userRes.length === 0) {
       return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     // 매일 5개 코인 자동 지급
     if (new Date(last_daily_grant).toISOString().split('T')[0] !== today) {
       coins += 5;
-      await sql(`UPDATE users SET coins = $1, last_daily_grant = CURRENT_DATE WHERE user_id = $2`, [coins, userId]);
+      await sql`UPDATE users SET coins = ${coins}, last_daily_grant = CURRENT_DATE WHERE user_id = ${userId}`;
     }
 
     // GET 요청: 잔여 코인 조회
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
       }
 
       const updatedCoins = coins - 1;
-      await sql(`UPDATE users SET coins = $1 WHERE user_id = $2`, [updatedCoins, userId]);
+      await sql`UPDATE users SET coins = ${updatedCoins} WHERE user_id = ${userId}`;
 
       return res.status(200).json({ success: true, coins: updatedCoins });
     }
