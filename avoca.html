@@ -915,19 +915,25 @@
 						// --- Neon 백엔드 별 추가 요청 ---
 						const userId = localStorage.getItem('tetris_user_id');
 						const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
-				
+						
 						if (userId) {
 							fetch(`${apiBase}/api/game`, {
 								method: 'POST',
 								headers: { 'Content-Type': 'application/json' },
 								body: JSON.stringify({ 
-									action: 'addStar',
+									action: 'add_star',  // 'addStar' -> 'add_star'로 변경
 									userId: userId, 
 									amount: 1 
 								})
 							})
 							.then(res => res.json())
-							.then(data => console.log('별 적립 성공:', data))
+							.then(data => {
+								console.log('별 적립 성공:', data);
+								// DB에서 최신 별 개수를 돌려받은 경우 화면 즉시 갱신
+								if (data.success && typeof data.stars === 'number') {
+									document.getElementById('starCountDisplay').innerText = `⭐ ${data.stars}개`;
+								}
+							})
 							.catch(err => console.error('접속 실패:', err));
 						}
 						// ------------------------------
