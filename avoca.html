@@ -902,36 +902,35 @@
             if (testIndex >= testWords.length) {
                 const isFullMark = (testScore === testWords.length);
                 
-                // 기존 renderTestStep() 함수 내의 isFullMark 처리 부분
 				if (isFullMark) {
 					const currentSub = document.getElementById('subjectSelect').value;
 					const currentCh = document.getElementById('chapterSelect').value;
 					const chapterKey = `${currentSub}_${currentCh}`;
 				
-					// 이전에 통과하지 않았던 새로운 단원인 경우에만 별 저장 및 서버 전송
 					if (!passedChapters.has(chapterKey)) {
 						passedChapters.add(chapterKey);
 						savePassedChapters();
-						updateChapterSelect();
+						updateChapterSelect(); 
 				
-						// ---------------- 백엔드 연동 추가 ----------------
-						// 로컬스토리지에서 로그인된 유저 ID 가져오기
-						const userId = localStorage.getItem('tetris_user_id'); 
+						// --- Neon 백엔드 별 추가 요청 ---
+						const userId = localStorage.getItem('tetris_user_id');
 						const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
 				
-						if (userId && apiBase) {
-							fetch(`${apiBase}/api/add-star`, {
+						if (userId) {
+							fetch(`${apiBase}/api/game`, {
 								method: 'POST',
 								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify({ userId: userId, count: 1 })
+								body: JSON.stringify({ 
+									action: 'addStar',
+									userId: userId, 
+									amount: 1 
+								})
 							})
 							.then(res => res.json())
-							.then(data => {
-								console.log('⭐ 추가 :', data);
-							})
-							.catch(err => console.error('별 저장 실패:', err));
+							.then(data => console.log('별 적립 성공:', data))
+							.catch(err => console.error('접속 실패:', err));
 						}
-						// ------------------------------------------------
+						// ------------------------------
 					}
 				}
 
