@@ -352,35 +352,44 @@
       }
     }
 
-    1. 브라우저 로컬 스토리지에서 userId 가져오기, 없으면 입력받아 저장하기
+    const ALLOWED_USERS = ['yeyun', 'woosong', 'jinyoung'];
+    
     function getOrSetUserId() {
       let userId = localStorage.getItem('tetris_user_id');
     
-      // 저장된 아이디가 없으면 팝업창으로 입력받음
-      if (!userId) {
-        userId = prompt('아이디를 입력해주세요 (예: yeyun):');
+      // 저장된 아이디가 없거나 올바르지 않은 경우 반복 확인
+      while (!userId || !ALLOWED_USERS.includes(userId)) {
+        const input = prompt("아이디를 입력해주세요:\n(yeyun, woosong, jinyoung 중 하나)");
         
-        if (userId && userId.trim() !== '') {
-          userId = userId.trim();
-          localStorage.setItem('tetris_user_id', userId);
-        } else {
-          // 입력 취소 시 기본값 설정
-          userId = 'child';
-          localStorage.setItem('tetris_user_id', userId);
+        if (input) {
+          const trimmed = input.trim().toLowerCase();
+          if (ALLOWED_USERS.includes(trimmed)) {
+            userId = trimmed;
+            localStorage.setItem('tetris_user_id', userId);
+            break;
+          } else {
+            alert("등록되지 않은 아이디입니다. 다시 입력해주세요.");
+          }
         }
       }
       return userId;
     }
     
-    // 사용자 ID 변수 선언
     const currentUserId = getOrSetUserId();
     
-    // 2. 서버에서 코인 잔여 수량 조회 (GET)
+    // 서버 코인 잔여 수량 조회 (GET)
     async function fetchCoins() {
       try {
-        // URL 뒤에 userId를 파라미터로 함께 전달
         const res = await fetch(`/api/game?userId=${currentUserId}`);
         const data = await res.json();
+    
+        if (!res.ok) {
+          // 아이디 오류 등으로 실패 시 로컬스토리지 삭제 후 재요청
+          localStorage.removeItem('tetris_user_id');
+          location.reload();
+          return;
+        }
+    
         currentCoins = data.coins;
         document.getElementById('coin-count').innerText = currentCoins;
         
@@ -397,13 +406,13 @@
       }
     }
     
-    // 3. 게임 시작 및 코인 차감 요청 (POST)
+    // 게임 시작 및 코인 차감 요청 (POST)
     async function tryStartGame() {
       try {
         const res = await fetch('/api/game', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: currentUserId }) // Body로 userId 전달
+          body: JSON.stringify({ userId: currentUserId })
         });
         const data = await res.json();
     
