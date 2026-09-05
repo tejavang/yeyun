@@ -330,28 +330,6 @@
     let dropInterval = 1000;
     let lastTime = 0;
     let isGameOver = true; // 최초 진입 시 대기 상태
-
-    // --- 서버 코인 조회 및 갱신 ---
-    async function fetchCoins() {
-      try {
-        const res = await fetch('/api/game');
-        const data = await res.json();
-        currentCoins = data.coins;
-        document.getElementById('coin-count').innerText = currentCoins;
-        
-        const restartBtn = document.getElementById('restart-btn');
-        if (currentCoins < 1) {
-          restartBtn.disabled = true;
-          restartBtn.innerText = "코인 부족 🪙";
-        } else {
-          restartBtn.disabled = false;
-          restartBtn.innerText = isGameOver && player.score > 0 ? "다시 시작" : "게임 시작";
-        }
-      } catch (err) {
-        console.error('코인 정보를 불러오지 못했습니다.', err);
-      }
-    }
-
     const ALLOWED_USERS = ['yeyun', 'woosong', 'jinyoung'];
     
     function getOrSetUserId() {
@@ -427,7 +405,7 @@
         alert('서버와의 통신에 실패했습니다.');
       }
     }
-
+    
     function createMatrix(w, h) {
       const matrix = [];
       while (h--) matrix.push(new Array(w).fill(0));
