@@ -5,61 +5,296 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Tetris</title>
   <style>
-    /* ... 기존 CSS 모두 동일하게 유지 ... */
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial Round MT Bold', 'Helvetica Neue', Arial, sans-serif; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-    body { background: #23272a; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; padding: 10px 5px; }
-    .game-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; }
-    .game-container { display: flex; gap: 12px; background: #36393f; padding: 12px; border-radius: 12px; border: 4px solid #1e2124; box-shadow: 0 8px 0 #141619; position: relative; }
-    canvas#tetris { border: 3px solid #1e2124; background-color: #111214; border-radius: 6px; touch-action: none; }
-    .side-panel { display: flex; flex-direction: column; justify-content: flex-start; width: 110px; }
-    .stat-box { background: #2b2d31; border: 2px solid #1e2124; border-radius: 8px; padding: 6px 4px; margin-bottom: 8px; text-align: center; box-shadow: 0 3px 0 #1e2124; }
-    .stat-title { font-size: 13px; font-weight: 900; color: #f1c40f; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
-    .stat-value { font-size: 18px; font-weight: bold; color: #ffffff; }
-    #next-canvas { background: #111214; border-radius: 6px; margin: 2px auto 0; display: block; border: 2px solid #1e2124; }
-    .touch-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 354px; }
-    .t-btn { height: 58px; background: #e74c3c; border: 3px solid #c0392b; border-radius: 10px; color: #ffffff; font-size: 22px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 #962d22; cursor: pointer; }
-    .t-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #962d22; }
-    .t-btn.accent { background: #f1c40f; border-color: #f39c12; color: #2c3e50; box-shadow: 0 5px 0 #d35400; font-size: 26px; }
-    .t-btn.drop-btn { font-size: 18px; }
-    
-    .game-over-overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(17, 18, 20, 0.95); display: flex; flex-direction: column;
-      align-items: center; justify-content: center; border-radius: 12px; z-index: 10; padding: 10px;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial Round MT Bold', 'Helvetica Neue', Arial, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
-    .game-over-title { font-size: 24px; font-weight: 900; color: #e74c3c; margin-bottom: 8px; text-shadow: 2px 2px 0 #000; }
-    .score-info { font-size: 14px; color: #f1c40f; margin-bottom: 4px; font-weight: bold; }
-    .score-num { color: #fff; font-size: 16px; }
 
-    /* 리더보드 UI 추가 */
-    .leaderboard-box {
-      background: #2b2d31; border: 2px solid #9b59b6; border-radius: 8px;
-      padding: 8px; margin: 8px 0; width: 95%; max-height: 120px; overflow-y: auto;
+    body {
+      background: #23272a;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+      padding: 10px 5px;
+    }
+
+    .game-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+
+    .game-container {
+      display: flex;
+      gap: 12px;
+      background: #36393f;
+      padding: 12px;
+      border-radius: 12px;
+      border: 4px solid #1e2124;
+      box-shadow: 0 8px 0 #141619;
+      position: relative;
+    }
+
+    canvas#tetris {
+      border: 3px solid #1e2124;
+      background-color: #111214;
+      border-radius: 6px;
+      touch-action: none;
+    }
+
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      width: 110px;
+    }
+
+    .stat-box {
+      background: #2b2d31;
+      border: 2px solid #1e2124;
+      border-radius: 8px;
+      padding: 6px 4px;
+      margin-bottom: 8px;
+      text-align: center;
       box-shadow: 0 3px 0 #1e2124;
     }
-    .leaderboard-title { font-size: 12px; color: #f1c40f; text-align: center; font-weight: bold; margin-bottom: 6px; }
-    #leaderboard-list { list-style: none; padding: 0; margin: 0; font-size: 12px; }
-    #leaderboard-list li { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #1e2124; }
-    #leaderboard-list li:last-child { border-bottom: none; }
-    .lb-rank { color: #a0a0a0; width: 18px; display: inline-block; }
-    .lb-user { color: #3498db; font-weight: bold; flex: 1; }
-    .lb-score { color: #fff; font-weight: bold; text-align: right; }
+
+    .stat-title {
+      font-size: 13px;
+      font-weight: 900;
+      color: #f1c40f;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffffff;
+    }
+
+    #next-canvas {
+      background: #111214;
+      border-radius: 6px;
+      margin: 2px auto 0;
+      display: block;
+      border: 2px solid #1e2124;
+    }
+
+    .touch-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      width: 354px;
+    }
+
+    .t-btn {
+      height: 58px;
+      background: #e74c3c;
+      border: 3px solid #c0392b;
+      border-radius: 10px;
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 5px 0 #962d22;
+      cursor: pointer;
+    }
+
+    .t-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #962d22;
+    }
+
+    .t-btn.accent {
+      background: #f1c40f;
+      border-color: #f39c12;
+      color: #2c3e50;
+      box-shadow: 0 5px 0 #d35400;
+      font-size: 26px;
+    }
+
+    .t-btn.drop-btn {
+      font-size: 18px;
+    }
+
+    .game-over-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(17, 18, 20, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      z-index: 10;
+      padding: 10px;
+    }
+
+    .game-over-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: #e74c3c;
+      margin-bottom: 8px;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    .score-info {
+      font-size: 14px;
+      color: #f1c40f;
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+
+    .score-num {
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .leaderboard-box {
+      background: #2b2d31;
+      border: 2px solid #9b59b6;
+      border-radius: 8px;
+      padding: 8px;
+      margin: 8px 0;
+      width: 95%;
+      max-height: 120px;
+      overflow-y: auto;
+      box-shadow: 0 3px 0 #1e2124;
+    }
+
+    .leaderboard-title {
+      font-size: 12px;
+      color: #f1c40f;
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    #leaderboard-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 12px;
+    }
+
+    #leaderboard-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 3px 0;
+      border-bottom: 1px solid #1e2124;
+    }
+
+    #leaderboard-list li:last-child {
+      border-bottom: none;
+    }
+
+    .lb-rank {
+      color: #a0a0a0;
+      width: 18px;
+      display: inline-block;
+    }
+
+    .lb-user {
+      color: #3498db;
+      font-weight: bold;
+      flex: 1;
+    }
+
+    .lb-score {
+      color: #fff;
+      font-weight: bold;
+      text-align: right;
+    }
 
     .coin-info-box {
-      background: #2b2d31; border: 2px solid #f1c40f; border-radius: 8px;
-      padding: 8px; margin-bottom: 10px; text-align: center; width: 95%; box-shadow: 0 3px 0 #1e2124;
+      background: #2b2d31;
+      border: 2px solid #f1c40f;
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 10px;
+      text-align: center;
+      width: 95%;
+      box-shadow: 0 3px 0 #1e2124;
     }
-    .coin-info-line { font-size: 13px; color: #ffffff; font-weight: bold; margin-bottom: 2px; }
-    .user-tag { font-size: 11px; color: #a0a0a0; margin-bottom: 4px; }
-    .user-input-box { display: flex; gap: 6px; margin-top: 6px; }
-    .user-input-box input { width: 90px; padding: 5px; border-radius: 6px; border: 1px solid #f1c40f; background: #111214; color: #fff; text-align: center; font-weight: bold; font-size: 12px; }
-    .user-input-box button { padding: 5px 8px; background: #3498db; border: none; border-radius: 6px; color: #fff; font-weight: bold; cursor: pointer; font-size: 12px; }
-    
+
+    .coin-info-line {
+      font-size: 13px;
+      color: #ffffff;
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+    .user-tag {
+      font-size: 11px;
+      color: #a0a0a0;
+      margin-bottom: 4px;
+    }
+
+    .user-input-box {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .user-input-box input {
+      width: 90px;
+      padding: 5px;
+      border-radius: 6px;
+      border: 1px solid #f1c40f;
+      background: #111214;
+      color: #fff;
+      text-align: center;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .user-input-box button {
+      padding: 5px 8px;
+      background: #3498db;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
     .overlay-restart-btn {
-      padding: 8px 24px; background: #2ecc71; border: 3px solid #27ae60; border-radius: 8px;
-      color: white; font-size: 15px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 0 #1e8449;
+      padding: 8px 24px;
+      background: #2ecc71;
+      border: 3px solid #27ae60;
+      border-radius: 8px;
+      color: white;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #1e8449;
     }
-    .overlay-restart-btn:disabled { background: #7f8c8d; border-color: #95a5a6; box-shadow: none; cursor: not-allowed; }
+
+    .overlay-restart-btn:disabled {
+      background: #7f8c8d;
+      border-color: #95a5a6;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -97,7 +332,6 @@
           내 점수: <span class="score-num" id="go-score">0</span>
         </div>
 
-        <!-- 탑 10 리더보드 UI -->
         <div class="leaderboard-box">
           <div class="leaderboard-title">🏆 TOP 10 🏆</div>
           <ul id="leaderboard-list">
@@ -131,16 +365,24 @@
 
   <script>
     const ALLOWED_USERS = ['yeyun', 'woosong', 'jinyoung'];
+    const GAME_ID = 'tetris';
+
     const canvas = document.getElementById('tetris');
     const context = canvas.getContext('2d');
     const nextCanvas = document.getElementById('next-canvas');
     const nextContext = nextCanvas.getContext('2d');
     
-    const COLS = 10, ROWS = 17, BLOCK_SIZE = 22;
+    const COLS = 10;
+    const ROWS = 17;
+    const BLOCK_SIZE = 22;
+
     context.scale(BLOCK_SIZE, BLOCK_SIZE);
     nextContext.scale(20, 20);
 
-    const COLORS = [null, '#00a8ff', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22', '#1abc9c'];
+    const COLORS = [
+      null, '#00a8ff', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22', '#1abc9c'
+    ];
+
     const PIECES = [
       [],
       [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]],
@@ -160,39 +402,66 @@
     let currentUserId = localStorage.getItem('tetris_user_id') || '';
 
     let player = { pos: { x: 0, y: 0 }, matrix: null, score: 0, lines: 0, level: 1 };
-    let dropCounter = 0, dropInterval = 1000, lastTime = 0, isGameOver = true;
+    let dropCounter = 0;
+    let dropInterval = 1000;
+    let lastTime = 0;
+    let isGameOver = true;
 
-    // 레고 블록 그리기
     function drawLegoBlock(ctx, x, y, color) {
-      ctx.fillStyle = color; ctx.fillRect(x + 0.05, y + 0.05, 0.9, 0.9);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'; ctx.fillRect(x + 0.05, y + 0.05, 0.9, 0.15); ctx.fillRect(x + 0.05, y + 0.05, 0.15, 0.9);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)'; ctx.fillRect(x + 0.05, y + 0.8, 0.9, 0.15); ctx.fillRect(x + 0.8, y + 0.05, 0.15, 0.9);
-      ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x + 0.5, y + 0.5, 0.22, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(x + 0.48, y + 0.48, 0.2, Math.PI * 0.75, Math.PI * 1.75); ctx.stroke();
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)'; ctx.beginPath(); ctx.arc(x + 0.52, y + 0.52, 0.2, Math.PI * 1.75, Math.PI * 0.75); ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.fillRect(x + 0.05, y + 0.05, 0.9, 0.9);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.fillRect(x + 0.05, y + 0.05, 0.9, 0.15);
+      ctx.fillRect(x + 0.05, y + 0.05, 0.15, 0.9);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.fillRect(x + 0.05, y + 0.8, 0.9, 0.15);
+      ctx.fillRect(x + 0.8, y + 0.05, 0.15, 0.9);
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x + 0.5, y + 0.5, 0.22, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 0.05;
+      ctx.beginPath();
+      ctx.arc(x + 0.48, y + 0.48, 0.2, Math.PI * 0.75, Math.PI * 1.75);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.arc(x + 0.52, y + 0.52, 0.2, Math.PI * 1.75, Math.PI * 0.75);
+      ctx.stroke();
     }
 
     function saveUserId() {
       const inputVal = document.getElementById('user-id-input').value.trim().toLowerCase();
       if (!ALLOWED_USERS.includes(inputVal)) {
-        alert('허용되지 않은 아이디입니다.\n(yeyun, woosong, jinyoung 중 입력)'); return;
+        alert('허용되지 않은 아이디입니다.\n(yeyun, woosong, jinyoung 중 입력)');
+        return;
       }
       currentUserId = inputVal;
-      try { localStorage.setItem('tetris_user_id', currentUserId); } catch (e) {}
-      updateUserUI(); fetchCoins();
+      try {
+        localStorage.setItem('tetris_user_id', currentUserId);
+      } catch (e) {}
+      updateUserUI();
+      fetchCoins();
     }
 
     function updateUserUI() {
       const displayTag = document.getElementById('display-user-id');
       const inputArea = document.getElementById('id-input-area');
       if (currentUserId && ALLOWED_USERS.includes(currentUserId)) {
-        displayTag.innerText = currentUserId; inputArea.style.display = 'none';
+        displayTag.innerText = currentUserId;
+        inputArea.style.display = 'none';
       } else {
-        displayTag.innerText = '미설정'; inputArea.style.display = 'flex';
+        displayTag.innerText = '미설정';
+        inputArea.style.display = 'flex';
       }
     }
 
-    // 리더보드 UI 업데이트 함수
     function updateLeaderboardUI(leaderboardArray) {
       const list = document.getElementById('leaderboard-list');
       list.innerHTML = '';
@@ -211,58 +480,77 @@
       });
     }
 
-    // 서버 정보 가져오기 (코인 및 리더보드)
     async function fetchCoins() {
       if (!currentUserId || !ALLOWED_USERS.includes(currentUserId)) {
         document.getElementById('coin-count').innerText = '--';
-        document.getElementById('restart-btn').disabled = true;
-        document.getElementById('restart-btn').innerText = "아이디를 입력하세요";
+        const restartBtn = document.getElementById('restart-btn');
+        restartBtn.disabled = true;
+        restartBtn.innerText = "아이디를 입력하세요";
         return;
       }
+
       try {
-        // URL에 gameId 파라미터 추가
         const res = await fetch(`/api/game?userId=${currentUserId}&gameId=${GAME_ID}`);
         const data = await res.json();
-        if (res.ok) {
-          currentCoins = data.coins;
-          document.getElementById('coin-count').innerText = currentCoins;
-          
-          // 리더보드 목록 업데이트
-          if (data.leaderboard) updateLeaderboardUI(data.leaderboard);
-          
-          const restartBtn = document.getElementById('restart-btn');
-          if (currentCoins < 1) {
-            restartBtn.disabled = true; restartBtn.innerText = "코인 부족 🪙";
-          } else {
-            restartBtn.disabled = false; restartBtn.innerText = isGameOver && player.score > 0 ? "다시 시작" : "게임 시작";
-          }
+
+        if (!res.ok) {
+          console.error('API Error:', data);
+          document.getElementById('leaderboard-list').innerHTML = `<li style="color:#e74c3c;">조회 실패 (${res.status})</li>`;
+          return;
         }
-      } catch (err) { console.error(err); }
+
+        currentCoins = data.coins;
+        document.getElementById('coin-count').innerText = currentCoins;
+        
+        if (data.leaderboard) {
+          updateLeaderboardUI(data.leaderboard);
+        }
+
+        const restartBtn = document.getElementById('restart-btn');
+        if (currentCoins < 1) {
+          restartBtn.disabled = true;
+          restartBtn.innerText = "코인 부족 🪙";
+        } else {
+          restartBtn.disabled = false;
+          restartBtn.innerText = isGameOver && player.score > 0 ? "다시 시작" : "게임 시작";
+        }
+      } catch (err) {
+        console.error('통신 실패 detail:', err);
+        document.getElementById('leaderboard-list').innerHTML = '<li style="color:#e74c3c;">통신 에러 발생</li>';
+      }
     }
 
-    // 2. 게임 시작 요청 (POST 요청 시 gameId 추가)
     async function tryStartGame() {
-      if (!currentUserId) return;
+      if (!currentUserId) {
+        alert('아이디를 먼저 등록해주세요.');
+        return;
+      }
+
       try {
         const res = await fetch('/api/game', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             userId: currentUserId, 
-            gameId: GAME_ID, // 게임 식별자 추가
+            gameId: GAME_ID, 
             action: 'start' 
-          }) 
+          })
         });
         const data = await res.json();
+
         if (res.ok && data.success) {
-          currentCoins = data.coins; resetGame();
+          currentCoins = data.coins;
+          resetGame();
         } else {
-          alert(data.error || '게임 시작 실패'); fetchCoins();
+          alert(data.error || '게임 시작에 실패했습니다.');
+          fetchCoins();
         }
-      } catch (err) { alert('통신 실패'); }
+      } catch (err) {
+        console.error(err);
+        alert('서버 통신 실패! 개발자 도구(F12) 콘솔을 확인하세요.');
+      }
     }
 
-    // 3. DB에 최종 점수 기록 (POST 요청 시 gameId 추가)
     async function saveScoreToDB(score) {
       if (!currentUserId || score <= 0) return;
       try {
@@ -271,27 +559,48 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             userId: currentUserId, 
-            gameId: GAME_ID, // 게임 식별자 추가
+            gameId: GAME_ID, 
             action: 'save_score', 
             score: score 
           })
         });
-        fetchCoins(); 
-      } catch (err) { console.error('점수 저장 실패'); }
+        fetchCoins();
+      } catch (err) {
+        console.error('점수 저장 실패:', err);
+      }
     }
 
-    function createMatrix(w, h) { const matrix = []; while (h--) matrix.push(new Array(w).fill(0)); return matrix; }
+    function createMatrix(w, h) {
+      const matrix = [];
+      while (h--) matrix.push(new Array(w).fill(0));
+      return matrix;
+    }
 
     class Particle {
-      constructor(x, y, color) { this.x = x; this.y = y; this.vx = (Math.random() - 0.5) * 0.5; this.vy = (Math.random() - 0.5) * 0.5 - 0.2; this.color = color; this.alpha = 1; this.size = Math.random() * 0.25 + 0.15; this.decay = Math.random() * 0.03 + 0.02; }
+      constructor(x, y, color) {
+        this.x = x; this.y = y;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5 - 0.2;
+        this.color = color; this.alpha = 1;
+        this.size = Math.random() * 0.25 + 0.15;
+        this.decay = Math.random() * 0.03 + 0.02;
+      }
       update() { this.x += this.vx; this.y += this.vy; this.alpha -= this.decay; }
-      draw(ctx) { ctx.save(); ctx.globalAlpha = Math.max(0, this.alpha); ctx.fillStyle = this.color; ctx.fillRect(this.x, this.y, this.size, this.size); ctx.restore(); }
+      draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.size, this.size);
+        ctx.restore();
+      }
     }
 
     function createLineParticles(yIndex, rowColors) {
       for (let x = 0; x < COLS; x++) {
         const color = COLORS[rowColors[x]] || '#f1c40f';
-        for (let i = 0; i < 6; i++) particles.push(new Particle(x + 0.5, yIndex + 0.5, color));
+        for (let i = 0; i < 6; i++) {
+          particles.push(new Particle(x + 0.5, yIndex + 0.5, color));
+        }
       }
     }
 
@@ -306,131 +615,210 @@
     }
 
     function merge(board, player) {
-      player.matrix.forEach((row, y) => { row.forEach((value, x) => { if (value !== 0) board[y + player.pos.y][x + player.pos.x] = value; }); });
+      player.matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (value !== 0) board[y + player.pos.y][x + player.pos.x] = value;
+        });
+      });
     }
 
     function rotate(matrix, dir) {
-      for (let y = 0; y < matrix.length; ++y) { for (let x = 0; x < y; ++x) [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]]; }
-      if (dir > 0) matrix.forEach(row => row.reverse()); else matrix.reverse();
+      for (let y = 0; y < matrix.length; ++y) {
+        for (let x = 0; x < y; ++x) [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+      }
+      if (dir > 0) matrix.forEach(row => row.reverse());
+      else matrix.reverse();
     }
 
     function playerRotate(dir) {
-      const pos = player.pos.x; let offset = 1; rotate(player.matrix, dir);
+      const pos = player.pos.x;
+      let offset = 1;
+      rotate(player.matrix, dir);
       while (collide(board, player)) {
-        player.pos.x += offset; offset = -(offset + (offset > 0 ? 1 : -1));
-        if (offset > player.matrix[0].length) { rotate(player.matrix, -dir); player.pos.x = pos; return; }
+        player.pos.x += offset;
+        offset = -(offset + (offset > 0 ? 1 : -1));
+        if (offset > player.matrix[0].length) {
+          rotate(player.matrix, -dir);
+          player.pos.x = pos;
+          return;
+        }
       }
     }
 
-    function playerMove(dir) { player.pos.x += dir; if (collide(board, player)) player.pos.x -= dir; }
-    function getRandomPiece() { const pieces = '1234567'; return PIECES[pieces[pieces.length * Math.random() | 0]]; }
+    function playerMove(dir) {
+      player.pos.x += dir;
+      if (collide(board, player)) player.pos.x -= dir;
+    }
+
+    function getRandomPiece() {
+      const pieces = '1234567';
+      return PIECES[pieces[pieces.length * Math.random() | 0]];
+    }
 
     function playerReset() {
       if (!nextPiece) nextPiece = getRandomPiece();
-      player.matrix = nextPiece; nextPiece = getRandomPiece();
-      player.pos.y = 0; player.pos.x = (board[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+      player.matrix = nextPiece;
+      nextPiece = getRandomPiece();
+      player.pos.y = 0;
+      player.pos.x = (board[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
       drawNextPiece();
-      if (collide(board, player)) { isGameOver = true; handleGameOver(); }
+
+      if (collide(board, player)) {
+        isGameOver = true;
+        handleGameOver();
+      }
     }
 
     function drawNextPiece() {
-      nextContext.fillStyle = '#111214'; nextContext.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
-      const offsetX = (4 - nextPiece[0].length) / 2, offsetY = (4 - nextPiece.length) / 2;
-      nextPiece.forEach((row, y) => { row.forEach((value, x) => { if (value !== 0) drawLegoBlock(nextContext, x + offsetX, y + offsetY, COLORS[value]); }); });
+      nextContext.fillStyle = '#111214';
+      nextContext.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+      const offsetX = (4 - nextPiece[0].length) / 2;
+      const offsetY = (4 - nextPiece.length) / 2;
+
+      nextPiece.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (value !== 0) drawLegoBlock(nextContext, x + offsetX, y + offsetY, COLORS[value]);
+        });
+      });
     }
 
     function playerDrop() {
       player.pos.y++;
       if (collide(board, player)) {
-        player.pos.y--; merge(board, player); playerReset(); arenaSweep(); updateScore();
+        player.pos.y--;
+        merge(board, player);
+        playerReset();
+        arenaSweep();
+        updateScore();
       }
       dropCounter = 0;
     }
 
     function playerHardDrop() {
       while (!collide(board, player)) player.pos.y++;
-      player.pos.y--; merge(board, player); playerReset(); arenaSweep(); updateScore(); dropCounter = 0;
+      player.pos.y--;
+      merge(board, player);
+      playerReset();
+      arenaSweep();
+      updateScore();
+      dropCounter = 0;
     }
 
     function arenaSweep() {
       let rowCount = 0;
       outer: for (let y = board.length - 1; y >= 0; --y) {
-        for (let x = 0; x < board[y].length; ++x) { if (board[y][x] === 0) continue outer; }
+        for (let x = 0; x < board[y].length; ++x) {
+          if (board[y][x] === 0) continue outer;
+        }
         createLineParticles(y, [...board[y]]);
-        const row = board.splice(y, 1)[0].fill(0); board.unshift(row); ++y; rowCount++;
+        const row = board.splice(y, 1)[0].fill(0);
+        board.unshift(row);
+        ++y;
+        rowCount++;
       }
+
       if (rowCount > 0) {
-        player.lines += rowCount; player.score += rowCount * 100 * player.level;
-        player.level = Math.floor(player.lines / 10) + 1; dropInterval = Math.max(100, 1000 - (player.level - 1) * 100);
+        player.lines += rowCount;
+        player.score += rowCount * 100 * player.level;
+        player.level = Math.floor(player.lines / 10) + 1;
+        dropInterval = Math.max(100, 1000 - (player.level - 1) * 100);
       }
     }
 
     function drawMatrix(matrix, offset) {
-      matrix.forEach((row, y) => { row.forEach((value, x) => { if (value !== 0) drawLegoBlock(context, x + offset.x, y + offset.y, COLORS[value]); }); });
+      matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (value !== 0) drawLegoBlock(context, x + offset.x, y + offset.y, COLORS[value]);
+        });
+      });
     }
 
     function draw() {
-      context.fillStyle = '#111214'; context.fillRect(0, 0, canvas.width, canvas.height);
-      context.lineWidth = 0.03; context.strokeStyle = '#23272a';
-      for (let x = 0; x < COLS; x++) { for (let y = 0; y < ROWS; y++) context.strokeRect(x, y, 1, 1); }
-      drawMatrix(board, { x: 0, y: 0 }); drawMatrix(player.matrix, player.pos);
+      context.fillStyle = '#111214';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.lineWidth = 0.03;
+      context.strokeStyle = '#23272a';
+      for (let x = 0; x < COLS; x++) {
+        for (let y = 0; y < ROWS; y++) context.strokeRect(x, y, 1, 1);
+      }
+      drawMatrix(board, { x: 0, y: 0 });
+      drawMatrix(player.matrix, player.pos);
+
       for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].update(); particles[i].draw(context);
+        particles[i].update();
+        particles[i].draw(context);
         if (particles[i].alpha <= 0) particles.splice(i, 1);
       }
     }
 
     function updateScore() {
-      if (player.score > highScore) { highScore = player.score; localStorage.setItem('tetris_high_score', highScore); }
+      if (player.score > highScore) {
+        highScore = player.score;
+        localStorage.setItem('tetris_high_score', highScore);
+      }
       document.getElementById('score').innerText = player.score;
       document.getElementById('high-score').innerText = highScore;
       document.getElementById('lines').innerText = player.lines;
       document.getElementById('level').innerText = player.level;
     }
 
-    // 게임 종료 로직 (점수 저장 호출 포함)
     function handleGameOver() {
       document.getElementById('overlay-title').innerText = "GAME OVER";
       document.getElementById('go-score').innerText = player.score;
       document.getElementById('score-info-container').style.display = 'block';
       document.getElementById('game-over-screen').style.display = 'flex';
-      
-      saveScoreToDB(player.score); // DB에 점수 기록
+      saveScoreToDB(player.score);
     }
 
     function update(time = 0) {
       if (isGameOver) return;
-      const deltaTime = time - lastTime; lastTime = time; dropCounter += deltaTime;
+      const deltaTime = time - lastTime;
+      lastTime = time;
+      dropCounter += deltaTime;
       if (dropCounter > dropInterval) playerDrop();
-      draw(); requestAnimationFrame(update);
+      draw();
+      requestAnimationFrame(update);
     }
 
     function resetGame() {
       document.getElementById('game-over-screen').style.display = 'none';
-      board = createMatrix(COLS, ROWS); particles = []; nextPiece = null;
-      player.score = 0; player.lines = 0; player.level = 1; dropInterval = 1000; isGameOver = false;
-      updateScore(); playerReset(); update();
+      board = createMatrix(COLS, ROWS);
+      particles = [];
+      nextPiece = null;
+      player.score = 0; player.lines = 0; player.level = 1;
+      dropInterval = 1000;
+      isGameOver = false;
+      updateScore();
+      playerReset();
+      update();
     }
 
     document.addEventListener('keydown', event => {
       if (isGameOver) return;
-      if (event.keyCode === 37) playerMove(-1); else if (event.keyCode === 39) playerMove(1);
-      else if (event.keyCode === 40) playerDrop(); else if (event.keyCode === 38) playerRotate(1);
+      if (event.keyCode === 37) playerMove(-1);
+      else if (event.keyCode === 39) playerMove(1);
+      else if (event.keyCode === 40) playerDrop();
+      else if (event.keyCode === 38) playerRotate(1);
       else if (event.keyCode === 32) { event.preventDefault(); playerHardDrop(); }
     });
 
     function bindTouchBtn(id, action) {
       const btn = document.getElementById(id);
       const trigger = (e) => { e.preventDefault(); if (!isGameOver) action(); };
-      btn.addEventListener('touchstart', trigger, { passive: false }); btn.addEventListener('click', trigger);
+      btn.addEventListener('touchstart', trigger, { passive: false });
+      btn.addEventListener('click', trigger);
     }
 
-    bindTouchBtn('btn-rot-ccw', () => playerRotate(-1)); bindTouchBtn('btn-drop', () => playerHardDrop());
-    bindTouchBtn('btn-rot-cw', () => playerRotate(1)); bindTouchBtn('btn-left', () => playerMove(-1));
-    bindTouchBtn('btn-down', () => playerDrop()); bindTouchBtn('btn-right', () => playerMove(1));
+    bindTouchBtn('btn-rot-ccw', () => playerRotate(-1));
+    bindTouchBtn('btn-drop', () => playerHardDrop());
+    bindTouchBtn('btn-rot-cw', () => playerRotate(1));
+    bindTouchBtn('btn-left', () => playerMove(-1));
+    bindTouchBtn('btn-down', () => playerDrop());
+    bindTouchBtn('btn-right', () => playerMove(1));
 
     document.getElementById('high-score').innerText = highScore;
-    updateUserUI(); fetchCoins();
+    updateUserUI();
+    fetchCoins();
   </script>
 </body>
 </html>
