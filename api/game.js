@@ -21,7 +21,7 @@ export default async function handler(req, res) {
       const today = new Date().toISOString().split('T')[0];
 
       if (new Date(last_daily_grant).toISOString().split('T')[0] !== today) {
-        coins += 5;
+        coins += 1;
         await sql`UPDATE users SET coins = ${coins}, last_daily_grant = CURRENT_DATE WHERE user_id = ${userId}`;
       }
 
