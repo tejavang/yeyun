@@ -888,123 +888,149 @@
 			renderTestStep();
 		}
 
+		// ✨ await 동작을 위해 renderTestStep을 async 함수로 변경
 		async function renderTestStep() {
-			const layout = document.getElementById('testLayout');
-			if (testWords.length === 0) {
-				layout.innerHTML = `<div class="empty-msg">시험을 볼 단어가 없습니다.</div>`;
-				return;
-			}
-
-			if (testIndex >= testWords.length) {
-				const currentScore = window.testScore || 0; 
-				const totalCount = testWords.length;
-				const isFullMark = (currentScore === totalCount && totalCount > 0);
-				
-				let titleMsg = '최종 시험 완료!';
-				let starAnimHtml = '';
-
-				if (isFullMark) {
-					const currentSub = document.getElementById('subjectSelect').value;
-					const currentCh = document.getElementById('chapterSelect').value;
-					const chapterKey = `${currentSub}_${currentCh}`;
-					
-					const wasAlreadyPassed = passedChapters.has(chapterKey);
-				
-					if (!wasAlreadyPassed) {
-						titleMsg = '🎉 만점 축하합니다! (⭐+1)';
-						
-						const userId = localStorage.getItem('tetris_user_id');
-						const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
-						
-						let prevStars = 0;
-						
-						// 🚀 window.currentServerStars 대신 서버에서 별 개수 FETCH 
-						if (userId) {
-							try {
-								const res = await fetch(`${apiBase}/api/game?userId=${userId}`);
-								const data = await res.json();
-								
-								if (!res.ok) {
-									console.error('API Error:', data);
-								} else if (data.stars !== undefined) {
-									prevStars = data.stars;
-								}
-							} catch (err) {
-								console.error('별 조회 실패:', err);
-							}
-						}
-						
-						const nextStars = prevStars + 1;
-
-						starAnimHtml = `
-							<div style="font-size: 1.3rem; margin: 12px 0; font-weight: bold; background: #f8fafc; padding: 10px; border-radius: 8px; display: inline-block;">
-								⭐ 별: <span id="starAnimText" style="display: inline-block; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #333;">${prevStars}개</span>
-							</div>
-						`;
-
-						setTimeout(() => {
-							const animText = document.getElementById('starAnimText');
-							if(animText) {
-								animText.style.color = '#ff9800';
-								animText.style.transform = 'scale(1.3)';
-								animText.innerHTML = `${nextStars}개!`;
-							}
-						}, 600);
-						
-						passedChapters.add(chapterKey);
-						savePassedChapters();
-						updateChapterSelect(); 
-				
-						// 증가된 별 서버에 저장
-						if (userId) {
-							fetch(`${apiBase}/api/game`, {
-								method: 'POST',
-								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify({ action: 'add_star', userId: userId, amount: 1 })
-							}).catch(err => console.error('서버 별 증가 실패:', err));
-						}
-					} else {
-						titleMsg = '🎉 만점 축하합니다!';
-					}
-				}
-
-				let wrongHtml = '';
-				if (testWrongList.length > 0) {
-					wrongHtml = `
-						<div class="wrong-answers-box">
-							<div class="wrong-answers-title">📝 틀린 문제 복습하기</div>
-							${testWrongList.map(w => `
-								<div class="wrong-item">
-									<span class="w-kor">${escapeHtml(w.meaning)}</span>
-									<span class="w-eng">${escapeHtml(w.word)}</span>
-								</div>
-							`).join('')}
-						</div>
-					`;
-				}
-
-				layout.innerHTML = `
-					<div style="text-align:center; padding: 20px 0;">
-						<h2 style="color:var(--primary); margin-bottom:8px;">${titleMsg}</h2>
-						${starAnimHtml}
-						<p style="font-size:1.1rem; font-weight:700; margin-top: 10px;">점수: ${currentScore} / ${totalCount}</p>
-						${wrongHtml}
-						<button class="btn btn-primary" style="margin:16px auto 0; padding:0 30px;" onclick="initTest()">다시 풀어보기</button>
-					</div>`;
-				return;
-			}
-
-			const progress = ((testIndex + 1) / testWords.length) * 100;
-			document.getElementById('testProgress').style.width = `${progress}%`;
-
-			const target = testWords[testIndex];
-			document.getElementById('testTargetMeaning').innerText = target.meaning;
-			
-			window.currentTestLetters = target.word.split(''); 
-			window.testLetterCardsState = window.currentTestLetters.map((char, i) => ({ char, id: i, used: false })).sort(() => Math.random() - 0.5);
-			window.testUserInput = [];
-			
-			renderTestLetters();
+		    const layout = document.getElementById('testLayout');
+		    if (testWords.length === 0) {
+		        layout.innerHTML = `<div class="empty-msg">시험을 볼 단어가 없습니다.</div>`;
+		        return;
+		    }
+		
+		    if (testIndex >= testWords.length) {
+		        const currentScore = window.testScore || 0; 
+		        const totalCount = testWords.length;
+		        const isFullMark = (currentScore === totalCount && totalCount > 0);
+		        
+		        let titleMsg = '최종 시험 완료!';
+		        let starAnimHtml = '';
+		
+		        if (isFullMark) {
+		            const currentSub = document.getElementById('subjectSelect').value;
+		            const currentCh = document.getElementById('chapterSelect').value;
+		            const chapterKey = `${currentSub}_${currentCh}`;
+		            
+		            const wasAlreadyPassed = passedChapters.has(chapterKey);
+		        
+		            if (!wasAlreadyPassed) {
+		                titleMsg = '🎉 만점 축하합니다! (⭐+1)';
+		                
+		                const userId = localStorage.getItem('tetris_user_id');
+		                const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
+		                
+		                let prevStars = 0;
+		                let prevCoins = 0;
+		                
+		                // 🚀 서버에서 별 개수와 코인 수 FETCH
+		                if (userId) {
+		                    try {
+		                        const res = await fetch(`${apiBase}/api/game?userId=${userId}&gameId=voca`);
+		                        const data = await res.json();
+		                        
+		                        if (!res.ok) {
+		                            console.error('API Error:', data);
+		                        } else {
+		                            if (data.stars !== undefined) prevStars = data.stars;
+		                            if (data.coins !== undefined) prevCoins = data.coins;
+		                        }
+		                    } catch (err) {
+		                        console.error('조회 실패:', err);
+		                    }
+		                }
+		                
+		                const nextStars = prevStars + 1;
+		                const nextCoins = prevCoins + currentScore; // 받은 점수만큼 코인 증가
+		
+		                // 별과 코인 애니메이션 UI
+		                starAnimHtml = `
+		                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 12px 0;">
+		                        <div style="font-size: 1.3rem; font-weight: bold; background: #f8fafc; padding: 10px; border-radius: 8px; display: inline-block;">
+		                            ⭐ 별: <span id="starAnimText" style="display: inline-block; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #333;">${prevStars}개</span>
+		                        </div>
+		                        <div style="font-size: 1.3rem; font-weight: bold; background: #f8fafc; padding: 10px; border-radius: 8px; display: inline-block;">
+		                            <span class="coin-icon">🪙</span> 코인: <span id="coinAnimText" style="display: inline-block; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #333;">${prevCoins}개</span>
+		                        </div>
+		                    </div>
+		                `;
+		
+		                // 숫자가 변경되며 팝업되는 애니메이션 효과
+		                setTimeout(() => {
+		                    const animText = document.getElementById('starAnimText');
+		                    if(animText) {
+		                        animText.style.color = '#ff9800';
+		                        animText.style.transform = 'scale(1.3)';
+		                        animText.innerHTML = `${nextStars}개!`;
+		                    }
+		                    
+		                    const coinText = document.getElementById('coinAnimText');
+		                    if(coinText) {
+		                        coinText.style.color = '#f1c40f';
+		                        coinText.style.transform = 'scale(1.3)';
+		                        coinText.innerHTML = `${nextCoins}개!`;
+		                    }
+		                }, 600);
+		                
+		                passedChapters.add(chapterKey);
+		                savePassedChapters();
+		                updateChapterSelect(); 
+		        
+		                // 증가된 별과 코인을 서버에 저장
+		                if (userId) {
+		                    // 별 저장
+		                    fetch(`${apiBase}/api/game`, {
+		                        method: 'POST',
+		                        headers: { 'Content-Type': 'application/json' },
+		                        body: JSON.stringify({ action: 'add_star', userId: userId, amount: 1 })
+		                    }).catch(err => console.error('서버 별 증가 실패:', err));
+		
+		                    // 코인 저장
+		                    fetch(`${apiBase}/api/game`, {
+		                        method: 'POST',
+		                        headers: { 'Content-Type': 'application/json' },
+		                        body: JSON.stringify({ action: 'add_coins', userId: userId, amount: currentScore })
+		                    }).catch(err => console.error('서버 코인 증가 실패:', err));
+		                }
+		            } else {
+		                titleMsg = '🎉 만점 축하합니다!';
+		            }
+		        }
+		
+		        let wrongHtml = '';
+		        if (testWrongList.length > 0) {
+		            wrongHtml = `
+		                <div class="wrong-answers-box">
+		                    <div class="wrong-answers-title">📝 틀린 문제 복습하기</div>
+		                    ${testWrongList.map(w => `
+		                        <div class="wrong-item">
+		                            <span class="w-kor">${escapeHtml(w.meaning)}</span>
+		                            <span class="w-eng">${escapeHtml(w.word)}</span>
+		                        </div>
+		                    `).join('')}
+		                </div>
+		            `;
+		        }
+		
+		        layout.innerHTML = `
+		            <div style="text-align:center; padding: 20px 0;">
+		                <h2 style="color:var(--primary); margin-bottom:8px;">${titleMsg}</h2>
+		                ${starAnimHtml}
+		                <p style="font-size:1.1rem; font-weight:700; margin-top: 10px;">점수: ${currentScore} / ${totalCount}</p>
+		                ${wrongHtml}
+		                <button class="btn btn-primary" style="margin:16px auto 0; padding:0 30px;" onclick="initTest()">다시 풀어보기</button>
+		            </div>`;
+		        return;
+		    }
+		
+		    const progress = ((testIndex + 1) / testWords.length) * 100;
+		    document.getElementById('testProgress').style.width = `${progress}%`;
+		
+		    const target = testWords[testIndex];
+		    document.getElementById('testTargetMeaning').innerText = target.meaning;
+		    
+		    window.currentTestLetters = target.word.split(''); 
+		    window.testLetterCardsState = window.currentTestLetters.map((char, i) => ({ char, id: i, used: false })).sort(() => Math.random() - 0.5);
+		    window.testUserInput = [];
+		    
+		    renderTestLetters();
 		}
 		function renderTestLetters() {
 			const display = document.getElementById('testLetterInputDisplay');
