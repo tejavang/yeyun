@@ -549,7 +549,7 @@
                     const wasAlreadyPassed = passedToday.includes(currentGrade);
                 
                     if (!wasAlreadyPassed) {
-                        titleMsg = '🎉 10문제 만점 축하합니다!';
+                        titleMsg = '🎉 만점 축하합니다!';
                         
                         const userId = localStorage.getItem('tetris_user_id');
                         const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
@@ -587,7 +587,7 @@
                             if(animText) { animText.style.color = '#ff9800'; animText.style.transform = 'scale(1.3)'; animText.innerHTML = `${nextStars}개!`; }
                             const coinText = document.getElementById('coinAnimText');
                             if(coinText) { coinText.style.color = '#ff9800'; coinText.style.transform = 'scale(1.3)'; coinText.innerHTML = `${nextCoins}개!`; }
-                        }, 600);
+                        }, 1000);
                         
                         if (!mathPassedData[currentDate]) mathPassedData[currentDate] = [];
                         mathPassedData[currentDate].push(currentGrade);
@@ -608,7 +608,7 @@
                             }).catch(()=>{});
                         }
                     } else {
-                        titleMsg = '🎉 만점 (이미 별을 받은 학기입니다)';
+                        titleMsg = '🎉 만점 축하합니다!';
                     }
                 }
 
