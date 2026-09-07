@@ -346,10 +346,13 @@
     <div class="app-container">
         <div id="toastPopup" class="toast-popup"></div>
 
-        <header>
-            <div class="header-title">🥑 VOCA</div>
-            <div class="star-count" id="starCountDisplay">👤 연결중 ⏳</div>
-        </header>
+		<header>
+		    <div class="header-title">
+		        🥑 VOCA 
+		        <span id="adminSettingBtn" style="display:none; cursor:pointer; margin-left:4px;" onclick="location.href='admin-avoca'"> ⚙️</span>
+		    </div>
+		    <div class="star-count" id="starCountDisplay">👤 연결중 ⏳</div>
+		</header>
 
         <div class="category-container">
             <select id="subjectSelect" onchange="updateChapterSelect()"></select>
@@ -453,6 +456,12 @@
 				userId = userId.trim();
 				localStorage.setItem('tetris_user_id', userId);
 			}
+			
+			// 💡 [추가] 특정 관리자 아이디일 때 톱니바퀴 버튼 표시
+		    if (userId === 'jinyoung' || userId === 'woosong') {
+		        const adminBtn = document.getElementById('adminSettingBtn');
+		        if (adminBtn) adminBtn.style.display = 'inline';
+		    }
 			
 			// 2. 상단 우측에 아이디만 표시
 			document.getElementById('starCountDisplay').innerHTML = `👤 ${escapeHtml(userId)}`;
