@@ -49,9 +49,9 @@ export default async function handler(req, res) {
         if (userRes.length === 0) return res.status(404).json({ error: '유저 없음' });
         
         let coins = userRes[0].coins;
-        if (coins < 1) return res.status(400).json({ error: '코인이 부족합니다!', coins });
+        if (coins < 3) return res.status(400).json({ error: '코인이 부족합니다!', coins });
 
-        const updatedCoins = coins - 1;
+        const updatedCoins = coins - 3;
         await sql`UPDATE users SET coins = ${updatedCoins} WHERE user_id = ${userId}`;
         return res.status(200).json({ success: true, coins: updatedCoins });
       }
