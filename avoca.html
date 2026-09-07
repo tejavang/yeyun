@@ -342,7 +342,8 @@
     </style>
 </head>
 <body>
-
+	<!-- 구글 번역 TTS 재생용 숨김 오디오 태그 -->
+	<audio id="ttsAudio" style="display:none;"></audio>
     <div class="app-container">
         <div id="toastPopup" class="toast-popup"></div>
 
@@ -696,17 +697,16 @@
 			if (filteredWords.length === 0) return;
 			speakText(filteredWords[cardIndex].word);
 		}
-
 		function speakText(text) {
-			if ('speechSynthesis' in window) {
-				window.speechSynthesis.cancel();
-				const utterance = new SpeechSynthesisUtterance(text);
-				utterance.lang = 'en-US';
-				utterance.rate = 0.85;
-				window.speechSynthesis.speak(utterance);
-			}
+		    const audio = document.getElementById('ttsAudio');
+		    if (!audio) return;
+		    const encodedText = encodeURIComponent(text);
+		    audio.src = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=en&client=tw-ob`;
+		    audio.play().catch(error => {
+		        console.error("오디오 재생 오류:", error);
+		    });
 		}
-
+			
 		function openDictionary(e) {
 			if (e) e.stopPropagation();
 			if (filteredWords.length === 0) return;
