@@ -352,7 +352,7 @@
         <div class="coin-info-box">
           <div class="user-tag">접속 ID: <b id="display-user-id" style="color:#f1c40f;">미설정</b></div>
           <div class="coin-info-line">
-            🪙 : <span id="coin-count">--</span>개
+            🪙&nbsp;<span id="coin-count">--</span>
           </div>
           
           <div class="user-input-box" id="id-input-area">
@@ -362,7 +362,7 @@
         </div>
 
         <button class="overlay-restart-btn" id="restart-btn" onclick="tryStartGame()">
-          게임 시작 🪙
+          게임 시작 🪙3
         </button>
       </div>
     </div>
@@ -522,13 +522,13 @@
         }
 
         const restartBtn = document.getElementById('restart-btn');
-        if (currentCoins < 1) {
+        if (currentCoins < 3) {
           restartBtn.disabled = true;
           restartBtn.innerHTML = `코인 부족 ${COIN_SVG}`;
         } else {
           restartBtn.disabled = false;
           const btnLabel = isGameOver && player.score > 0 ? "다시 시작" : "게임 시작";
-          restartBtn.innerHTML = `${btnLabel} 🪙`;
+          restartBtn.innerHTML = `${btnLabel} 🪙3`;
         }
       } catch (err) {
         console.error('통신 실패 detail:', err);
