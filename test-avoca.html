@@ -645,7 +645,7 @@
 			container.innerHTML = itemsHtml + `<div class="list-bottom-spacer" aria-hidden="true"></div>`;
 		}
 
-		function renderCard(autoSpeak = true) {
+		function renderCard(autoSpeak = false) {
 			const card = document.getElementById('flashcard');
 			card.classList.remove('flipped');
 
@@ -692,56 +692,76 @@
 		}
 
 		/* Gemini 3.1 Flash TTS Preview API 연동 */
+		/* Gemini API 연동 (수정됨) */
 		async function speakText(text) {
-			if (!text) return;
-
-			if (currentAudio) {
-				currentAudio.pause();
-				currentAudio = null;
-			}
-
-			try {
-				// 1. API 키 가져오기
-				const keyResponse = await fetch('/api/get-gemini-key');
-				if (!keyResponse.ok) throw new Error('API 키 설정 라우트를 찾을 수 없습니다.');
-				
-				const { apiKey } = await keyResponse.json();
-				if (!apiKey) throw new Error('GEMINI_API_KEY 환경변수가 설정되지 않았습니다.');
-
-				// 2. Gemini 3.1 Flash TTS preview API 호출
-				const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent?key=${apiKey}`;
-
-				const response = await fetch(url, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						contents: [{
-							parts: [{
-								text: text
-							}]
-						}],
-						generationConfig: {
-							responseMimeType: "audio/mp3"
-						}
-					})
-				});
-
-				if (!response.ok) throw new Error(`Gemini TTS API 오류 (${response.status})`);
-
-				const data = await response.json();
-				const audioBase64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-
-				if (audioBase64) {
-					const mimeType = data.candidates[0].content.parts[0].inlineData.mimeType || 'audio/mp3';
-					currentAudio = new Audio(`data:${mimeType};base64,${audioBase64}`);
-					await currentAudio.play();
-				} else {
-					fallbackSpeech(text);
-				}
-			} catch (error) {
-				console.error('Gemini TTS 호출 실패, 브라우저 기본 TTS로 전환합니다:', error);
-				fallbackSpeech(text);
-			}
+		    if (!text) return;
+		
+		    if (currentAudio) {
+		        currentAudio.pause();
+		        currentAudio = null;
+		    }
+		
+		    try {
+		        // 1. API 키 가져오기
+		        const keyResponse = await fetch('/api/get-gemini-key');
+		        if (!keyResponse.ok) throw new Error('API 키 설정 라우트를 찾을 수 없습니다.');
+		        
+		        const { apiKey } = await keyResponse.json();
+		        if (!apiKey) throw new Error('GEMINI_API_KEY 환경변수가 설정되지 않았습니다.');
+		
+		        // 2. Gemini API 호출 (Audio 생성)
+		        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent?key=${apiKey}`;
+		
+		        const response = await fetch(url, {
+		            method: 'POST',
+		            headers: { 'Content-Type': 'application/json' },
+		            body: JSON.stringify({
+						systemInstruction: {
+		                    parts: [{
+		                        text: "당신은 초등학교 영어수업에서 학생에게 발음을 가르쳐주는 다정한 선생님입니다. 학생이 듣고 따라하기 쉽도록 친절하고 또박또박하게 발음하세요."
+		                    }]
+		                },
+		                contents: [{
+		                    parts: [{
+		                        text: text
+		                    }]
+		                }],
+		                generationConfig: {
+		                    // 오디오 생성을 위한 필수 설정
+		                    responseModalities: ["AUDIO"],
+		                    speechConfig: {
+		                        voiceConfig: {
+		                            prebuiltVoiceConfig: {
+		                                // 사용 가능한 음성: Aoede, Puck, Charon, Kore, Fenrir
+		                                voiceName: "Charon" 
+		                            }
+		                        }
+		                    }
+		                }
+		            })
+		        });
+		
+		        if (!response.ok) throw new Error(`Gemini TTS API 오류 (${response.status})`);
+		
+		        const data = await response.json();
+		        
+		        // 3. 응답에서 오디오 데이터 추출
+		        // 모델이 텍스트(단어 뜻 등)를 함께 반환할 수 있으므로, inlineData가 포함된 파트를 직접 탐색합니다.
+		        const parts = data.candidates?.[0]?.content?.parts || [];
+		        const audioPart = parts.find(p => p.inlineData && p.inlineData.mimeType.startsWith('audio/'));
+		
+		        if (audioPart) {
+		            const audioBase64 = audioPart.inlineData.data;
+		            const mimeType = audioPart.inlineData.mimeType || 'audio/wav';
+		            currentAudio = new Audio(`data:${mimeType};base64,${audioBase64}`);
+		            await currentAudio.play();
+		        } else {
+		            throw new Error("응답에서 오디오 데이터를 찾을 수 없습니다.");
+		        }
+		    } catch (error) {
+		        console.error('Gemini TTS 호출 실패, 브라우저 기본 TTS로 전환합니다:', error);
+		        fallbackSpeech(text);
+		    }
 		}
 
 		function fallbackSpeech(text) {
