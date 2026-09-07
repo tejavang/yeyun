@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>🧮 Math Drill</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #eef2ff;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+            --accent-pink: #ec4899;
+        }
+
+        /* 아이폰 더블 탭 확대 방지 */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            touch-action: manipulation; 
+        }
+        
+        html, body { 
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 12px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+            position: relative;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 0 4px;
+            flex-shrink: 0;
+        }
+        .header-title { font-size: 1.35rem; color: #166534; font-weight: 800; display: flex; align-items: center; gap: 4px; }
+        .star-count { font-size: 0.95rem; color: #f59e0b; font-weight: 800; background: #fffbebf5; padding: 4px 10px; border-radius: 20px; border: 1px solid #fde68a; }
+
+        .category-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+            background: #ffffff;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+        .date-label {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--text-main);
+            white-space: nowrap;
+        }
+        .date-input {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            background: #fff;
+            color: var(--text-main);
+            outline: none;
+            text-align: center;
+        }
+
+        nav {
+            display: flex;
+            background: #e2e8f0;
+            border-radius: 8px;
+            padding: 2px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+            gap: 2px;
+        }
+        .nav-btn {
+            flex: 1;
+            padding: 8px 2px;
+            border: none;
+            background: transparent;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .nav-btn.active {
+            background: #fff;
+            color: var(--primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .tab-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .study-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            gap: 8px;
+        }
+
+        .card-wrapper {
+            height: 130px;
+            flex-shrink: 0;
+        }
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card-face {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            text-align: center;
+            width: 100%;
+        }
+        .card-meaning { font-size: 2.1rem; font-weight: 800; color: var(--primary); word-break: break-word; }
+
+        .btn {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-secondary { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
+
+        .test-input {
+            width: 100%;
+            height: 48px;
+            padding: 0 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1.5rem;
+            text-align: center;
+            outline: none;
+            background: #fff;
+            font-weight: bold;
+        }
+        .test-input:focus { border-color: var(--primary); }
+
+        /* Numpad 스타일 */
+        .numpad-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-top: 6px;
+            margin-bottom: 6px;
+            flex: 1;
+        }
+        .numpad-btn {
+            height: 48px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            border: 1px solid var(--border-color);
+            background: #ffffff;
+            border-radius: 10px;
+            color: var(--text-main);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .numpad-btn:active {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .numpad-btn.op-btn {
+            background: #f1f5f9;
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+        .numpad-btn.del-btn {
+            background: #fef2f2;
+            color: var(--danger);
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .numpad-submit-btn {
+            height: 48px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+        .numpad-submit-btn:active {
+            background: #4338ca;
+        }
+
+        .wrong-answers-box {
+            margin-top: 12px;
+            text-align: left;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            padding: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .wrong-answers-title { font-size: 0.85rem; font-weight: 800; color: var(--danger); margin-bottom: 8px; }
+        .wrong-item { font-size: 0.85rem; padding: 6px 0; border-bottom: 1px dashed #fca5a5; display: flex; justify-content: space-between; gap: 8px; }
+        .wrong-item:last-child { border-bottom: none; }
+        .wrong-item .w-kor { font-weight: 700; color: var(--text-main); }
+        .wrong-item .w-eng { font-weight: 700; color: var(--danger); }
+
+        .toast-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            padding: 16px 28px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.15s ease-out;
+            z-index: 999;
+            text-align: center;
+            min-width: 180px;
+            white-space: pre-wrap;
+        }
+        .toast-popup.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .toast-popup.correct { background-color: var(--success); }
+        .toast-popup.wrong { background-color: var(--danger); }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div id="toastPopup" class="toast-popup"></div>
+
+        <header>
+            <div class="header-title">🧮 Math Drill</div>
+            <div class="star-count" id="starCountDisplay">👤 연결중 ⏳</div>
+        </header>
+
+        <div class="category-container">
+            <span class="date-label">📅 날짜 선택</span>
+            <input type="date" id="dateSelect" class="date-input" onchange="onDateChange()">
+            <span id="dateStarBadge" style="font-size:1.3rem; display:none;" title="올클리어!">⭐</span>
+        </div>
+
+        <nav>
+            <button id="btn_g3_2" class="nav-btn active" onclick="switchGrade('g3_2', this)">3학년 2학기</button>
+            <button id="btn_g4_1" class="nav-btn" onclick="switchGrade('g4_1', this)">4학년 1학기</button>
+            <button id="btn_g4_2" class="nav-btn" onclick="switchGrade('g4_2', this)">4학년 2학기</button>
+            <button id="btn_g5_1" class="nav-btn" onclick="switchGrade('g5_1', this)">5학년 1학기</button>
+        </nav>
+
+        <main>
+            <div id="testTab" class="tab-content">
+                <div class="study-layout" id="testLayout">
+                    </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="voca-config.js"></script>
+    <script>
+        window.currentServerStars = 0;
+        window.currentServerCoins = 0;
+
+        let currentGradeId = 'g3_2'; // 기본 선택 학기
+        let currentPassedSemesters = new Set(); // 선택 날짜의 만점 획득 학기 목록
+
+        let testWords = []; // 현재 10개 문제 리스트
+        let testIndex = 0;
+        let testScore = 0;
+        let testWrongList = [];
+
+        window.userMathInput = ""; // 입력창 문자열
+
+        window.onload = async function() {
+            // 1. 아이디 확인 및 로그인 처리
+            let userId = localStorage.getItem('tetris_user_id');
+            if (!userId || userId.trim() === '') {
+                userId = prompt("사용할 아이디를 입력해주세요:");
+                if (!userId || userId.trim() === '') {
+                    alert("아이디는 필수입니다. 다시 시도해주세요.");
+                    location.reload();
+                    return;
+                }
+                userId = userId.trim();
+                localStorage.setItem('tetris_user_id', userId);
+            }
+            
+            // 2. 상단 우측 아이디 표시
+            document.getElementById('starCountDisplay').innerHTML = `👤 ${escapeHtml(userId)}`;
+
+            // 3. 오늘 날짜 기본 세팅
+            const todayStr = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('dateSelect');
+            if (dateInput) dateInput.value = todayStr;
+
+            // 4. 날짜별 완수 기록 불러오기
+            loadPassedDataForDate(todayStr);
+
+            // 5. 서버 별/코인 개수 백그라운드 동기화
+            await syncUserStarsOnly();
+
+            // 6. 수학 문제 세트 생성 및 시작
+            initTest();
+        };
+
+        // 서버에서 사용자 유저 정보(별/코인) 조회
+        async function syncUserStarsOnly() {
+            const userId = localStorage.getItem('tetris_user_id');
+            const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
+
+            if (!userId) return;
+            try {
+                const res = await fetch(`${apiBase}/api/game`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        userId: userId, 
+                        action: 'get_user_info' 
+                    })
+                });
+                const data = await res.json();
+                if (data.success || data.stars !== undefined) {
+                    window.currentServerStars = data.stars || 0;
+                    window.currentServerCoins = data.coins || 0;
+                }
+            } catch (err) {
+                console.error('별 개수 동기화 실패:', err);
+            }
+        }
+
+        // 특정 날짜의 만점 완료 기록 불러오기
+        function loadPassedDataForDate(dateStr) {
+            const userId = localStorage.getItem('tetris_user_id') || 'guest';
+            const saved = localStorage.getItem(`math_passed_${userId}_${dateStr}`);
+            if (saved) {
+                try {
+                    currentPassedSemesters = new Set(JSON.parse(saved));
+                } catch(e) {
+                    currentPassedSemesters = new Set();
+                }
+            } else {
+                currentPassedSemesters = new Set();
+            }
+            updateTabBadges();
+        }
+
+        // 날짜 완수 기록 저장
+        function savePassedDataForDate(dateStr) {
+            const userId = localStorage.getItem('tetris_user_id') || 'guest';
+            localStorage.setItem(`math_passed_${userId}_${dateStr}`, JSON.stringify(Array.from(currentPassedSemesters)));
+        }
+
+        // 학기 버튼 및 날짜 올클리어 별 표시 업데이트
+        function updateTabBadges() {
+            const grades = [
+                { id: 'g3_2', label: '3학년 2학기' },
+                { id: 'g4_1', label: '4학년 1학기' },
+                { id: 'g4_2', label: '4학년 2학기' },
+                { id: 'g5_1', label: '5학년 1학기' }
+            ];
+
+            grades.forEach(g => {
+                const btn = document.getElementById(`btn_${g.id}`);
+                if (btn) {
+                    const isPassed = currentPassedSemesters.has(g.id);
+                    btn.innerHTML = `${g.label}${isPassed ? ' ⭐' : ''}`;
+                }
+            });
+
+            // 4개 학기 모두 통과 시 날짜 옆에 별 표시 (지침 8번)
+            const dateStarBadge = document.getElementById('dateStarBadge');
+            const allCleared = grades.every(g => currentPassedSemesters.has(g.id));
+            if (dateStarBadge) {
+                dateStarBadge.style.display = allCleared ? 'inline-block' : 'none';
+            }
+        }
+
+        // 날짜 변동 핸들러
+        function onDateChange() {
+            const dateVal = document.getElementById('dateSelect').value;
+            if (!dateVal) return;
+            loadPassedDataForDate(dateVal);
+            initTest();
+        }
+
+        // 학기 탭 전환
+        function switchGrade(gradeId, btnEl) {
+            currentGradeId = gradeId;
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+            initTest();
+        }
+
+        // 수식 문제 10개 랜덤 생성 (지침 7번)
+        function generateMathProblems(gradeId) {
+            const problems = [];
+            for (let i = 0; i < 10; i++) {
+                problems.push(generateSingleProblem(gradeId));
+            }
+            return problems;
+        }
+
+        function generateSingleProblem(gradeId) {
+            if (gradeId === 'g3_2') {
+                // 3학년 2학기: 두자리수 x 두자리수 OR 세자리수 x 한자리수
+                if (Math.random() < 0.5) {
+                    const a = randInt(11, 99);
+                    const b = randInt(11, 99);
+                    return { question: `${a} × ${b} = ?`, answer: String(a * b) };
+                } else {
+                    const a = randInt(100, 999);
+                    const b = randInt(2, 9);
+                    return { question: `${a} × ${b} = ?`, answer: String(a * b) };
+                }
+            } else if (gradeId === 'g4_1') {
+                // 4학년 1학기: 세자리수 x 두자리수 OR 세자리수 ÷ 두자리수
+                if (Math.random() < 0.5) {
+                    const a = randInt(100, 999);
+                    const b = randInt(11, 99);
+                    return { question: `${a} × ${b} = ?`, answer: String(a * b) };
+                } else {
+                    const b = randInt(11, 99);
+                    const a = randInt(100, 999);
+                    const q = Math.floor(a / b);
+                    const r = a % b;
+                    const ansStr = (r === 0) ? String(q) : `${q}...${r}`;
+                    return { 
+                        question: `${a} ÷ ${b} = ?`, 
+                        answer: ansStr,
+                        rawDiv: { q: q, r: r }
+                    };
+                }
+            } else if (gradeId === 'g4_2') {
+                // 4학년 2학기: 소수의 덧셈과 뺄셈
+                const isAdd = Math.random() < 0.5;
+                const p1 = Math.random() < 0.5 ? 10 : 100;
+                const p2 = Math.random() < 0.5 ? 10 : 100;
+                if (isAdd) {
+                    const a = randInt(10, 999) / p1;
+                    const b = randInt(10, 999) / p2;
+                    const res = Math.round((a + b) * 100) / 100;
+                    return { question: `${a} + ${b} = ?`, answer: String(res) };
+                } else {
+                    let a = randInt(10, 999) / p1;
+                    let b = randInt(10, 999) / p2;
+                    if (a < b) { const tmp = a; a = b; b = tmp; }
+                    if (a === b) a += 1;
+                    a = Math.round(a * 100) / 100;
+                    b = Math.round(b * 100) / 100;
+                    const res = Math.round((a - b) * 100) / 100;
+                    return { question: `${a} - ${b} = ?`, answer: String(res) };
+                }
+            } else if (gradeId === 'g5_1') {
+                // 5학년 1학기: 통분이 필요한 분수의 덧셈과 뺄셈
+                const isAdd = Math.random() < 0.5;
+                let d1 = randInt(2, 9);
+                let d2 = randInt(2, 9);
+                while (d1 === d2) { d2 = randInt(2, 9); } // 통분 필요 (d1 !== d2)
+
+                let n1 = randInt(1, d1 - 1);
+                let n2 = randInt(1, d2 - 1);
+
+                if (isAdd) {
+                    const numSum = n1 * d2 + n2 * d1;
+                    const denCommon = d1 * d2;
+                    const g = gcd(numSum, denCommon);
+                    const finalN = numSum / g;
+                    const finalD = denCommon / g;
+                    const ansStr = (finalD === 1) ? String(finalN) : `${finalN}/${finalD}`;
+                    return { question: `${n1}/${d1} + ${n2}/${d2} = ?`, answer: ansStr };
+                } else {
+                    // Subtraction: n1/d1 > n2/d2
+                    if (n1 * d2 < n2 * d1) {
+                        const tmpN = n1; n1 = n2; n2 = tmpN;
+                        const tmpD = d1; d1 = d2; d2 = tmpD;
+                    } else if (n1 * d2 === n2 * d1) {
+                        n1 += 1;
+                    }
+                    const numDiff = n1 * d2 - n2 * d1;
+                    const denCommon = d1 * d2;
+                    const g = gcd(numDiff, denCommon);
+                    const finalN = numDiff / g;
+                    const finalD = denCommon / g;
+                    const ansStr = (finalD === 1) ? String(finalN) : `${finalN}/${finalD}`;
+                    return { question: `${n1}/${d1} - ${n2}/${d2} = ?`, answer: ansStr };
+                }
+            }
+        }
+
+        function randInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function gcd(a, b) {
+            return b === 0 ? a : gcd(b, a % b);
+        }
+
+        // 시험 세트 초기화
+        function initTest() {
+            testIndex = 0;
+            testScore = 0;
+            testWrongList = [];
+            window.userMathInput = "";
+
+            testWords = generateMathProblems(currentGradeId);
+            renderTestStep();
+        }
+
+        // 현재 문제 화면 및 Numpad 렌더링
+        function renderTestStep() {
+            const layout = document.getElementById('testLayout');
+            
+            // 10문제 풀이 완료 결과 화면
+            if (testIndex >= testWords.length) {
+                const total = testWords.length;
+                const isPerfect = (testScore === total); // 10개 만점
+                const dateVal = document.getElementById('dateSelect').value;
+                const alreadyPassed = currentPassedSemesters.has(currentGradeId);
+
+                let html = '';
+
+                if (isPerfect) {
+                    if (!alreadyPassed) {
+                        // 처음 만점 달성 시 보상 지급 (지침 6, 9번)
+                        currentPassedSemesters.add(currentGradeId);
+                        savePassedDataForDate(dateVal);
+                        updateTabBadges();
+
+                        const userId = localStorage.getItem('tetris_user_id');
+                        const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
+                        
+                        const prevStars = window.currentServerStars || 0;
+                        const prevCoins = window.currentServerCoins || 0;
+                        const nextStars = prevStars + 1;
+                        const nextCoins = prevCoins + 5;
+
+                        window.currentServerStars = nextStars;
+                        window.currentServerCoins = nextCoins;
+
+                        if (userId) {
+                            fetch(`${apiBase}/api/game`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'add_star', userId: userId, amount: 1 })
+                            }).catch(err => console.error(err));
+
+                            fetch(`${apiBase}/api/game`, {
+                                method: 'POST',
+                                headers: { 'Content
