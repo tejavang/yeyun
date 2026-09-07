@@ -362,7 +362,7 @@
         </div>
 
         <button class="overlay-restart-btn" id="restart-btn" onclick="tryStartGame()">
-          게임 시작 🪙3
+          게임 시작 🪙 3
         </button>
       </div>
     </div>
@@ -528,7 +528,7 @@
         } else {
           restartBtn.disabled = false;
           const btnLabel = isGameOver && player.score > 0 ? "다시 시작" : "게임 시작";
-          restartBtn.innerHTML = `${btnLabel} 🪙3`;
+          restartBtn.innerHTML = `${btnLabel} 🪙 3`;
         }
       } catch (err) {
         console.error('통신 실패 detail:', err);
