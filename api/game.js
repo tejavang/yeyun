@@ -65,7 +65,7 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true });
       }
 
-      // 별 적립 (avoca 단어장 시험 합격 시)
+      // 별 적립
       if (action === 'add_star' || action === 'addStar') { // 두 방식 모두 대응
         const amount = req.body?.amount || 1;
         const result = await sql`
@@ -80,32 +80,22 @@ export default async function handler(req, res) {
           stars: result[0]?.stars || 0
         });
       }
-
-      // 별을 코인으로 교환 (메인 포털)
-      if (action === 'exchange_stars') {
-        const userRes = await sql`SELECT COALESCE(stars, 0) AS stars, COALESCE(coins, 0) AS coins FROM users WHERE user_id = ${userId}`;
-        if (userRes.length === 0) return res.status(404).json({ error: '유저 없음' });
-
-        const currentStars = userRes[0].stars;
-        if (currentStars <= 0) {
-          return res.status(400).json({ success: false, message: '교환할 별이 없습니다.' });
-        }
-
-        const coinsToAdd = currentStars * 10;
-
-        const updatedRes = await sql`
+      // 코인 적립
+      if (action === 'add_coins' || action === 'addCoins') { // 두 방식 모두 대응
+        const amount = req.body?.amount || 1;
+        const result = await sql`
           UPDATE users 
-          SET stars = 0, coins = coins + ${coinsToAdd} 
+          SET coins = COALESCE(coins, 0) + ${amount} 
           WHERE user_id = ${userId}
-          RETURNING stars, coins
+          RETURNING coins
         `;
-
-        return res.status(200).json({
-          success: true,
-          stars: updatedRes[0].stars,
-          coins: updatedRes[0].coins
+        return res.status(200).json({ 
+          success: true, 
+          message: '코인이 적립되었습니다.',
+          coins: result[0]?.coins || 0
         });
       }
+      
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
