@@ -691,7 +691,37 @@
 			speakText(filteredWords[cardIndex].word);
 		}
 
-		/* Gemini 3.1 Flash TTS Preview API 연동 */
+		// 원시 PCM 오디오 데이터에 올바른 WAV 헤더를 붙여주는 보조 함수
+		function pcmToWav(pcmByteArray, sampleRate = 24000) {
+		    const numChannels = 1;
+		    const bitsPerSample = 16;
+		    const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+		    const blockAlign = numChannels * (bitsPerSample / 8);
+		    const dataSize = pcmByteArray.length;
+		    const chunkSize = 36 + dataSize;
+		
+		    const headerBuffer = new ArrayBuffer(44);
+		    const view = new DataView(headerBuffer);
+		
+		    view.setUint32(0, 0x52494646, false); // "RIFF"
+		    view.setUint32(4, chunkSize, true);
+		    view.setUint32(8, 0x57415645, false); // "WAVE"
+		
+		    view.setUint32(12, 0x666d7420, false); // "fmt "
+		    view.setUint32(16, 16, true); // PCM
+		    view.setUint16(20, 1, true); // AudioFormat
+		    view.setUint16(22, numChannels, true);
+		    view.setUint32(24, sampleRate, true);
+		    view.setUint32(28, byteRate, true);
+		    view.setUint16(32, blockAlign, true);
+		    view.setUint16(34, bitsPerSample, true);
+		
+		    view.setUint32(36, 0x64617461, false); // "data"
+		    view.setUint32(40, dataSize, true);
+		
+		    return new Blob([headerBuffer, pcmByteArray], { type: 'audio/wav' });
+		}
+		
 		/* Gemini API 연동 (수정됨) */
 		async function speakText(text) {
 		    if (!text) return;
@@ -716,11 +746,7 @@
 		            method: 'POST',
 		            headers: { 'Content-Type': 'application/json' },
 		            body: JSON.stringify({
-						systemInstruction: {
-		                    parts: [{
-		                        text: "당신은 초등학교 영어수업에서 학생에게 발음을 가르쳐주는 다정한 선생님입니다. 학생이 듣고 따라하기 쉽도록 친절하고 또박또박하게 발음하세요."
-		                    }]
-		                },
+		                // 에러 원인이 되는 systemInstruction을 제거하고, 텍스트 내부에 지시사항을 포함하거나 순수 단어만 전송
 		                contents: [{
 		                    parts: [{
 		                        text: text
@@ -741,19 +767,32 @@
 		            })
 		        });
 		
-		        if (!response.ok) throw new Error(`Gemini TTS API 오류 (${response.status})`);
+		        if (!response.ok) {
+		            const errData = await response.json();
+		            throw new Error(errData.error?.message || `Gemini TTS API 오류 (${response.status})`);
+		        }
 		
 		        const data = await response.json();
 		        
 		        // 3. 응답에서 오디오 데이터 추출
-		        // 모델이 텍스트(단어 뜻 등)를 함께 반환할 수 있으므로, inlineData가 포함된 파트를 직접 탐색합니다.
 		        const parts = data.candidates?.[0]?.content?.parts || [];
 		        const audioPart = parts.find(p => p.inlineData && p.inlineData.mimeType.startsWith('audio/'));
 		
 		        if (audioPart) {
 		            const audioBase64 = audioPart.inlineData.data;
-		            const mimeType = audioPart.inlineData.mimeType || 'audio/wav';
-		            currentAudio = new Audio(`data:${mimeType};base64,${audioBase64}`);
+		            
+		            // Base64를 바이너리 배열로 변환
+		            const binaryString = atob(audioBase64);
+		            const bytes = new Uint8Array(binaryString.length);
+		            for (let i = 0; i < binaryString.length; i++) {
+		                bytes[i] = binaryString.charCodeAt(i);
+		            }
+		
+		            // 브라우저가 인식할 수 있도록 WAV 헤더를 장착하여 Blob 생성
+		            const wavBlob = pcmToWav(bytes, 24000);
+		            const audioUrl = URL.createObjectURL(wavBlob);
+		
+		            currentAudio = new Audio(audioUrl);
 		            await currentAudio.play();
 		        } else {
 		            throw new Error("응답에서 오디오 데이터를 찾을 수 없습니다.");
