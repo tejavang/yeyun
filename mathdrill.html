@@ -48,7 +48,7 @@
             padding: 0 4px;
             flex-shrink: 0;
         }
-        .header-title { font-size: 1.25rem; color: #166534; font-weight: 800; display: flex; align-items: center; gap: 4px; }
+        .header-title { font-size: 1.25rem; color: #880000; font-weight: 800; display: flex; align-items: center; gap: 4px; }
         .star-count { font-size: 0.95rem; color: #f59e0b; font-weight: 800; background: #fffbebf5; padding: 4px 10px; border-radius: 20px; border: 1px solid #fde68a; }
 
         .category-container {
@@ -202,7 +202,7 @@
         }
         .numpad button:active { background: var(--primary-light); }
         .numpad .func-btn { background: #f1f5f9; font-size: 1.1rem; color: var(--text-muted); }
-        .numpad .submit-btn { background: var(--primary); color: #fff; border: none; grid-column: span 2; font-size: 1.1rem; }
+        .numpad .submit-btn { background: var(--primary); color: #fff; border: none; font-size: 1.1rem; }
         .numpad .submit-btn:active { background: #4338ca; }
 
         .btn {
@@ -490,7 +490,7 @@
             testWrongList = [];
 
             testWords = [];
-            for(let i=0; i<10; i++){
+            for(let i=0; i<5; i++){
                 testWords.push(generateMathProblem(currentGrade));
             }
 
@@ -507,23 +507,24 @@
                 <div id="testLetterInputDisplay" class="test-input"></div>
                 
                 <div class="numpad">
-                    <button onclick="typeNum('1')">1</button>
-                    <button onclick="typeNum('2')">2</button>
-                    <button onclick="typeNum('3')">3</button>
-                    <button onclick="undoTestLetter()" class="func-btn">지우기</button>
+                    <button onclick="typeNum('7')">7</button>
+                    <button onclick="typeNum('8')">8</button>
+                    <button onclick="typeNum('9')">9</button>
+                    <button onclick="undoTestLetter()" class="func-btn">⌫</button>
                     
                     <button onclick="typeNum('4')">4</button>
                     <button onclick="typeNum('5')">5</button>
                     <button onclick="typeNum('6')">6</button>
                     <button onclick="typeNum('/')" class="func-btn">/</button>
                     
-                    <button onclick="typeNum('7')">7</button>
-                    <button onclick="typeNum('8')">8</button>
-                    <button onclick="typeNum('9')">9</button>
+                    <button onclick="typeNum('1')">1</button>
+                    <button onclick="typeNum('2')">2</button>
+                    <button onclick="typeNum('3')">3</button>
                     <button onclick="typeNum('...')" class="func-btn">...</button>
                     
-                    <button onclick="typeNum('.')">.</button>
                     <button onclick="typeNum('0')">0</button>
+                    <button onclick="typeNum('.')">.</button>
+                    <button onclick="typeNum(' ')">␣</button>
                     <button onclick="submitTestAnswer()" class="submit-btn">정답 제출</button>
                 </div>
             `;
