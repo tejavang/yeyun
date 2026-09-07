@@ -549,7 +549,10 @@
                     const passedToday = mathPassedData[currentDate] || [];
                     const wasAlreadyPassed = passedToday.includes(currentGrade);
                 
-                    if (!wasAlreadyPassed) {
+                    const todayDate = new Date().toISOString().split('T')[0];
+                    const isToday = (currentDate === todayDate);
+                
+                    if (!wasAlreadyPassed && isToday) {
                         titleMsg = '🎉 만점 축하합니다!';
                         
                         const userId = localStorage.getItem('tetris_user_id');
