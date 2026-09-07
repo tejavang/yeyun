@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Watermelon Game</title>
+  <!-- 물리 엔진을 위한 Matter.js 로드 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <style>
+    /* 테트리스에서 사용된 기본 스타일 및 오버레이 디자인 참고[cite: 3] */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial Round MT Bold', 'Helvetica Neue', Arial, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+    }
+
+    body {
+      background: #23272a;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+      padding: 10px 5px;
+    }
+
+    .game-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #36393f;
+      padding: 12px;
+      border-radius: 12px;
+      border: 4px solid #1e2124;
+      box-shadow: 0 8px 0 #141619;
+      position: relative;
+      width: 344px;
+    }
+
+    .header-panel {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .stat-box {
+      flex: 1;
+      background: #2b2d31;
+      border: 2px solid #1e2124;
+      border-radius: 8px;
+      padding: 6px 4px;
+      text-align: center;
+      box-shadow: 0 3px 0 #1e2124;
+    }
+
+    .stat-title {
+      font-size: 13px;
+      font-weight: 900;
+      color: #f1c40f;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffffff;
+    }
+
+    #game-canvas-container {
+      position: relative;
+      width: 320px;
+      height: 500px;
+      background: #111214;
+      border: 3px solid #1e2124;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    /* 상단 경계선 표시 (이 선을 넘으면 게임 오버) */
+    .limit-line {
+      position: absolute;
+      top: 60px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: rgba(231, 76, 60, 0.5);
+      border-bottom: 1px dashed #e74c3c;
+      z-index: 1;
+    }
+
+    /* 게임 오버 오버레이 스타일 (테트리스 구조 차용)[cite: 3] */
+    .game-over-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(17, 18, 20, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      z-index: 10;
+      padding: 10px;
+    }
+
+    .game-over-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: #e74c3c;
+      margin-bottom: 8px;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    .score-info {
+      font-size: 14px;
+      color: #f1c40f;
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+
+    .score-num {
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .leaderboard-box {
+      background: #2b2d31;
+      border: 2px solid #9b59b6;
+      border-radius: 8px;
+      padding: 8px;
+      margin: 8px 0;
+      width: 95%;
+      max-height: 180px;
+      overflow-y: auto;
+      box-shadow: 0 3px 0 #1e2124;
+    }
+
+    .leaderboard-title {
+      font-size: 12px;
+      color: #f1c40f;
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    #leaderboard-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 12px;
+    }
+
+    #leaderboard-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 3px 0;
+      border-bottom: 1px solid #1e2124;
+    }
+
+    #leaderboard-list li:last-child {
+      border-bottom: none;
+    }
+
+    .lb-rank {
+      color: #a0a0a0;
+      width: 18px;
+      display: inline-block;
+    }
+
+    .lb-user {
+      color: #3498db;
+      font-weight: bold;
+      flex: 1;
+    }
+
+    .lb-score {
+      color: #fff;
+      font-weight: bold;
+      text-align: right;
+    }
+
+    .coin-info-box {
+      background: #2b2d31;
+      border: 2px solid #f1c40f;
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 10px;
+      text-align: center;
+      width: 95%;
+      box-shadow: 0 3px 0 #1e2124;
+    }
+
+    .coin-info-line {
+      font-size: 13px;
+      color: #ffffff;
+      font-weight: bold;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .user-tag {
+      font-size: 11px;
+      color: #a0a0a0;
+      margin-bottom: 4px;
+    }
+
+    .user-input-box {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      justify-content: center;
+    }
+
+    .user-input-box input {
+      width: 90px;
+      padding: 5px;
+      border-radius: 6px;
+      border: 1px solid #f1c40f;
+      background: #111214;
+      color: #fff;
+      text-align: center;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .user-input-box button {
+      padding: 5px 8px;
+      background: #3498db;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .overlay-restart-btn {
+      padding: 8px 20px;
+      background: #2ecc71;
+      border: 3px solid #27ae60;
+      border-radius: 8px;
+      color: white;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #1e8449;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .overlay-restart-btn:disabled {
+      background: #7f8c8d;
+      border-color: #95a5a6;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-wrapper">
+    <div class="game-container">
+      
+      <div class="header-panel">
+        <div class="stat-box">
+          <div class="stat-title">SCORE</div>
+          <div class="stat-value" id="score">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-title">BEST (MY)</div>
+          <div class="stat-value" id="high-score">0</div>
+        </div>
+      </div>
+
+      <div id="game-canvas-container">
+        <div class="limit-line"></div>
+        <!-- Matter.js Canvas가 여기에 주입됩니다 -->
+      </div>
+
+      <!-- 백엔드 로직 연동을 위한 UI 오버레이 (테트리스와 동일)[cite: 3] -->
+      <div class="game-over-overlay" id="game-over-screen">
+        <div class="game-over-title" id="overlay-title">WATERMELON</div>
+        <div class="score-info" id="score-info-container" style="display: none;">
+          내 점수: <span class="score-num" id="go-score">0</span>
+        </div>
+
+        <div class="leaderboard-box">
+          <div class="leaderboard-title">🏆 TOP 5 🏆</div>
+          <ul id="leaderboard-list">
+            <li style="justify-content: center; color: #a0a0a0;">로딩 중...</li>
+          </ul>
+        </div>
+
+        <div class="coin-info-box">
+          <div class="user-tag">접속 ID: <b id="display-user-id" style="color:#f1c40f;">미설정</b></div>
+          <div class="coin-info-line">
+            🪙&nbsp;<span id="coin-count">--</span>
+          </div>
+          
+          <div class="user-input-box" id="id-input-area">
+            <input type="text" id="user-id-input" placeholder="yeyun 등">
+            <button onclick="saveUserId()">등록</button>
+          </div>
+        </div>
+
+        <button class="overlay-restart-btn" id="restart-btn" onclick="tryStartGame()">
+          게임 시작 🪙 3
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // --- 백엔드 설정 (테트리스 설정 참고)[cite: 3] ---
+    const ALLOWED_USERS = ['yeyun', 'woosong', 'jinyoung'];
+    const GAME_ID = 'watermelon'; // DB 저장을 위해 게임 ID 변경
+    
+    let currentUserId = localStorage.getItem('game_user_id') || '';
+    let highScore = localStorage.getItem('watermelon_high_score') || 0;
+    let currentCoins = 0;
+    let score = 0;
+    let isGameOver = true;
+
+    // --- 수박 게임 물리 엔진 설정 (Matter.js) ---
+    const Engine = Matter.Engine,
+          Render = Matter.Render,
+          Runner = Matter.Runner,
+          Bodies = Matter.Bodies,
+          Composite = Matter.Composite,
+          Events = Matter.Events;
+
+    const engine = Engine.create();
+    const render = Render.create({
+      element: document.getElementById('game-canvas-container'),
+      engine: engine,
+      options: {
+        width: 320,
+        height: 500,
+        wireframes: false,
+        background: 'transparent'
+      }
+    });
+
+    // 벽 생성
+    const wallOptions = { isStatic: true, render: { fillStyle: '#1e2124' } };
+    const ground = Bodies.rectangle(160, 510, 320, 20, wallOptions);
+    const leftWall = Bodies.rectangle(-10, 250, 20, 500, wallOptions);
+    const rightWall = Bodies.rectangle(330, 250, 20, 500, wallOptions);
+    Composite.add(engine.world, [ground, leftWall, rightWall]);
+
+    // 과일 단계 설정 (반지름, 색상, 점수)
+    const FRUITS = [
+      { radius: 12, color: '#ff0000', score: 1 },    // 체리
+      { radius: 18, color: '#ff4d4d', score: 3 },    // 딸기
+      { radius: 25, color: '#800080', score: 6 },    // 포도
+      { radius: 32, color: '#ffa500', score: 10 },   // 귤
+      { radius: 42, color: '#ff8c00', score: 15 },   // 오렌지
+      { radius: 52, color: '#ff0000', score: 21 },   // 사과
+      { radius: 62, color: '#e4d00a', score: 28 },   // 배
+      { radius: 72, color: '#ffb6c1', score: 36 },   // 복숭아
+      { radius: 85, color: '#ffff00', score: 45 },   // 파인애플
+      { radius: 98, color: '#90ee90', score: 55 },   // 메론
+      { radius: 115, color: '#008000', score: 66 }   // 수박
+    ];
+
+    let currentFruit = null;
+    let dropping = false;
+
+    // 새 과일 드롭 준비
+    function spawnFruit(x) {
+      if (isGameOver) return;
+      const typeIndex = Math.floor(Math.random() * 4); // 처음 4단계까지만 스폰
+      const fruitDef = FRUITS[typeIndex];
+      
+      currentFruit = Bodies.circle(x, 30, fruitDef.radius, {
+        isSleeping: true, // 드롭 전에는 물리 적용 안 됨
+        render: { fillStyle: fruitDef.color },
+        restitution: 0.3,
+        friction: 0.1,
+        fruitType: typeIndex
+      });
+      Composite.add(engine.world, currentFruit);
+      dropping = false;
+    }
+
+    // 과일 떨어뜨리기
+    function dropFruit() {
+      if (currentFruit && !dropping && !isGameOver) {
+        dropping = true;
+        Matter.Sleeping.set(currentFruit, false);
+        currentFruit = null;
+        setTimeout(() => spawnFruit(160), 1000); // 1초 쿨다운 후 새 과일
+      }
+    }
+
+    // 마우스/터치 이동 시 과일 위치 조정
+    const container = document.getElementById('game-canvas-container');
+    container.addEventListener('pointermove', (e) => {
+      if (currentFruit && !dropping && !isGameOver) {
+        const rect = container.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        const radius = FRUITS[currentFruit.fruitType].radius;
+        // 벽을 넘지 않도록 위치 제한
+        x = Math.max(radius, Math.min(320 - radius, x));
+        Matter.Body.setPosition(currentFruit, { x: x, y: 30 });
+      }
+    });
+
+    container.addEventListener('pointerdown', () => {
+      dropFruit();
+    });
+
+    // 충돌(합성) 로직
+    Events.on(engine, 'collisionStart', (event) => {
+      event.pairs.forEach((pair) => {
+        const bodyA = pair.bodyA;
+        const bodyB = pair.bodyB;
+
+        // 둘 다 과일이고 타입이 같으면
+        if (bodyA.fruitType !== undefined && bodyA.fruitType === bodyB.fruitType) {
+          const type = bodyA.fruitType;
+          
+          if (type < FRUITS.length - 1) { // 수박이 아니면 합성
+            // 기존 과일 삭제 중복 방지
+            if (!Composite.allBodies(engine.world).includes(bodyA) || !Composite.allBodies(engine.world).includes(bodyB)) return;
+
+            Composite.remove(engine.world, [bodyA, bodyB]);
+            
+            const newType = type + 1;
+            const newFruitDef = FRUITS[newType];
+            const newX = (bodyA.position.x + bodyB.position.x) / 2;
+            const newY = (bodyA.position.y + bodyB.position.y) / 2;
+
+            const newFruit = Bodies.circle(newX, newY, newFruitDef.radius, {
+              render: { fillStyle: newFruitDef.color },
+              restitution: 0.3,
+              friction: 0.1,
+              fruitType: newType
+            });
+            
+            Composite.add(engine.world, newFruit);
+            
+            // 점수 추가
+            score += newFruitDef.score;
+            updateScoreUI();
+          }
+        }
+      });
+    });
+
+    // 게임 오버 체크 루프 (제한선 넘었는지)
+    Events.on(engine, 'afterUpdate', () => {
+      if (isGameOver) return;
+      const bodies = Composite.allBodies(engine.world);
+      for (let i = 0; i < bodies.length; i++) {
+        const body = bodies[i];
+        // 정지된 바디이면서 벽이 아닌 과일이 제한선(y=60) 위로 올라갔을 때
+        if (body.fruitType !== undefined && !body.isSleeping && body.position.y < 50 && body.velocity.y < 0.1 && body.velocity.y > -0.1) {
+          handleGameOver();
+          break;
+        }
+      }
+    });
+
+    function updateScoreUI() {
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('watermelon_high_score', highScore);
+      }
+      document.getElementById('score').innerText = score;
+      document.getElementById('high-score').innerText = highScore;
+    }
+
+    // --- API 및 UI 백엔드 연동 (테트리스 로직 활용)[cite: 3] ---
+    function saveUserId() {
+      const inputVal = document.getElementById('user-id-input').value.trim().toLowerCase();
+      if (!ALLOWED_USERS.includes(inputVal)) {
+        alert('허용되지 않은 아이디입니다.\n(yeyun, woosong, jinyoung 중 입력)');
+        return;
+      }
+      currentUserId = inputVal;
+      try {
+        localStorage.setItem('game_user_id', currentUserId);
+      } catch (e) {}
+      updateUserUI();
+      fetchCoins();
+    }
+
+    function updateUserUI() {
+      const displayTag = document.getElementById('display-user-id');
+      const inputArea = document.getElementById('id-input-area');
+      if (currentUserId && ALLOWED_USERS.includes(currentUserId)) {
+        displayTag.innerText = currentUserId;
+        inputArea.style.display = 'none';
+      } else {
+        displayTag.innerText = '미설정';
+        inputArea.style.display = 'flex';
+      }
+    }
+
+    function updateLeaderboardUI(leaderboardArray) {
+      const list = document.getElementById('leaderboard-list');
+      list.innerHTML = '';
+      if (!leaderboardArray || leaderboardArray.length === 0) {
+        list.innerHTML = '<li style="justify-content: center; color: #a0a0a0;">기록이 없습니다.</li>';
+        return;
+      }
+      const top5 = leaderboardArray.slice(0, 5);
+      top5.forEach((entry, idx) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span class="lb-rank">${idx + 1}.</span> 
+          <span class="lb-user">${entry.user_id}</span> 
+          <span class="lb-score">${entry.score}</span>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    async function fetchCoins() {
+      if (!currentUserId || !ALLOWED_USERS.includes(currentUserId)) {
+        document.getElementById('coin-count').innerText = '--';
+        const restartBtn = document.getElementById('restart-btn');
+        restartBtn.disabled = true;
+        restartBtn.innerHTML = "아이디를 입력하세요";
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/game?userId=${currentUserId}&gameId=${GAME_ID}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          console.error('API Error:', data);
+          document.getElementById('leaderboard-list').innerHTML = `<li style="color:#e74c3c;">조회 실패 (${res.status})</li>`;
+          return;
+        }
+
+        currentCoins = data.coins;
+        document.getElementById('coin-count').innerText = currentCoins;
+        
+        if (data.leaderboard) {
+          updateLeaderboardUI(data.leaderboard);
+        }
+
+        const restartBtn = document.getElementById('restart-btn');
+        if (currentCoins < 3) {
+          restartBtn.disabled = true;
+          restartBtn.innerHTML = `코인 부족`;
+        } else {
+          restartBtn.disabled = false;
+          const btnLabel = isGameOver && score > 0 ? "다시 시작" : "게임 시작";
+          restartBtn.innerHTML = `${btnLabel} 🪙 3`;
+        }
+      } catch (err) {
+        console.error('통신 실패 detail:', err);
+        document.getElementById('leaderboard-list').innerHTML = '<li style="color:#e74c3c;">통신 에러 발생</li>';
+      }
+    }
+
+    async function tryStartGame() {
+      if (!currentUserId) {
+        alert('아이디를 먼저 등록해주세요.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/game', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            userId: currentUserId, 
+            gameId: GAME_ID, 
+            action: 'start' 
+          })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          currentCoins = data.coins;
+          resetGame();
+        } else {
+          alert(data.error || '게임 시작에 실패했습니다.');
+          fetchCoins();
+        }
+      } catch (err) {
+        console.error(err);
+        alert('서버 통신 실패! 개발자 도구(F12) 콘솔을 확인하세요.');
+      }
+    }
+
+    async function saveScoreToDB(finalScore) {
+      if (!currentUserId || finalScore <= 0) return;
+      try {
+        await fetch('/api/game', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            userId: currentUserId, 
+            gameId: GAME_ID, 
+            action: 'save_score', 
+            score: finalScore 
+          })
+        });
+        fetchCoins();
+      } catch (err) {
+        console.error('점수 저장 실패:', err);
+      }
+    }
+
+    function handleGameOver() {
+      isGameOver = true;
+      document.getElementById('overlay-title').innerText = "GAME OVER";
+      document.getElementById('go-score').innerText = score;
+      document.getElementById('score-info-container').style.display = 'block';
+      document.getElementById('game-over-screen').style.display = 'flex';
+      Runner.stop(runner); // 물리 엔진 정지
+      saveScoreToDB(score);
+    }
+
+    const runner = Runner.create();
+
+    function resetGame() {
+      // 보드 초기화
+      Composite.clear(engine.world);
+      Engine.clear(engine);
+      Composite.add(engine.world, [ground, leftWall, rightWall]);
+      
+      score = 0;
+      isGameOver = false;
+      updateScoreUI();
+      
+      document.getElementById('game-over-screen').style.display = 'none';
+      
+      Runner.run(runner, engine);
+      Render.run(render);
+      spawnFruit(160);
+    }
+
+    // 초기 설정
+    document.getElementById('high-score').innerText = highScore;
+    updateUserUI();
+    fetchCoins();
+  </script>
+</body>
+</html>
