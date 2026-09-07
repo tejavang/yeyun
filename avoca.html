@@ -698,12 +698,24 @@
 			speakText(filteredWords[cardIndex].word);
 		}
 		function speakText(text) {
-		    const audio = document.getElementById('ttsAudio');
-		    if (!audio) return;
+		    if (!text) return;
 		    const encodedText = encodeURIComponent(text);
-		    audio.src = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=en&client=tw-ob`;
+		    
+		    // 구글 번역 TTS 오디오 객체 생성 및 재생
+		    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=en&client=tw-ob`;
+		    const audio = new Audio(ttsUrl);
+		    
 		    audio.play().catch(error => {
-		        console.error("오디오 재생 오류:", error);
+		        console.error("구글 TTS 재생 실패, 브라우저 내장 음성으로 대체합니다:", error);
+		        
+		        // 만약 구글 TTS가 차단되거나 실패할 경우, 기존 브라우저 내장 음성(SpeechSynthesis)으로 자동 백업(Fallback)
+		        if ('speechSynthesis' in window) {
+		            window.speechSynthesis.cancel();
+		            const utterance = new SpeechSynthesisUtterance(text);
+		            utterance.lang = 'en-US';
+		            utterance.rate = 0.85;
+		            window.speechSynthesis.speak(utterance);
+		        }
 		    });
 		}
 			
