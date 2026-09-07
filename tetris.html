@@ -737,7 +737,7 @@
         player.lines += rowCount;
         player.score += rowCount * 100 * player.level;
         player.level = Math.floor(player.lines / 10) + 1;
-        dropInterval = Math.max(100, 1000 - (player.level - 1) * 100);
+        dropInterval = Math.max(100, 800 - (player.level - 1) * 100);
       }
     }
 
