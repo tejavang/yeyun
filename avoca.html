@@ -944,10 +944,10 @@
 		                starAnimHtml = `
 		                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 12px 0;">
 							  <div style="font-size: 1.3rem; font-weight: bold; background: #f8fafc; padding: 10px; border-radius: 8px; display: inline-block;">
-							    ⭐&nbsp;&nbsp;<span id="starAnimText" style="display: inline-block; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #333;">${prevStars}개</span>
+							    ⭐&nbsp;&nbsp;&nbsp;<span id="starAnimText" style="display: inline-block; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #333;">${prevStars}개</span>
 							  </div>
 							  <div style="font-size: 1.3rem; font-weight: bold; background: #f8fafc; padding: 10px; border-radius: 8px; display: inline-block;">
-							    🪙&nbsp;&nbsp;<span id="coinAnimText" style="display: inline-block; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #333;">${prevCoins}개</span>
+							    🪙&nbsp;&nbsp;&nbsp;<span id="coinAnimText" style="display: inline-block; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #333;">${prevCoins}개</span>
 							  </div>
 							</div>
 		                `;
@@ -963,7 +963,7 @@
 		                    
 		                    const coinText = document.getElementById('coinAnimText');
 		                    if(coinText) {
-		                        coinText.style.color = '#f1c40f';
+		                        coinText.style.color = '#ff9800';
 		                        coinText.style.transform = 'scale(1.3)';
 		                        coinText.innerHTML = `${nextCoins}개!`;
 		                    }
