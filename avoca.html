@@ -944,10 +944,19 @@
 		                starAnimHtml = `
 		                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 12px 0;">
 		                        <div style="font-size: 1.3rem; font-weight: bold; background: #f8fafc; padding: 10px; border-radius: 8px; display: inline-block;">
-		                            ⭐ 별: <span id="starAnimText" style="display: inline-block; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #333;">${prevStars}개</span>
+		                            ⭐ 
+									<span id="starAnimText" style="display: inline-block; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #333;">${prevStars}개</span>
 		                        </div>
 		                        <div style="font-size: 1.3rem; font-weight: bold; background: #f8fafc; padding: 10px; border-radius: 8px; display: inline-block;">
-		                            <span class="coin-icon">🪙</span> 코인: <span id="coinAnimText" style="display: inline-block; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #333;">${prevCoins}개</span>
+		                            (<svg class="coin-icon" viewBox="0 0 24 32" width="15" height="19">
+						            <ellipse cx="12" cy="16" rx="10" ry="14" fill="#d35400" />
+						            <ellipse cx="12" cy="15" rx="10" ry="14" fill="#f39c12" />
+						            <ellipse cx="12" cy="15" rx="8.5" ry="12.5" fill="#f1c40f" />
+						            <ellipse cx="12" cy="15" rx="5" ry="8" fill="#f39c12" />
+						            <ellipse cx="12" cy="15" rx="3.5" ry="6.5" fill="#f1c40f" />
+						            <path d="M 6 8 A 7 11 0 0 1 12 4 A 7 11 0 0 0 8 10 Z" fill="#ffffff" opacity="0.6" />
+						          </svg>)
+								  <span id="coinAnimText" style="display: inline-block; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #333;">${prevCoins}개</span>
 		                        </div>
 		                    </div>
 		                `;
