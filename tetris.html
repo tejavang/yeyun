@@ -94,6 +94,25 @@
       border: 2px solid #1e2124;
     }
 
+    .pause-btn {
+      width: 100%;
+      height: 40px;
+      background: #34495e;
+      border: 2px solid #2c3e50;
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #1a252f;
+      margin-top: auto;
+    }
+
+    .pause-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #1a252f;
+    }
+
     .touch-controls {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -334,6 +353,9 @@
           <div class="stat-title">LEVEL</div>
           <div class="stat-value" id="level">1</div>
         </div>
+        
+        <!-- 일시정지 버튼 추가 -->
+        <button id="btn-pause" class="pause-btn" onclick="togglePause()">⏸️ 일시정지</button>
       </div>
 
       <div class="game-over-overlay" id="game-over-screen">
@@ -420,6 +442,7 @@
     let dropInterval = 1000;
     let lastTime = 0;
     let isGameOver = true;
+    let isPaused = false; // 일시정지 상태 변수 추가
 
     function drawLegoBlock(ctx, x, y, color) {
       ctx.fillStyle = color;
@@ -524,7 +547,7 @@
         const restartBtn = document.getElementById('restart-btn');
         if (currentCoins < 3) {
           restartBtn.disabled = true;
-          restartBtn.innerHTML = `코인 부족 ${COIN_SVG}`;
+          restartBtn.innerHTML = `코인 부족 🪙`;
         } else {
           restartBtn.disabled = false;
           const btnLabel = isGameOver && player.score > 0 ? "다시 시작" : "게임 시작";
@@ -767,6 +790,41 @@
       }
     }
 
+    // 일시정지 화면 그리기 함수
+    function drawPauseOverlay() {
+      draw();
+      context.fillStyle = 'rgba(17, 18, 20, 0.8)';
+      context.fillRect(0, 0, COLS, ROWS);
+
+      context.fillStyle = '#f1c40f';
+      context.font = 'bold 1.5px sans-serif';
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText('PAUSED', COLS / 2, ROWS / 2);
+    }
+
+    // 일시정지 토글 함수
+    function togglePause() {
+      if (isGameOver) return;
+      isPaused = !isPaused;
+
+      const pauseBtn = document.getElementById('btn-pause');
+      if (isPaused) {
+        pauseBtn.innerText = '▶️ 계속하기';
+        pauseBtn.style.background = '#2ecc71';
+        pauseBtn.style.borderColor = '#27ae60';
+        pauseBtn.style.boxShadow = '0 3px 0 #1e8449';
+        drawPauseOverlay();
+      } else {
+        pauseBtn.innerText = '⏸️ 일시정지';
+        pauseBtn.style.background = '#34495e';
+        pauseBtn.style.borderColor = '#2c3e50';
+        pauseBtn.style.boxShadow = '0 3px 0 #1a252f';
+        lastTime = performance.now();
+        update();
+      }
+    }
+
     function updateScore() {
       if (player.score > highScore) {
         highScore = player.score;
@@ -779,6 +837,7 @@
     }
 
     function handleGameOver() {
+      isPaused = false;
       document.getElementById('overlay-title').innerText = "GAME OVER";
       document.getElementById('go-score').innerText = player.score;
       document.getElementById('score-info-container').style.display = 'block';
@@ -787,7 +846,7 @@
     }
 
     function update(time = 0) {
-      if (isGameOver) return;
+      if (isGameOver || isPaused) return;
       const deltaTime = time - lastTime;
       lastTime = time;
       dropCounter += deltaTime;
@@ -804,13 +863,31 @@
       player.score = 0; player.lines = 0; player.level = 1;
       dropInterval = 1000;
       isGameOver = false;
+      isPaused = false;
+
+      const pauseBtn = document.getElementById('btn-pause');
+      if (pauseBtn) {
+        pauseBtn.innerText = '⏸️ 일시정지';
+        pauseBtn.style.background = '#34495e';
+        pauseBtn.style.borderColor = '#2c3e50';
+        pauseBtn.style.boxShadow = '0 3px 0 #1a252f';
+      }
+
       updateScore();
       playerReset();
+      lastTime = performance.now();
       update();
     }
 
     document.addEventListener('keydown', event => {
-      if (isGameOver) return;
+      // P 키(80) 또는 ESC 키(27) 누르면 일시정지 토글
+      if (event.keyCode === 80 || event.keyCode === 27) {
+        togglePause();
+        return;
+      }
+
+      if (isGameOver || isPaused) return;
+
       if (event.keyCode === 37) playerMove(-1);
       else if (event.keyCode === 39) playerMove(1);
       else if (event.keyCode === 40) playerDrop();
@@ -820,7 +897,7 @@
 
     function bindTouchBtn(id, action) {
       const btn = document.getElementById(id);
-      const trigger = (e) => { e.preventDefault(); if (!isGameOver) action(); };
+      const trigger = (e) => { e.preventDefault(); if (!isGameOver && !isPaused) action(); };
       btn.addEventListener('touchstart', trigger, { passive: false });
       btn.addEventListener('click', trigger);
     }
