@@ -698,13 +698,23 @@
 		}
 
 		function speakText(text) {
-			if ('speechSynthesis' in window) {
-				window.speechSynthesis.cancel();
-				const utterance = new SpeechSynthesisUtterance(text);
-				utterance.lang = 'en-US';
-				utterance.rate = 0.85;
-				window.speechSynthesis.speak(utterance);
-			}
+		    if (!text) return;
+		    
+		    // 단어 내 특수문자나 띄어쓰기 인코딩 처리
+		    const encodedText = encodeURIComponent(text);
+		    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=en&client=tw-ob`;
+		    const audio = new Audio(ttsUrl);
+		    
+		    audio.play().catch(error => {
+		        console.error("구글 번역 TTS 재생 실패, 브라우저 내장 음성으로 대체합니다:", error);
+		        if ('speechSynthesis' in window) {
+		            window.speechSynthesis.cancel();
+		            const utterance = new SpeechSynthesisUtterance(text);
+		            utterance.lang = 'en-US';
+		            utterance.rate = 0.85;
+		            window.speechSynthesis.speak(utterance);
+		        }
+		    });
 		}
 
 		function openDictionary(e) {
