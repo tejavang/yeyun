@@ -760,36 +760,38 @@
         }
 
         function createParticles(container, textElement, colorType) {
-            const textRect = textElement.getBoundingClientRect();
-            const contRect = container.getBoundingClientRect();
-            const color = colorType === 'eng' ? '#4f46e5' : '#0f172a';
+			const textRect = textElement.getBoundingClientRect();
+			const contRect = container.getBoundingClientRect();
+			const color = colorType === 'eng' ? '#4f46e5' : '#0f172a';
 
-            // 텍스트 너비에 비례해 파티클 생성
-            for (let i = 0; i < 20; i++) {
-                const p = document.createElement('div');
-                p.className = 'particle';
-                p.style.backgroundColor = color;
-                
-                const size = Math.random() * 5 + 3;
-                p.style.width = size + 'px';
-                p.style.height = size + 'px';
-                
-                // 텍스트 영역 내에서 랜덤 시작 위치 설정
-                const x = (textRect.left - contRect.left) + (Math.random() * textRect.width);
-                const y = (textRect.top - contRect.top) + (Math.random() * textRect.height);
-                p.style.left = x + 'px';
-                p.style.top = y + 'px';
-                
-                const tx = (Math.random() - 0.5) * 80 + 'px';
-                const ty = (Math.random() - 0.5) * 80 + 'px';
-                p.style.setProperty('--tx', tx);
-                p.style.setProperty('--ty', ty);
-                
-                container.appendChild(p);
-                
-                setTimeout(() => { if(p.parentElement) p.remove(); }, 500);
-            }
-        }
+			// 텍스트 너비에 비례해 파티클 생성
+			for (let i = 0; i < 20; i++) {
+				const p = document.createElement('div');
+				p.className = 'particle';
+				p.style.backgroundColor = color;
+				
+				const size = Math.random() * 5 + 3;
+				p.style.width = size + 'px';
+				p.style.height = size + 'px';
+				
+				// 텍스트 영역 내에서 랜덤 시작 위치 설정
+				const x = (textRect.left - contRect.left) + (Math.random() * textRect.width);
+				const y = (textRect.top - contRect.top) + (Math.random() * textRect.height);
+				p.style.left = x + 'px';
+				p.style.top = y + 'px';
+				
+				const tx = (Math.random() - 0.5) * 40 + 'px';
+				const ty = (Math.random() - 0.5) * 40 + 'px';
+				p.style.setProperty('--tx', tx);
+				p.style.setProperty('--ty', ty);
+				
+				p.style.animationDuration = '1초';
+				
+				container.appendChild(p);
+				
+				setTimeout(() => { if(p.parentElement) p.remove(); }, 1000);
+			}
+		}
 
         function adjustFontSizes() {
             const engs = document.querySelectorAll('.w-eng');
