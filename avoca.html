@@ -421,7 +421,7 @@
             <div id="listTab" class="tab-content active">
                 <div class="list-container" id="wordListContainer"></div>
                 <div class="row-group" style="padding-top: 8px; flex-shrink: 0;">
-                    <button id="toggleEngBtn" class="btn btn-secondary" style="flex:1;" onclick="toggleListHalf('eng')">영어 가리기</button>
+                    <button id="toggleEngBtn" class="btn btn-secondary" style="flex:1;" onclick="toggleListHalf('eng')">단어 가리기</button>
                     <button id="toggleKorBtn" class="btn btn-secondary" style="flex:1;" onclick="toggleListHalf('kor')">뜻 가리기</button>
                 </div>
             </div>
@@ -449,7 +449,7 @@
 
                     <div class="row-group">
 						<button class="btn btn-primary" style="flex:1" onclick="prevCard()">이전</button>
-                        <button class="btn btn-secondary" style="flex:1" onclick="flipCard()">넘기기</button>
+                        <button class="btn btn-secondary" style="flex:1" onclick="flipCard()">뒤집기</button>
                         <button class="btn btn-primary" style="flex:1" onclick="nextCard()">다음️</button>
                     </div>
                 </div>
@@ -466,7 +466,20 @@
             </div>
         </main>
     </div>
+	<!-- 팝업 배경화면 -->
+	<div id="featurePopupOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9998;"></div>
 
+	<!-- 팝업 내용 -->
+	<div id="featurePopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.2); z-index:9999; width: 300px;">
+		<h3 style="margin-top:0; text-align:center; color:var(--text-main);">🎉 새로운 기능 안내</h3>
+		<ul style="line-height:1.6; margin:20px 0; padding-left:20px; color:var(--text-main);">
+			<li>단어/뜻 가리기 버튼 추가</li>
+			<li>단어 눌러서 🔊 발음 듣기</li>
+			<li>뜻 눌러서 🔍 사전 찾기</li>
+			<li>카드 공부 방향키로 조작하기</li>
+		</ul>
+		<button onclick="closeFeaturePopup()" class="btn btn-primary" style="width:100%; padding:10px;">확인</button>
+	</div>
     <script src="voca-config.js"></script>
     <script>
 		window.currentServerStars = 0; 
@@ -657,7 +670,7 @@
             if (tabId === 'listTab') {
                 isEngHidden = false;
                 isKorHidden = false;
-                document.getElementById('toggleEngBtn').innerText = '영어 가리기';
+                document.getElementById('toggleEngBtn').innerText = '단어 가리기';
                 document.getElementById('toggleEngBtn').className = 'btn btn-secondary';
                 document.getElementById('toggleKorBtn').innerText = '뜻 가리기';
                 document.getElementById('toggleKorBtn').className = 'btn btn-secondary';
@@ -718,7 +731,7 @@
             if (type === 'eng') {
                 isEngHidden = !isEngHidden;
                 const btn = document.getElementById('toggleEngBtn');
-                btn.innerText = isEngHidden ? '영어 보이기' : '영어 가리기';
+                btn.innerText = isEngHidden ? '단어 보이기' : '단어 가리기';
                 btn.className = isEngHidden ? 'btn btn-primary' : 'btn btn-secondary';
             } else {
                 isKorHidden = !isKorHidden;
@@ -1286,6 +1299,19 @@
 				}
 			}
 		});
+		document.addEventListener('DOMContentLoaded', function() {
+			if (!localStorage.getItem('v1.1_features_seen')) {
+				document.getElementById('featurePopupOverlay').style.display = 'block';
+				document.getElementById('featurePopup').style.display = 'block';
+			}
+		});
+
+		// 확인 버튼 클릭 시 팝업 닫고 다시 안 보게 기록하기
+		function closeFeaturePopup() {
+			localStorage.setItem('v1.1_features_seen', 'true');
+			document.getElementById('featurePopupOverlay').style.display = 'none';
+			document.getElementById('featurePopup').style.display = 'none';
+		}
     </script>
 </body>
 </html>
