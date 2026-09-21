@@ -18,7 +18,6 @@
             --accent-pink: #ec4899;
         }
 
-        /* 아이폰 더블 탭 확대 방지를 위해 touch-action: manipulation 유지 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; touch-action: manipulation; }
         
         html, body { 
@@ -224,35 +223,86 @@
             border-radius: 12px;
             background: #fff;
         }
+        
+        /* 전체 목록 리스트 스타일 수정 */
         .list-item {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 18px; 
+            align-items: stretch;
+            padding: 0;
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             user-select: none;
-            gap: 12px;
         }
         .list-item:active {
             background-color: var(--primary-light);
         }
         .list-item:last-child { border-bottom: none; }
         
+        /* 50% 분할 영역 */
+        .word-half {
+            width: 50%;
+            position: relative;
+            padding: 16px 14px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+        .eng-half {
+            justify-content: flex-start;
+            border-right: 1px dashed var(--border-color);
+            padding-right: 40px; /* 사전 아이콘 공간 확보 */
+        }
+        .kor-half {
+            justify-content: flex-end;
+        }
+
+        /* 폰트 축소 및 파티클을 위해 nowrap 적용 */
+        .list-item .w-eng, .list-item .w-kor {
+            white-space: nowrap;
+            transition: color 0.2s;
+            position: relative;
+            z-index: 2;
+        }
+        
         .list-item .w-eng { 
             font-weight: 800; 
             color: var(--primary); 
             font-size: 1.5rem; 
-            text-align: left;
-            word-break: break-word;
         }
         
         .list-item .w-kor { 
             font-size: 1.4rem; 
             font-weight: 700;
             color: var(--text-main); 
-            text-align: right;
-            word-break: break-word;
+        }
+
+        /* 가리기 기능 시 투명화 클래스 */
+        .hidden-text {
+            color: transparent !important;
+        }
+
+        /* 사전 찾기 아이콘 */
+        .dict-icon {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        /* 파티클 이펙트 */
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 3;
+            animation: scatter 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        @keyframes scatter {
+            0% { transform: translate(0, 0) scale(1.2); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
         }
 
         .list-bottom-spacer {
@@ -367,8 +417,13 @@
         </nav>
 
         <main>
+            <!-- 전체 목록 탭 구조 수정: 하단 가리기 버튼 추가 -->
             <div id="listTab" class="tab-content active">
                 <div class="list-container" id="wordListContainer"></div>
+                <div class="row-group" style="padding-top: 8px; flex-shrink: 0;">
+                    <button id="toggleEngBtn" class="btn btn-secondary" style="flex:1;" onclick="toggleListHalf('eng')">영어 가리기</button>
+                    <button id="toggleKorBtn" class="btn btn-secondary" style="flex:1;" onclick="toggleListHalf('kor')">뜻 가리기</button>
+                </div>
             </div>
 
             <div id="cardTab" class="tab-content">
@@ -387,20 +442,15 @@
                     </div>
 
                     <div class="row-group">
-                        <button id="speechRecBtn" class="btn-action-third" onclick="startSpeechRecognition(event)">
-                            🎙️ 발음 하기
-                        </button>
-                        <button class="btn-action-third" onclick="openDictionary(event)">
-                            🔍 사전 찾기
-                        </button>
-                        <button class="btn-action-third" onclick="speakCurrentWord(event)">
-                            🔊 발음 듣기
-                        </button>
+                        <button id="speechRecBtn" class="btn-action-third" onclick="startSpeechRecognition(event)">🎙️ 발음 하기</button>
+                        <button class="btn-action-third" onclick="speakCurrentWord(event)">🔊 발음 듣기</button>
+						<button class="btn-action-third" onclick="openDictionary(event)">🔍 사전 찾기</button>
                     </div>
 
                     <div class="row-group">
-                        <button class="btn btn-secondary" style="flex:1" onclick="prevCard()">이전</button>
-                        <button class="btn btn-primary" style="flex:1" onclick="nextCard()">다음</button>
+						<button class="btn btn-primary" style="flex:1" onclick="prevCard()">이전</button>
+                        <button class="btn btn-secondary" style="flex:1" onclick="flipCard()">넘기기</button>
+                        <button class="btn btn-primary" style="flex:1" onclick="nextCard()">다음️</button>
                     </div>
                 </div>
             </div>
@@ -419,7 +469,7 @@
 
     <script src="voca-config.js"></script>
     <script>
-		window.currentServerStars = 0; // 서버에서 가져온 별 개수를 임시 저장할 변수
+		window.currentServerStars = 0; 
 
 		let allWords = [];
 		let originalFilteredWords = [];
@@ -441,10 +491,13 @@
 		let recognition = null;
 		let isRecording = false;
 
+        // 전체 목록 가리기 전역 상태
+        let isEngHidden = false;
+        let isKorHidden = false;
+
 		window.onload = async function() {
 			initSpeechRecognition();
 			
-			// 1. 아이디 확인 및 로그인 처리
 			let userId = localStorage.getItem('tetris_user_id');
 			if (!userId || userId.trim() === '') {
 				userId = prompt("사용할 아이디를 입력해주세요:");
@@ -457,16 +510,13 @@
 				localStorage.setItem('tetris_user_id', userId);
 			}
 			
-			// 💡 [추가] 특정 관리자 아이디일 때 톱니바퀴 버튼 표시
 		    if (userId === 'jinyoung' || userId === 'woosong') {
 		        const adminBtn = document.getElementById('adminSettingBtn');
 		        if (adminBtn) adminBtn.style.display = 'inline';
 		    }
 			
-			// 2. 상단 우측에 아이디만 표시
 			document.getElementById('starCountDisplay').innerHTML = `👤 ${escapeHtml(userId)}`;
 
-			// 3. 단원 통과 기록 불러오기
 			const savedChapters = localStorage.getItem(`voca_passed_chapters_${userId}`);
 			if (savedChapters) {
 				try { passedChapters = new Set(JSON.parse(savedChapters)); } catch(e){}
@@ -474,27 +524,21 @@
 			
 			await loadWords();
 			
-			// 4. 백그라운드에서 별 개수 동기화 (화면엔 표시 안 함)
 			await syncUserStarsOnly(); 
 		};
 
 		async function syncUserStarsOnly() {
 			const userId = localStorage.getItem('tetris_user_id');
 			const apiBase = typeof window.VOCA_API_URL === 'string' ? window.VOCA_API_URL.replace(/\/$/, '') : '';
-
 			if (!userId) return;
 
 			try {
 				const res = await fetch('/api/game', {
           			method: 'POST',
           			headers: { 'Content-Type': 'application/json' },
-          			body: JSON.stringify({ 
-            			userId: userId, 
-            			action: 'get_user_info' 
-          			})
+          			body: JSON.stringify({ userId: userId, action: 'get_user_info' })
         		});
 				const data = await res.json();
-				
 				if (data.success || data.stars !== undefined) {
 					window.currentServerStars = data.stars || 0;
 				}
@@ -522,7 +566,7 @@
 			} catch (error) {
 				console.error('단어 데이터 불러오기 실패:', error);
 				allWords = [
-					{ id: 1, subject: "기본 단어장", chapter: "1단원", word: "connection", meaning: "연결" }
+					{ id: 1, subject: "기본 단어장", chapter: "1단원", word: "build a relationship", meaning: "관계를 맺다, 관계를 만들다" }
 				];
 				initCategorySelects();
 			}
@@ -609,6 +653,17 @@
 			document.getElementById(tabId).classList.add('active');
 			btnEl.classList.add('active');
 
+            // 탭 변경 시 리스트 탭 가리기 상태 초기화
+            if (tabId === 'listTab') {
+                isEngHidden = false;
+                isKorHidden = false;
+                document.getElementById('toggleEngBtn').innerText = '영어 가리기';
+                document.getElementById('toggleEngBtn').className = 'btn btn-secondary';
+                document.getElementById('toggleKorBtn').innerText = '뜻 가리기';
+                document.getElementById('toggleKorBtn').className = 'btn btn-secondary';
+                renderList();
+            }
+
 			if (tabId === 'cardTab') {
 				resetCardShuffleState();
 				cardIndex = 0;
@@ -634,6 +689,7 @@
 			}, 500);
 		}
 
+        // --- 전체 목록 관련 함수들 (수정됨) ---
 		function renderList() {
 			const container = document.getElementById('wordListContainer');
 			if (originalFilteredWords.length === 0) {
@@ -642,14 +698,123 @@
 			}
 
 			const itemsHtml = originalFilteredWords.map(w => `
-				<div class="list-item" onclick="speakText('${escapeHtml(w.word)}')">
-					<span class="w-eng">${escapeHtml(w.word)}</span>
-					<span class="w-kor">${escapeHtml(w.meaning)}</span>
+				<div class="list-item">
+                    <div class="word-half eng-half" onclick="speakText('${escapeHtml(w.word)}')">
+                        <span class="w-eng ${isEngHidden ? 'hidden-text' : ''}">${escapeHtml(w.word)}</span>
+                        <div class="dict-icon" onclick="openDictFromList(event, '${escapeHtml(w.word)}')">🔍</div>
+                    </div>
+                    <div class="word-half kor-half" onclick="speakText('${escapeHtml(w.word)}')">
+                        <span class="w-kor ${isKorHidden ? 'hidden-text' : ''}">${escapeHtml(w.meaning)}</span>
+                    </div>
 				</div>
 			`).join('');
 
 			container.innerHTML = itemsHtml + `<div class="list-bottom-spacer" aria-hidden="true"></div>`;
+
+            // 렌더링 후 약간의 딜레이를 주어 폰트 사이즈 조정
+            setTimeout(adjustFontSizes, 10);
 		}
+
+        function toggleListHalf(type) {
+            if (type === 'eng') {
+                isEngHidden = !isEngHidden;
+                const btn = document.getElementById('toggleEngBtn');
+                btn.innerText = isEngHidden ? '영어 보이기' : '영어 가리기';
+                btn.className = isEngHidden ? 'btn btn-primary' : 'btn btn-secondary';
+            } else {
+                isKorHidden = !isKorHidden;
+                const btn = document.getElementById('toggleKorBtn');
+                btn.innerText = isKorHidden ? '뜻 보이기' : '뜻 가리기';
+                btn.className = isKorHidden ? 'btn btn-primary' : 'btn btn-secondary';
+            }
+            updateListVisibility(type);
+        }
+
+        function updateListVisibility(type) {
+            const elements = document.querySelectorAll(type === 'eng' ? '.w-eng' : '.w-kor');
+            const isHidden = type === 'eng' ? isEngHidden : isKorHidden;
+            const colorType = type === 'eng' ? 'eng' : 'kor';
+
+            elements.forEach(el => {
+                if (isHidden) {
+                    if (!el.classList.contains('hidden-text')) {
+                        createParticles(el.parentElement, el, colorType);
+                        el.classList.add('hidden-text');
+                    }
+                } else {
+                    el.classList.remove('hidden-text');
+                }
+            });
+        }
+
+        function createParticles(container, textElement, colorType) {
+            const textRect = textElement.getBoundingClientRect();
+            const contRect = container.getBoundingClientRect();
+            const color = colorType === 'eng' ? '#4f46e5' : '#0f172a';
+
+            // 텍스트 너비에 비례해 파티클 생성
+            for (let i = 0; i < 20; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.backgroundColor = color;
+                
+                const size = Math.random() * 5 + 3;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                
+                // 텍스트 영역 내에서 랜덤 시작 위치 설정
+                const x = (textRect.left - contRect.left) + (Math.random() * textRect.width);
+                const y = (textRect.top - contRect.top) + (Math.random() * textRect.height);
+                p.style.left = x + 'px';
+                p.style.top = y + 'px';
+                
+                const tx = (Math.random() - 0.5) * 80 + 'px';
+                const ty = (Math.random() - 0.5) * 80 + 'px';
+                p.style.setProperty('--tx', tx);
+                p.style.setProperty('--ty', ty);
+                
+                container.appendChild(p);
+                
+                setTimeout(() => { if(p.parentElement) p.remove(); }, 500);
+            }
+        }
+
+        function adjustFontSizes() {
+            const engs = document.querySelectorAll('.w-eng');
+            const kors = document.querySelectorAll('.w-kor');
+            
+            engs.forEach(el => {
+                const parent = el.parentElement;
+                let fontSize = 24; // 1.5rem (24px 기반)
+                el.style.fontSize = fontSize + 'px';
+                // 아이콘(약 20px)과 패딩 공간을 뺀 여유 너비 계산
+                const maxWidth = parent.clientWidth - 45; 
+                while (el.scrollWidth > maxWidth && fontSize > 11) {
+                    fontSize -= 1;
+                    el.style.fontSize = fontSize + 'px';
+                }
+            });
+            
+            kors.forEach(el => {
+                const parent = el.parentElement;
+                let fontSize = 22.4; // 1.4rem
+                el.style.fontSize = fontSize + 'px';
+                const maxWidth = parent.clientWidth - 28;
+                while (el.scrollWidth > maxWidth && fontSize > 11) {
+                    fontSize -= 1;
+                    el.style.fontSize = fontSize + 'px';
+                }
+            });
+        }
+
+        function openDictFromList(e, word) {
+            e.stopPropagation(); // 단어 클릭 시 발음 듣기 방지
+            const queryWord = word.trim().replace(/\s+/g, '+');
+            const searchUrl = `https://small.dic.daum.net/search.do?dic=eng&q=${queryWord}`;
+            window.open(searchUrl, '_blank');
+        }
+
+		// --- 이하 기존 코드와 동일 ---
 
 		function renderCard(autoSpeak = true) {
 			const card = document.getElementById('flashcard');
@@ -897,7 +1062,6 @@
 			renderTestStep();
 		}
 
-		// ✨ await 동작을 위해 renderTestStep을 async 함수로 변경
 		async function renderTestStep() {
 		    const layout = document.getElementById('testLayout');
 		    if (testWords.length === 0) {
@@ -929,7 +1093,6 @@
 		                let prevStars = 0;
 		                let prevCoins = 0;
 		                
-		                // 🚀 서버에서 별 개수와 코인 수 FETCH
 		                if (userId) {
 		                    try {
 		                        const res = await fetch(`${apiBase}/api/game?userId=${userId}&gameId=voca`);
@@ -947,9 +1110,8 @@
 		                }
 		                
 		                const nextStars = prevStars + 1;
-		                const nextCoins = prevCoins + currentScore; // 받은 점수만큼 코인 증가
+		                const nextCoins = prevCoins + currentScore; 
 		
-		                // 별과 코인 애니메이션 UI
 		                starAnimHtml = `
 		                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 12px 0;">
 							  <div style="font-size: 1.3rem; font-weight: bold; background: #f8fafc; padding: 10px; border-radius: 8px; display: inline-block;">
@@ -961,7 +1123,6 @@
 							</div>
 		                `;
 		
-		                // 숫자가 변경되며 팝업되는 애니메이션 효과
 		                setTimeout(() => {
 		                    const animText = document.getElementById('starAnimText');
 		                    if(animText) {
@@ -982,16 +1143,13 @@
 		                savePassedChapters();
 		                updateChapterSelect(); 
 		        
-		                // 증가된 별과 코인을 서버에 저장
 		                if (userId) {
-		                    // 별 저장
 		                    fetch(`${apiBase}/api/game`, {
 		                        method: 'POST',
 		                        headers: { 'Content-Type': 'application/json' },
 		                        body: JSON.stringify({ action: 'add_star', userId: userId, amount: 1 })
 		                    }).catch(err => console.error('서버 별 증가 실패:', err));
 		
-		                    // 코인 저장
 		                    fetch(`${apiBase}/api/game`, {
 		                        method: 'POST',
 		                        headers: { 'Content-Type': 'application/json' },
@@ -1110,6 +1268,25 @@
 				.replace(/"/g, "&quot;")
 				.replace(/'/g, "&#039;");
 		}
+		document.addEventListener('keydown', function(event) {
+			const cardTab = document.getElementById('cardTab');
+			if (cardTab && cardTab.classList.contains('active')) {
+				switch(event.key) {
+					case 'ArrowUp':
+						speakCurrentWord();
+						break;
+					case 'ArrowDown':
+						flipCard();
+						break;
+					case 'ArrowLeft':
+						prevCard();
+						break;
+					case 'ArrowRight':
+						nextCard();
+						break;
+				}
+			}
+		});
     </script>
 </body>
 </html>
