@@ -298,7 +298,7 @@
             border-radius: 50%;
             pointer-events: none;
             z-index: 3;
-            animation: scatter 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            animation: scatter 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
         @keyframes scatter {
             0% { transform: translate(0, 0) scale(1.2); opacity: 1; }
@@ -785,7 +785,7 @@
 				p.style.setProperty('--tx', tx);
 				p.style.setProperty('--ty', ty);
 				
-				p.style.animationDuration = '1초';
+				p.style.animationDuration = '1s';
 				
 				container.appendChild(p);
 				
