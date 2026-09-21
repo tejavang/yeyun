@@ -249,11 +249,11 @@
         }
         .eng-half {
             justify-content: flex-start;
-            border-right: 1px dashed var(--border-color);
-            padding-right: 40px; /* 사전 아이콘 공간 확보 */
+            /* border-right: 1px dashed var(--border-color);
+            padding-right: 40px; 사전 아이콘 공간 확보 */
         }
         .kor-half {
-            justify-content: flex-end;
+            justify-content: flex-start;
         }
 
         /* 폰트 축소 및 파티클을 위해 nowrap 적용 */
@@ -566,7 +566,7 @@
 			} catch (error) {
 				console.error('단어 데이터 불러오기 실패:', error);
 				allWords = [
-					{ id: 1, subject: "기본 단어장", chapter: "1단원", word: "build a relationship", meaning: "관계를 맺다, 관계를 만들다" }
+					{ id: 1, subject: "기본 단어장", chapter: "1단원", word: "build a relationship", meaning: "관계를 맺다" }
 				];
 				initCategorySelects();
 			}
@@ -701,9 +701,8 @@
 				<div class="list-item">
                     <div class="word-half eng-half" onclick="speakText('${escapeHtml(w.word)}')">
                         <span class="w-eng ${isEngHidden ? 'hidden-text' : ''}">${escapeHtml(w.word)}</span>
-                        <div class="dict-icon" onclick="openDictFromList(event, '${escapeHtml(w.word)}')">🔍</div>
                     </div>
-                    <div class="word-half kor-half" onclick="speakText('${escapeHtml(w.word)}')">
+                    <div class="word-half kor-half" onclick="openDictFromList(event, '${escapeHtml(w.word)}')">
                         <span class="w-kor ${isKorHidden ? 'hidden-text' : ''}">${escapeHtml(w.meaning)}</span>
                     </div>
 				</div>
